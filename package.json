@@ -1,0 +1,26 @@
+{
+  "name": "erp-next",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ERP Next monorepo",
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=24.0.0 <25.0.0",
+    "npm": ">=11.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently -n web,api -c blue,green \"npm run dev --workspace @erp-next/web\" \"npm run dev --workspace @erp-next/api\"",
+    "lint": "npm run lint --workspaces --if-present && npm run format:check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "prettier": "^3.5.3"
+  }
+}

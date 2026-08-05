@@ -20,11 +20,13 @@ Módulos iniciais: `auth`, `users`, `roles`, `customers`, `suppliers`, `catalog`
 
 ## Segurança
 
-- JWT de curta duração é enviado via mecanismo definido na implementação; tokens nunca são registrados em logs.
-- Guards autenticam o usuário e verificam permissões explícitas.
+- O MVP emite JWT de acesso de 15 minutos com `sub` e `authVersion`; tokens nunca são registrados em logs. Não há refresh token nem sessão persistida no MVP.
+- Em cada requisição protegida, guards carregam o usuário ativo, comparam `authVersion` e verificam permissões explícitas atuais no servidor. Papéis e permissões não são confiados ao JWT.
+- Alterar senha ou inativar usuário incrementa `authVersion`, invalidando tokens anteriores no próximo uso.
+- O catálogo de permissões é mantido no código/migrations; a API só o expõe para consulta. Redis pode ser usado para rate limiting e cache de autorização, desde que a mudança de usuário, papel ou permissão invalide o cache.
 - Senhas usam algoritmo de hash apropriado e comparação segura.
 - Validação global rejeita campos não permitidos e transforma tipos de forma controlada.
-- CORS, rate limiting e cabeçalhos de segurança são configurados por ambiente.
+- CORS, limite de cinco tentativas de login falhas por IP/e-mail em 15 minutos e cabeçalhos de segurança são configurados por ambiente.
 
 ## Frontend
 

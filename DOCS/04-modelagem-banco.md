@@ -11,11 +11,11 @@
 
 | Entidade | Campos principais | Relações |
 | --- | --- | --- |
-| User | id, name, email, passwordHash, isActive, lastLoginAt | N:N Role; 1:N AuditLog |
+| User | id, name, email, passwordHash, authVersion, isActive, lastLoginAt | N:N Role; 1:N AuditLog |
 | Role | id, name, description, isSystem | N:N User e Permission |
 | Permission | id, resource, action, description | N:N Role; único por resource/action |
 
-As associações são `UserRole(userId, roleId)` e `RolePermission(roleId, permissionId)`, ambas com chave composta única.
+As associações são `UserRole(userId, roleId)` e `RolePermission(roleId, permissionId)`, ambas com chave composta única. `email` é persistido normalizado e possui índice único. `authVersion` é incrementado ao alterar senha ou inativar a conta e é comparado ao JWT em cada requisição protegida. Permissões são catalogadas por migrations, não por CRUD público.
 
 ## Cadastros e estoque
 
