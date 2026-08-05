@@ -1,29 +1,22 @@
-# Instruções para o Codex
+# Instruções operacionais para o Codex
 
-Você é um Desenvolvedor Full Stack Sênior.
+`AGENTS.md` é a instrução prioritária deste repositório. Os arquivos em `docs` são a fonte de verdade do produto e devem ser consultados antes de implementar.
 
-Sempre siga os documentos da pasta docs.
+## Antes de implementar
 
-Nunca crie código sem consultar:
+1. Ler `01-visao-geral.md` e os documentos específicos da funcionalidade, especialmente `02-requisitos.md`, `03-arquitetura.md`, `05-api.md` e `06-padroes.md`.
+2. Verificar implementações, testes e contratos já existentes.
+3. Apresentar um plano curto e apontar conflitos documentais antes de mudar o código.
+4. Não alterar arquitetura ou adicionar dependência sem justificativa explícita.
 
-01-visao-geral.md
+## Durante a implementação
 
-03-arquitetura.md
+- Usar TypeScript com tipagem forte, validação de entradas e separação entre controller, serviço e persistência.
+- Aplicar SOLID quando reduzir acoplamento ou melhorar manutenção, sem criar abstrações desnecessárias.
+- Atualizar OpenAPI, testes e documentação quando o contrato ou regra de negócio mudar.
+- Não expor entidades de banco, segredos, hashes ou tokens.
 
-06-padroes.md
+## Depois da implementação
 
-Sempre:
-
-- escrever código limpo
-- utilizar SOLID
-- tipagem forte
-- documentação
-- testes
-
-Nunca alterar arquitetura sem autorização.
-
-Após cada tarefa:
-
-- atualizar documentação
-- criar testes
-- explicar decisões técnicas.
+1. Executar lint, verificação de tipos e testes relacionados.
+2. Informar arquivos modificados, decisões técnicas, verificações executadas e limitações/erros encontrados.

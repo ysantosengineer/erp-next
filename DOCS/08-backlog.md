@@ -1,0 +1,24 @@
+# Backlog priorizado
+
+## P0 — necessário para o MVP
+
+| ID | História | Critério de aceite resumido |
+| --- | --- | --- |
+| US001 | Como administrador, quero administrar usuários. | Criar, editar, inativar e impedir login de usuário inativo. |
+| US002 | Como administrador, quero atribuir papéis e permissões. | A API bloqueia ações sem a permissão necessária. |
+| US003 | Como operador, quero manter clientes, fornecedores, produtos e categorias. | Validações, busca e paginação funcionam. |
+| US004 | Como compras, quero registrar e receber compras. | Recebimento cria movimentação e atualiza saldo atomicamente. |
+| US005 | Como vendas, quero confirmar pedidos. | Estoque insuficiente bloqueia confirmação; confirmação baixa estoque. |
+| US006 | Como financeiro, quero registrar pagamentos. | Pagamentos parciais atualizam saldo e status da fatura. |
+
+## P1 — valor operacional
+
+| ID | História | Critério de aceite resumido |
+| --- | --- | --- |
+| US007 | Como gestor, quero dashboard e relatórios. | Período filtrável e indicadores consistentes com os dados. |
+| US008 | Como administrador, quero consultar auditoria. | Alterações críticas registram ator, data, ação e dados alterados. |
+| US009 | Como operador, quero alertas de estoque baixo. | Produtos abaixo do mínimo são identificáveis no dashboard. |
+
+## P2 — após o MVP
+
+Exportação de relatórios, integrações, multiempresa, emissão fiscal, WMS, BI, IA e aplicativo mobile. Cada item deve ser refinado com regra de negócio, dependências e critérios de aceite antes de entrar em sprint.

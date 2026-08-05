@@ -1,27 +1,31 @@
-Sprint 1
+# Roadmap
 
-Autenticação
+## Sprint 0 — Fundação
 
-Usuários
+Monorepo, Docker Compose para API/PostgreSQL/Redis, configuração de qualidade, CI inicial, variáveis de ambiente documentadas e OpenAPI básico.
 
-Permissões
+## Sprint 1 — Acesso e administração
 
----
+Autenticação, usuários, papéis, permissões, proteção de rotas, redefinição de senha e auditoria inicial.
 
-Sprint 2
+## Sprint 2 — Cadastros e catálogo
 
-Produtos
+Clientes, fornecedores, categorias, produtos, armazéns, busca/paginação e formulários validados.
 
-Categorias
+## Sprint 3 — Compras e estoque
 
-Fornecedor
+Pedidos de compra, recebimento, saldo por armazém e movimentações imutáveis.
 
----
+## Sprint 4 — Vendas
 
-Sprint 3
+Pedidos de venda, confirmação com baixa de estoque, cancelamento com estorno e histórico do cliente.
 
-Clientes
+## Sprint 5 — Financeiro e relatórios
 
-Pedidos
+Faturas, pagamentos parciais, contas em aberto, dashboard e relatórios operacionais.
 
-Dashboard
+## Sprint 6 — Produção e estabilização
+
+Cobertura de fluxos críticos, segurança, observabilidade, backup, deploy e documentação de operação.
+
+Cada sprint só é concluída quando seus critérios de aceitação, testes relevantes, OpenAPI e documentação estiverem atualizados.
