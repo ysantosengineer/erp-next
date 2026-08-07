@@ -21,4 +21,9 @@
 
 ## P2 — após o MVP
 
-Exportação de relatórios, integrações, multiempresa, emissão fiscal, WMS, BI, IA e aplicativo mobile. Cada item deve ser refinado com regra de negócio, dependências e critérios de aceite antes de entrar em sprint.
+Exportação de relatórios, integrações, expansão do isolamento multiempresa para módulos comerciais, emissão fiscal, WMS, BI, IA e aplicativo mobile. Cada item deve ser refinado com regra de negócio, dependências e critérios de aceite antes de entrar em sprint.
+
+## Estado de implementação
+
+- US001 e US002 estão implementadas em código com isolamento por empresa e testes unitários.
+- A validação em banco real e os testes de integração permanecem pendentes pela indisponibilidade local de PostgreSQL/Docker; por isso essas histórias ainda não são consideradas concluídas.

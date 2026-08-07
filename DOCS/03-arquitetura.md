@@ -20,13 +20,20 @@ Módulos iniciais: `auth`, `users`, `roles`, `customers`, `suppliers`, `catalog`
 
 ## Segurança
 
-- O MVP emite JWT de acesso de 15 minutos com `sub` e `authVersion`; tokens nunca são registrados em logs. Não há refresh token nem sessão persistida no MVP.
+- A API emite JWT de acesso de 15 minutos com `sub` e `authVersion` e refresh JWT de maior duração. Refresh tokens são persistidos somente como hash, rotacionados no uso e revogados no logout ou em mudanças de autorização; tokens nunca são registrados em logs.
 - Em cada requisição protegida, guards carregam o usuário ativo, comparam `authVersion` e verificam permissões explícitas atuais no servidor. Papéis e permissões não são confiados ao JWT.
 - Alterar senha ou inativar usuário incrementa `authVersion`, invalidando tokens anteriores no próximo uso.
 - O catálogo de permissões é mantido no código/migrations; a API só o expõe para consulta. Redis pode ser usado para rate limiting e cache de autorização, desde que a mudança de usuário, papel ou permissão invalide o cache.
 - Senhas usam algoritmo de hash apropriado e comparação segura.
 - Validação global rejeita campos não permitidos e transforma tipos de forma controlada.
 - CORS, limite de cinco tentativas de login falhas por IP/e-mail em 15 minutos e cabeçalhos de segurança são configurados por ambiente.
+
+## Isolamento por empresa
+
+- `User` e `Role` pertencem a uma `Company`; `Permission` permanece como catálogo global.
+- O contexto autenticado contém `userId`, `companyId` e `authVersion`, todos resolvidos novamente no banco pela estratégia JWT.
+- Controllers não aceitam `companyId`. Services limitam consultas e mutações ao `companyId` autenticado e retornam `404` para recursos de outra empresa.
+- Alterações de papéis e permissões invalidam as sessões afetadas por incremento de `authVersion` e revogação de refresh tokens.
 
 ## Frontend
 
@@ -38,6 +45,6 @@ OpenAPI é o contrato público da API. Logs devem ser estruturados e correlacion
 
 ## Decisões atuais
 
-- Banco único PostgreSQL no MVP, sem multi-tenancy.
+- Banco PostgreSQL compartilhado com isolamento lógico por `companyId` nos módulos de acesso e administração.
 - API REST versionada com prefixo `/api/v1`.
 - Sem acesso direto do frontend ao banco e sem regras fiscais implícitas.

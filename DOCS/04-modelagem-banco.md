@@ -11,11 +11,12 @@
 
 | Entidade | Campos principais | Relações |
 | --- | --- | --- |
-| User | id, name, email, passwordHash, authVersion, isActive, lastLoginAt | N:N Role; 1:N AuditLog |
-| Role | id, name, description, isSystem | N:N User e Permission |
+| Company | id, name, document, isActive | 1:N User, Role e AuditLog |
+| User | id, companyId, name, email, passwordHash, authVersion, isActive, lastLoginAt | N:1 Company; N:N Role; 1:N AuditLog |
+| Role | id, companyId, name, description, isSystem | N:1 Company; N:N User e Permission |
 | Permission | id, resource, action, description | N:N Role; único por resource/action |
 
-As associações são `UserRole(userId, roleId)` e `RolePermission(roleId, permissionId)`, ambas com chave composta única. `email` é persistido normalizado e possui índice único. `authVersion` é incrementado ao alterar senha ou inativar a conta e é comparado ao JWT em cada requisição protegida. Permissões são catalogadas por migrations, não por CRUD público.
+As associações são `UserRole(userId, roleId)` e `RolePermission(roleId, permissionId)`, ambas com chave composta única. `email` é persistido normalizado e permanece globalmente único porque o login não recebe identificador de empresa. O nome do papel é único por `companyId`. `authVersion` é incrementado ao alterar senha, inativar a conta ou mudar autorizações e é comparado ao JWT em cada requisição protegida. Permissões são um catálogo global versionado por seed/migrations, não por CRUD público. A camada de aplicação impede associações `UserRole` entre empresas.
 
 ## Cadastros e estoque
 
@@ -42,6 +43,6 @@ As associações são `UserRole(userId, roleId)` e `RolePermission(roleId, permi
 | PurchaseOrderItem | id, quantity, unitCost, discount, total | N:1 PurchaseOrder e Product |
 | Invoice | id, direction, status, dueDate, amount, balance | opcionalmente ligada a venda ou compra; 1:N Payment |
 | Payment | id, paidAt, amount, method, status, reference | N:1 Invoice; N:1 User |
-| AuditLog | id, entity, entityId, action, before, after, occurredAt | N:1 User |
+| AuditLog | id, companyId, entity, entityId, action, before, after, occurredAt | N:1 User; N:1 Company opcional |
 
 Regras de integridade: um item não pode ter quantidade ou preço negativo; `total = quantidade × preço - desconto`; uma fatura não pode apontar simultaneamente para compra e venda; pagamentos cancelados não compõem saldo.

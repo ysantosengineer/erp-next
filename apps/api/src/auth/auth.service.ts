@@ -11,6 +11,7 @@ import { LoginDto } from './dto/login.dto';
 
 type LoginUser = {
   id: string;
+  companyId: string;
   name: string;
   email: string;
   passwordHash: string;
@@ -35,10 +36,6 @@ export class AuthService {
 
   async login(loginDto: LoginDto, requestId: string): Promise<AuthTokensDto> {
     const email = loginDto.email.trim().toLowerCase();
-    const company = await this.prisma.company.findFirst({
-      orderBy: { createdAt: 'asc' },
-      select: { isActive: true },
-    });
     const user = await this.prisma.user.findUnique({
       where: { email },
       select: {
@@ -48,6 +45,8 @@ export class AuthService {
         passwordHash: true,
         authVersion: true,
         isActive: true,
+        companyId: true,
+        company: { select: { isActive: true } },
       },
     });
 
@@ -55,7 +54,7 @@ export class AuthService {
       ? await bcrypt.compare(loginDto.password, user.passwordHash)
       : false;
 
-    if (!company?.isActive || !user?.isActive || !passwordMatches) {
+    if (!user?.company.isActive || !user.isActive || !passwordMatches) {
       await this.recordFailedLogin(email, requestId);
       throw this.invalidCredentialsException();
     }
@@ -79,6 +78,7 @@ export class AuthService {
       await transaction.auditLog.create({
         data: {
           actorId: user.id,
+          companyId: user.companyId,
           entity: 'Auth',
           entityId: user.id,
           action: 'auth.login.succeeded',
@@ -96,7 +96,7 @@ export class AuthService {
     const refreshTokenHash = this.hashToken(refreshToken);
 
     return this.prisma.$transaction(async (transaction) => {
-      const [storedToken, user, company] = await Promise.all([
+      const [storedToken, user] = await Promise.all([
         transaction.refreshToken.findUnique({ where: { id: payload.jti } }),
         transaction.user.findUnique({
           where: { id: payload.sub },
@@ -107,11 +107,9 @@ export class AuthService {
             passwordHash: true,
             authVersion: true,
             isActive: true,
+            companyId: true,
+            company: { select: { isActive: true } },
           },
-        }),
-        transaction.company.findFirst({
-          orderBy: { createdAt: 'asc' },
-          select: { isActive: true },
         }),
       ]);
 
@@ -124,7 +122,7 @@ export class AuthService {
         !user ||
         !user.isActive ||
         user.authVersion !== payload.authVersion ||
-        !company?.isActive
+        !user.company.isActive
       ) {
         throw this.invalidSessionException();
       }
@@ -150,6 +148,7 @@ export class AuthService {
       await transaction.auditLog.create({
         data: {
           actorId: user.id,
+          companyId: user.companyId,
           entity: 'Auth',
           entityId: user.id,
           action: 'auth.refresh.succeeded',
@@ -165,29 +164,39 @@ export class AuthService {
   async logout(refreshToken: string, requestId: string): Promise<void> {
     const payload = await this.verifyRefreshToken(refreshToken);
     const tokenHash = this.hashToken(refreshToken);
-    const revoked = await this.prisma.refreshToken.updateMany({
-      where: { id: payload.jti, userId: payload.sub, tokenHash, revokedAt: null },
-      data: { revokedAt: new Date() },
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { companyId: true },
     });
 
-    if (revoked.count !== 1) {
+    if (!user) {
       throw this.invalidSessionException();
     }
 
-    await this.prisma.auditLog.create({
-      data: {
-        actorId: payload.sub,
-        entity: 'Auth',
-        entityId: payload.sub,
-        action: 'auth.logout.succeeded',
-        requestId,
-      },
+    await this.prisma.$transaction(async (transaction) => {
+      const revoked = await transaction.refreshToken.updateMany({
+        where: { id: payload.jti, userId: payload.sub, tokenHash, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      if (revoked.count !== 1) {
+        throw this.invalidSessionException();
+      }
+      await transaction.auditLog.create({
+        data: {
+          actorId: payload.sub,
+          companyId: user.companyId,
+          entity: 'Auth',
+          entityId: payload.sub,
+          action: 'auth.logout.succeeded',
+          requestId,
+        },
+      });
     });
     this.logger.log(`Logout do usuário ${payload.sub}.`);
   }
 
   getCurrentUser(user: AuthenticatedUser): CurrentUserDto {
-    return { id: user.id, name: user.name, email: user.email };
+    return { id: user.userId, companyId: user.companyId, name: user.name, email: user.email };
   }
 
   private async issueTokens(user: LoginUser): Promise<IssuedTokens> {

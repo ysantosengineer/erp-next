@@ -27,14 +27,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         email: true,
         authVersion: true,
         isActive: true,
+        companyId: true,
+        company: { select: { isActive: true } },
       },
     });
-    const activeCompany = await this.prisma.company.findFirst({
-      where: { isActive: true },
-      select: { id: true },
-    });
 
-    if (!user || !user.isActive || user.authVersion !== payload.authVersion || !activeCompany) {
+    if (
+      !user ||
+      !user.isActive ||
+      user.authVersion !== payload.authVersion ||
+      !user.company.isActive
+    ) {
       throw new UnauthorizedException({
         code: 'INVALID_SESSION',
         message: 'Sessão inválida.',
@@ -42,7 +45,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     return {
-      id: user.id,
+      userId: user.id,
+      companyId: user.companyId,
       name: user.name,
       email: user.email,
       authVersion: user.authVersion,

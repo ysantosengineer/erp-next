@@ -12,11 +12,13 @@ const bcryptCompareMock = bcrypt.compare as unknown as {
 describe('AuthService', () => {
   const user = {
     id: 'f0630c13-8c2d-4c9a-b23d-585d0c07cf06',
+    companyId: '42105ea7-c456-47c2-ab73-80bc4788442d',
     name: 'Administrator',
     email: 'admin@erp.local',
     passwordHash: '$2b$12$hashed-password',
     authVersion: 1,
     isActive: true,
+    company: { isActive: true },
   };
   const transaction = {
     user: { update: jest.fn(), findUnique: jest.fn() },
@@ -26,10 +28,8 @@ describe('AuthService', () => {
       updateMany: jest.fn(),
     },
     auditLog: { create: jest.fn() },
-    company: { findFirst: jest.fn() },
   };
   const prisma = {
-    company: { findFirst: jest.fn() },
     user: { findUnique: jest.fn() },
     refreshToken: { updateMany: jest.fn() },
     auditLog: { create: jest.fn() },
@@ -57,13 +57,11 @@ describe('AuthService', () => {
     prisma.$transaction.mockImplementation(
       async (callback: (client: typeof transaction) => Promise<unknown>) => callback(transaction),
     );
-    prisma.company.findFirst.mockResolvedValue({ isActive: true });
     prisma.user.findUnique.mockResolvedValue(user);
     transaction.user.update.mockResolvedValue(user);
     transaction.user.findUnique.mockResolvedValue(user);
     transaction.refreshToken.create.mockResolvedValue({});
     transaction.auditLog.create.mockResolvedValue({});
-    transaction.company.findFirst.mockResolvedValue({ isActive: true });
     jwtService.signAsync
       .mockResolvedValueOnce('access-token')
       .mockResolvedValueOnce('refresh-token');
@@ -137,12 +135,11 @@ describe('AuthService', () => {
 
   it('revoga o refresh token durante o logout', async () => {
     jwtService.verifyAsync.mockResolvedValue({ sub: user.id, authVersion: 1, jti: 'token-id' });
-    prisma.refreshToken.updateMany.mockResolvedValue({ count: 1 });
-    prisma.auditLog.create.mockResolvedValue({});
+    transaction.refreshToken.updateMany.mockResolvedValue({ count: 1 });
 
     await service.logout('refresh-token', 'request-4');
 
-    expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith(
+    expect(transaction.refreshToken.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ id: 'token-id', revokedAt: null }),
       }),

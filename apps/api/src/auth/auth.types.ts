@@ -8,7 +8,8 @@ export interface RefreshTokenPayload extends AccessTokenPayload {
 }
 
 export interface AuthenticatedUser {
-  id: string;
+  userId: string;
+  companyId: string;
   name: string;
   email: string;
   authVersion: number;
