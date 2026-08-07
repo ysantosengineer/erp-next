@@ -37,7 +37,9 @@ Módulos iniciais: `auth`, `users`, `roles`, `customers`, `suppliers`, `catalog`
 
 ## Frontend
 
-Next.js organiza páginas por área funcional. Formulários usam React Hook Form e Zod; TanStack Query controla cache, carregamento e invalidação de dados remotos. Componentes visuais usam Tailwind CSS e shadcn/ui. A interface não decide autorização: ela apenas reflete permissões já aplicadas pela API.
+Next.js organiza páginas por área funcional. Formulários usam React Hook Form e Zod; TanStack Query controla cache, carregamento e invalidação de dados remotos. Componentes visuais usam Tailwind CSS e shadcn/ui quando configurado. A interface não decide autorização: ela apenas reflete permissões já aplicadas pela API.
+
+O frontend possui áreas públicas (`/login`) e autenticadas (`/` e `/unauthorized`). Um provider de autenticação mantém o access token apenas em memória, recupera a sessão por cookie HttpOnly e centraliza renovação, logout e tratamento de `401`. A proteção do cliente direciona a navegação, mas não substitui os guards da API.
 
 ## Integrações e observabilidade
 

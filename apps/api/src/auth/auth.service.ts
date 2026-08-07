@@ -19,7 +19,8 @@ type LoginUser = {
   isActive: boolean;
 };
 
-type IssuedTokens = AuthTokensDto & {
+export type IssuedTokens = AuthTokensDto & {
+  refreshToken: string;
   refreshTokenId: string;
   refreshTokenExpiresAt: Date;
 };
@@ -34,7 +35,7 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  async login(loginDto: LoginDto, requestId: string): Promise<AuthTokensDto> {
+  async login(loginDto: LoginDto, requestId: string): Promise<IssuedTokens> {
     const email = loginDto.email.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({
       where: { email },
@@ -88,10 +89,10 @@ export class AuthService {
     });
 
     this.logger.log(`Login bem-sucedido para o usuário ${user.id}.`);
-    return this.toAuthTokens(tokens);
+    return tokens;
   }
 
-  async refresh(refreshToken: string, requestId: string): Promise<AuthTokensDto> {
+  async refresh(refreshToken: string, requestId: string): Promise<IssuedTokens> {
     const payload = await this.verifyRefreshToken(refreshToken);
     const refreshTokenHash = this.hashToken(refreshToken);
 
@@ -157,7 +158,7 @@ export class AuthService {
       });
 
       this.logger.log(`Refresh de sessão para o usuário ${user.id}.`);
-      return this.toAuthTokens(rotation);
+      return rotation;
     });
   }
 
@@ -196,7 +197,22 @@ export class AuthService {
   }
 
   getCurrentUser(user: AuthenticatedUser): CurrentUserDto {
-    return { id: user.userId, companyId: user.companyId, name: user.name, email: user.email };
+    return {
+      id: user.userId,
+      company: { id: user.companyId, name: user.companyName },
+      name: user.name,
+      email: user.email,
+      roles: user.roles,
+      permissions: user.permissions,
+    };
+  }
+
+  toAuthTokens(tokens: IssuedTokens): AuthTokensDto {
+    return {
+      accessToken: tokens.accessToken,
+      tokenType: tokens.tokenType,
+      expiresIn: tokens.expiresIn,
+    };
   }
 
   private async issueTokens(user: LoginUser): Promise<IssuedTokens> {
@@ -249,15 +265,6 @@ export class AuthService {
 
   private hashToken(value: string): string {
     return createHash('sha256').update(value).digest('hex');
-  }
-
-  private toAuthTokens(tokens: IssuedTokens): AuthTokensDto {
-    return {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      tokenType: tokens.tokenType,
-      expiresIn: tokens.expiresIn,
-    };
   }
 
   private tokenHashesMatch(storedHash: string, candidateHash: string): boolean {

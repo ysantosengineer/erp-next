@@ -1,6 +1,6 @@
 # ERP Next
 
-Monorepo inicial do ERP Next para pequenas e médias empresas. O repositório contém apenas a base técnica: uma aplicação web em Next.js e uma API em NestJS. Módulos de negócio, autenticação e banco de dados ainda não foram implementados.
+Monorepo do ERP Next para pequenas e médias empresas. O repositório contém uma aplicação web em Next.js, uma API NestJS, PostgreSQL via Prisma e a fundação de autenticação, usuários, papéis e permissões. Módulos de negócio permanecem para próximas etapas.
 
 ## Pré-requisitos
 
@@ -25,6 +25,16 @@ exclusiva de desenvolvimento com ao menos 12 caracteres. O seed cria ou atualiza
 o usuário definido por `SEED_ADMIN_EMAIL`, o papel administrativo e o catálogo inicial de
 permissões.
 
+Defina também segredos JWT exclusivos e, para o frontend local, mantenha:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
+WEB_ORIGIN=http://localhost:3000
+AUTH_COOKIE_SECURE=false
+```
+
+Em produção, use HTTPS e `AUTH_COOKIE_SECURE=true`.
+
 ## Execução
 
 ```bash
@@ -33,6 +43,11 @@ npm run dev
 
 - Web: `http://localhost:3000`
 - API: `http://localhost:3001/api/v1/health`
+- Login: `http://localhost:3000/login`
+
+## Sessão web
+
+O access token é mantido apenas em memória. O refresh token é configurado pela API em cookie `HttpOnly` e rotacionado por `/auth/refresh`; ele não é armazenado pelo frontend. As rotas internas redirecionam para `/login` quando a sessão não pode ser recuperada e a sidebar usa permissões atuais de `/auth/me` apenas para controle visual.
 
 ## Scripts
 

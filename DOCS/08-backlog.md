@@ -27,3 +27,4 @@ Exportação de relatórios, integrações, expansão do isolamento multiempresa
 
 - US001 e US002 estão implementadas em código com isolamento por empresa e testes unitários.
 - A validação em banco real e os testes de integração permanecem pendentes pela indisponibilidade local de PostgreSQL/Docker; por isso essas histórias ainda não são consideradas concluídas.
+- A interface inicial de login, sessão autenticada e navegação por permissões está implementada; CRUDs administrativos no frontend permanecem fora do escopo desta etapa.

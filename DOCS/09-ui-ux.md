@@ -11,6 +11,8 @@
 
 Após login, a aplicação oferece dashboard e menu lateral agrupado em Cadastros, Operações, Financeiro, Relatórios e Administração. Itens indisponíveis por permissão podem ser ocultados, mas a API continua sendo a autoridade de acesso.
 
+Nesta fundação, a rota `/login` apresenta campos identificados de e-mail e senha, validação próxima ao campo, feedback de carregamento e controle para exibir a senha. A área autenticada possui sidebar, header com usuário/empresa, logout e dashboard sem indicadores empresariais fictícios.
+
 ## Padrões de tela
 
 - Listagens: título, ação principal autorizada, filtros, tabela paginada e estado vazio com próximo passo.

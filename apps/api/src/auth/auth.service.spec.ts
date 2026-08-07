@@ -70,21 +70,22 @@ describe('AuthService', () => {
   it('emite tokens, atualiza o último login e persiste somente o hash do refresh token', async () => {
     bcryptCompareMock.mockResolvedValue(true);
 
-    const result = await service.login(
+    const issuedTokens = await service.login(
       { email: 'ADMIN@ERP.LOCAL', password: 'senha-segura-com-12-caracteres' },
       'request-1',
     );
+    const result = service.toAuthTokens(issuedTokens);
 
     expect(result).toEqual(
       expect.objectContaining({
         accessToken: 'access-token',
-        refreshToken: 'refresh-token',
         tokenType: 'Bearer',
         expiresIn: 900,
       }),
     );
     expect(result).not.toHaveProperty('refreshTokenId');
     expect(result).not.toHaveProperty('refreshTokenExpiresAt');
+    expect(result).not.toHaveProperty('refreshToken');
     expect(transaction.user.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: user.id } }),
     );

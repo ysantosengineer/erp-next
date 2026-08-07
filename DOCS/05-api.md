@@ -29,4 +29,5 @@
 - Endpoints de escrita relevantes devem gerar evento de auditoria.
 - Todos os endpoints de usuários e papéis exigem Bearer JWT e permissão específica. O `companyId` é obtido da identidade autenticada; recursos externos à empresa retornam `404`.
 - `GET /users` aceita `page`, `limit` (máximo 100), `search`, `status`, `sortBy` e `sortOrder`, retornando `{ data, meta: { page, limit, total, totalPages } }`.
-- `POST /auth/login` retorna access e refresh tokens; o access token expira em 15 minutos. `POST /auth/refresh` rotaciona o refresh token, `POST /auth/logout` o revoga e `GET /auth/me` exige access token. Alteração e recuperação de senha permanecem fora do escopo atual.
+- `POST /auth/login` retorna access token; o refresh token é enviado exclusivamente em cookie `HttpOnly`. O access token expira em 15 minutos. `POST /auth/refresh` usa e rotaciona o cookie de refresh, `POST /auth/logout` o revoga e limpa, e `GET /auth/me` exige access token e retorna dados seguros do usuário, empresa, papéis e permissões atuais. Alteração e recuperação de senha permanecem fora do escopo atual.
+- A API aceita origem configurada em `WEB_ORIGIN` com credenciais; não é permitido usar origem curinga com cookies.

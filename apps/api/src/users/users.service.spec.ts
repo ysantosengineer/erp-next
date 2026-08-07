@@ -12,9 +12,12 @@ describe('UsersService', () => {
   const identity: AuthenticatedUser = {
     userId: '10000000-0000-4000-8000-000000000001',
     companyId: '20000000-0000-4000-8000-000000000001',
+    companyName: 'Empresa de teste',
     name: 'Admin',
     email: 'admin@erp.local',
     authVersion: 1,
+    roles: ['Administrator'],
+    permissions: ['users.read'],
   };
   const role = {
     id: '30000000-0000-4000-8000-000000000001',

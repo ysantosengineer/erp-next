@@ -10,6 +10,13 @@
 
 Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empresa é resolvido a partir do usuário autenticado no banco e nunca é aceito de body, query ou header. Permissões formam um catálogo global; sua atribuição ocorre por papéis limitados à empresa.
 
+### Sessão no navegador
+
+- O access token tem curta duração e é mantido somente em memória no cliente.
+- O refresh token é enviado pela API em cookie `HttpOnly`, com `SameSite=Lax`, escopo `/api/v1/auth` e `Secure` obrigatório em produção.
+- O cliente envia requisições autenticadas com credenciais de cookie, tenta uma única renovação controlada e nunca persiste tokens em `localStorage`.
+- A interface usa permissões retornadas por `GET /auth/me` apenas para experiência de navegação; a API permanece a autoridade de autorização.
+
 ### Requisitos funcionais
 
 - Usuários devem autenticar-se com e-mail e senha para acessar recursos protegidos.
