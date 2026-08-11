@@ -20,6 +20,14 @@ As associações são `UserRole(userId, roleId)` e `RolePermission(roleId, permi
 
 ## Cadastros e estoque
 
+### Category
+
+Categorias pertencem à empresa e usam `companyId`, `name`, `normalizedName`, `description`, `isActive`, timestamps e unicidade por `(companyId, normalizedName)`. A exclusão é lógica por status.
+
+### UnitOfMeasure
+
+Unidades de medida pertencem à empresa e usam `companyId`, `name`, `normalizedName`, `symbol`, `normalizedSymbol`, `description`, `isActive` e timestamps. Nome e símbolo são únicos dentro da empresa; o símbolo é normalizado para maiúsculas.
+
 | Entidade | Campos principais | Relações |
 | --- | --- | --- |
 | Customer | id, type, name, document, email, phone, creditLimit, isActive | 1:N SalesOrder, Address |

@@ -9,6 +9,14 @@ export const PERMISSIONS = {
   ROLES_UPDATE: 'roles.update',
   ROLES_DELETE: 'roles.delete',
   ROLES_MANAGE_PERMISSIONS: 'roles.manage_permissions',
+  CATEGORIES_READ: 'categories.read',
+  CATEGORIES_CREATE: 'categories.create',
+  CATEGORIES_UPDATE: 'categories.update',
+  CATEGORIES_MANAGE_STATUS: 'categories.manage_status',
+  UNITS_READ: 'units.read',
+  UNITS_CREATE: 'units.create',
+  UNITS_UPDATE: 'units.update',
+  UNITS_MANAGE_STATUS: 'units.manage_status',
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -24,9 +32,19 @@ export const PERMISSION_LABELS: Readonly<Record<string, string>> = {
   'roles.update': 'Editar papéis',
   'roles.delete': 'Excluir papéis',
   'roles.manage_permissions': 'Gerenciar permissões de papéis',
+  'categories.read': 'Visualizar categorias',
+  'categories.create': 'Criar categorias',
+  'categories.update': 'Editar categorias',
+  'categories.manage_status': 'Gerenciar status de categorias',
+  'units.read': 'Visualizar unidades',
+  'units.create': 'Criar unidades',
+  'units.update': 'Editar unidades',
+  'units.manage_status': 'Gerenciar status de unidades',
 };
 
 export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
   users: 'Usuários',
   roles: 'Papéis',
+  categories: 'Categorias',
+  units: 'Unidades de medida',
 };

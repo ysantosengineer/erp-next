@@ -40,6 +40,25 @@ async function main(): Promise<void> {
       }),
     ),
   );
+  const categoryAndUnitPermissions = [
+    ['categories', 'read', 'Consulta categorias.'],
+    ['categories', 'create', 'Cria categorias.'],
+    ['categories', 'update', 'Atualiza categorias.'],
+    ['categories', 'manage_status', 'Ativa e inativa categorias.'],
+    ['units', 'read', 'Consulta unidades de medida.'],
+    ['units', 'create', 'Cria unidades de medida.'],
+    ['units', 'update', 'Atualiza unidades de medida.'],
+    ['units', 'manage_status', 'Ativa e inativa unidades de medida.'],
+  ] as const;
+  const newPermissions = await Promise.all(
+    categoryAndUnitPermissions.map(([resource, action, description]) =>
+      prisma.permission.upsert({
+        where: { resource_action: { resource, action } },
+        update: { description },
+        create: { resource, action, description },
+      }),
+    ),
+  );
 
   const administratorRole = await prisma.role.upsert({
     where: { companyId_name: { companyId: company.id, name: 'Administrator' } },
@@ -68,7 +87,7 @@ async function main(): Promise<void> {
   });
 
   await Promise.all(
-    permissions.map((permission) =>
+    [...permissions, ...newPermissions].map((permission) =>
       prisma.rolePermission.upsert({
         where: {
           roleId_permissionId: {
@@ -86,6 +105,32 @@ async function main(): Promise<void> {
     update: {},
     create: { userId: administrator.id, roleId: administratorRole.id },
   });
+
+  const standardUnits = [
+    ['Unidade', 'UN'],
+    ['Quilograma', 'KG'],
+    ['Grama', 'G'],
+    ['Litro', 'L'],
+    ['Mililitro', 'ML'],
+    ['Metro', 'M'],
+    ['Caixa', 'CX'],
+    ['Pacote', 'PCT'],
+  ] as const;
+  await Promise.all(
+    standardUnits.map(([name, symbol]) =>
+      prisma.unitOfMeasure.upsert({
+        where: { companyId_normalizedSymbol: { companyId: company.id, normalizedSymbol: symbol } },
+        update: { name, normalizedName: name.toLocaleLowerCase('pt-BR'), symbol, isActive: true },
+        create: {
+          companyId: company.id,
+          name,
+          normalizedName: name.toLocaleLowerCase('pt-BR'),
+          symbol,
+          normalizedSymbol: symbol,
+        },
+      }),
+    ),
+  );
 }
 
 main()

@@ -4,7 +4,7 @@
 
 - Base: `/api/v1`; JSON UTF-8; datas ISO 8601 em UTC.
 - Autenticação: endpoints protegidos exigem JWT. Autorização é feita por permissão no servidor.
-- Listagens aceitam `page` (inicia em 1), `pageSize` (máximo 100), `sort`, filtros documentados e devolvem `{ data, meta }`.
+- Listagens aceitam `page` (inicia em 1), `limit` (máximo 100), `sortBy`, `sortOrder`, filtros documentados e devolvem `{ data, meta }`.
 - Respostas usam DTOs. Erros seguem `{ statusCode, code, message, details?, requestId }`.
 - `400` validação, `401` não autenticado, `403` sem permissão, `404` inexistente, `409` conflito de estado/unicidade e `422` regra de negócio.
 
@@ -15,6 +15,12 @@
 | Auth | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me` |
 | Usuários e acesso | `GET,POST /users`, `GET,PATCH /users/:id`, `PATCH /users/:id/status`, `PUT /users/:id/roles`, `GET,POST /roles`, `GET,PATCH,DELETE /roles/:id`, `PUT /roles/:id/permissions`, `GET /permissions` |
 | Cadastros | `GET,POST /customers`, `/suppliers`, `/categories`, `/products`, `/warehouses`; `GET,PATCH /:resource/:id` |
+
+### Categorias e unidades de medida
+
+- `GET,POST /categories`, `GET,PATCH /categories/:id` e `PATCH /categories/:id/status` exigem, respectivamente, permissões `categories.read`, `categories.create`, `categories.read`, `categories.update` e `categories.manage_status`.
+- `GET,POST /units`, `GET,PATCH /units/:id` e `PATCH /units/:id/status` seguem o mesmo contrato com permissões `units.*`.
+- As duas listagens aceitam `page`, `limit`, `search`, `status`, `sortBy` e `sortOrder`.
 | Vendas | `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm`, `POST /sales-orders/:id/cancel` |
 | Compras | Rotas equivalentes em `/purchase-orders`, com `POST /:id/receive` |
 | Estoque | `GET /inventory`, `GET /stock-movements`; movimentação manual somente por endpoint autorizado e motivo obrigatório |

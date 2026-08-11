@@ -23,6 +23,22 @@ export function Sidebar() {
         <Link className={linkClass('/')} href="/">
           Dashboard
         </Link>
+        <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Cadastros
+        </p>
+        <Can permission={PERMISSIONS.CATEGORIES_READ}>
+          <Link className={linkClass('/categories')} href="/categories">
+            Categorias
+          </Link>
+        </Can>
+        <Can permission={PERMISSIONS.UNITS_READ}>
+          <Link className={linkClass('/units')} href="/units">
+            Unidades de medida
+          </Link>
+        </Can>
+        <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Administração
+        </p>
         <Can permission={PERMISSIONS.USERS_READ}>
           <Link className={linkClass('/users')} href="/users">
             Usuários

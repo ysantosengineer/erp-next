@@ -14,9 +14,44 @@ model Company {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  users     User[]
-  roles     Role[]
-  auditLogs AuditLog[]
+  users      User[]
+  roles      Role[]
+  categories Category[]
+  units      UnitOfMeasure[]
+  auditLogs  AuditLog[]
+}
+
+model Category {
+  id             String   @id @default(uuid()) @db.Uuid
+  companyId      String   @db.Uuid
+  name           String
+  normalizedName String
+  description    String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, normalizedName])
+  @@index([companyId, isActive])
+}
+
+model UnitOfMeasure {
+  id               String   @id @default(uuid()) @db.Uuid
+  companyId        String   @db.Uuid
+  name             String
+  normalizedName   String
+  symbol           String
+  normalizedSymbol String
+  description      String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, normalizedName])
+  @@unique([companyId, normalizedSymbol])
+  @@index([companyId, isActive])
 }
 
 model User {
