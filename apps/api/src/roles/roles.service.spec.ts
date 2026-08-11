@@ -1,3 +1,4 @@
+import { ForbiddenException } from '@nestjs/common';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { RolesService } from './roles.service';
 
@@ -10,7 +11,7 @@ describe('RolesService', () => {
     email: 'admin@erp.local',
     authVersion: 1,
     roles: ['Administrator'],
-    permissions: ['roles.read'],
+    permissions: ['roles.read', 'roles.create', 'roles.manage_permissions'],
   };
   const permission = {
     id: '30000000-0000-4000-8000-000000000001',
@@ -59,6 +60,17 @@ describe('RolesService', () => {
         { roleId: role.id, permissionId: permission.id, createdAt: new Date(), permission },
       ],
     });
+  });
+
+  it('bloqueia permissões na criação sem roles.manage_permissions', async () => {
+    await expect(
+      service.create(
+        { ...identity, permissions: ['roles.create'] },
+        { name: 'Operator', permissionIds: [permission.id] },
+        'request-permission-escalation',
+      ),
+    ).rejects.toEqual(expect.any(ForbiddenException));
+    expect(prisma.permission.findMany).not.toHaveBeenCalled();
   });
 
   it('substitui permissões e invalida sessões dos usuários afetados', async () => {

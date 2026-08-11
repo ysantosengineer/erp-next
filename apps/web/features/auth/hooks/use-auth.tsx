@@ -2,6 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { apiClient } from '../../../lib/api/api-client';
 import { ApiError } from '../../../lib/api/api-error';
 import { authService } from '../services/auth.service';
 import type { AuthState, LoginCredentials } from '../types/auth.types';
@@ -24,6 +25,19 @@ const initialState: AuthState = {
 export function AuthProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const queryClient = useQueryClient();
   const [state, setState] = useState<AuthState>(initialState);
+
+  useEffect(() => {
+    apiClient.setSessionInvalidatedHandler(() => {
+      queryClient.clear();
+      setState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        sessionError: 'Sua sessão expirou. Entre novamente.',
+      });
+    });
+    return () => apiClient.setSessionInvalidatedHandler(null);
+  }, [queryClient]);
 
   const refreshSession = useCallback(async () => {
     setState((current) => ({ ...current, isLoading: true, sessionError: null }));

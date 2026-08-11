@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -60,6 +61,12 @@ export class UsersService {
     dto: CreateUserDto,
     requestId: string,
   ): Promise<UserResponseDto> {
+    if (dto.roleIds.length && !identity.permissions.includes('users.manage_roles')) {
+      throw new ForbiddenException({
+        code: 'ACCESS_DENIED',
+        message: 'Permissão insuficiente para atribuir papéis.',
+      });
+    }
     const email = dto.email.trim().toLowerCase();
     await this.ensureRolesBelongToCompany(dto.roleIds, identity.companyId);
     const passwordHash = await bcrypt.hash(dto.password, 12);

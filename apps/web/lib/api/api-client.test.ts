@@ -57,4 +57,29 @@ describe('apiClient', () => {
     expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ credentials: 'include' }));
     expect(localStorage.length).toBe(0);
   });
+
+  it('expõe operações tipadas para serviços de domínio', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ data: [], meta: {} }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await apiClient.get('/users?page=1');
+
+    expect(fetchMock.mock.calls[0][0]).toContain('/users?page=1');
+    expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ credentials: 'include' }));
+  });
+
+  it('notifica a aplicação quando a sessão protegida não pode ser renovada', async () => {
+    const invalidated = vi.fn();
+    apiClient.setSessionInvalidatedHandler(invalidated);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ statusCode: 401, code: 'INVALID_SESSION' }, 401))
+      .mockResolvedValueOnce(jsonResponse({ statusCode: 401, code: 'INVALID_SESSION' }, 401));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(apiClient.get('/users')).rejects.toBeDefined();
+
+    expect(invalidated).toHaveBeenCalledTimes(1);
+    apiClient.setSessionInvalidatedHandler(null);
+  });
 });

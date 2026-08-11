@@ -1,6 +1,5 @@
 'use client';
 
-import { Can } from '../../components/navigation/can';
 import { useAuth } from '../../features/auth/hooks/use-auth';
 
 export default function DashboardPage() {
@@ -42,13 +41,6 @@ export default function DashboardPage() {
           </p>
         </article>
       </section>
-
-      <Can permission="users.read">
-        <section className="rounded-xl border border-blue-100 bg-blue-50 p-5 text-sm text-blue-950">
-          Você possui acesso à administração de usuários. A tela de gestão será entregue em uma
-          próxima etapa.
-        </section>
-      </Can>
     </div>
   );
 }

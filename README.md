@@ -44,10 +44,14 @@ npm run dev
 - Web: `http://localhost:3000`
 - API: `http://localhost:3001/api/v1/health`
 - Login: `http://localhost:3000/login`
+- Usuários: `http://localhost:3000/users`
+- Papéis e permissões: `http://localhost:3000/roles`
 
 ## Sessão web
 
 O access token é mantido apenas em memória. O refresh token é configurado pela API em cookie `HttpOnly` e rotacionado por `/auth/refresh`; ele não é armazenado pelo frontend. As rotas internas redirecionam para `/login` quando a sessão não pode ser recuperada e a sidebar usa permissões atuais de `/auth/me` apenas para controle visual.
+
+As telas administrativas consomem paginação, filtros e mutações reais da API. O catálogo de permissões é consultado por `GET /api/v1/permissions`; permissões não podem ser criadas, alteradas ou removidas pela interface.
 
 ## Scripts
 

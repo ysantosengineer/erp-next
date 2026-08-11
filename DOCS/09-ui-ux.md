@@ -13,6 +13,8 @@ Após login, a aplicação oferece dashboard e menu lateral agrupado em Cadastro
 
 Nesta fundação, a rota `/login` apresenta campos identificados de e-mail e senha, validação próxima ao campo, feedback de carregamento e controle para exibir a senha. A área autenticada possui sidebar, header com usuário/empresa, logout e dashboard sem indicadores empresariais fictícios.
 
+Na administração, `/users` oferece pesquisa com debounce, filtro de status, paginação no servidor, criação, edição, status e papéis. `/roles` oferece criação, edição, exclusão confirmada e permissões agrupadas por módulo. Links e ações são exibidos conforme as permissões atuais; acesso direto sem permissão leva a `/unauthorized`.
+
 ## Padrões de tela
 
 - Listagens: título, ação principal autorizada, filtros, tabela paginada e estado vazio com próximo passo.

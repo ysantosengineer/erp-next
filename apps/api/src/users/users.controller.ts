@@ -57,7 +57,10 @@ export class UsersController {
 
   @Post()
   @RequirePermissions(PERMISSIONS.USERS_CREATE)
-  @ApiOperation({ summary: 'Cria um usuário na empresa autenticada.' })
+  @ApiOperation({
+    summary: 'Cria um usuário na empresa autenticada.',
+    description: 'Atribuir roleIds exige também a permissão users.manage_roles.',
+  })
   @ApiCreatedResponse({ type: UserResponseDto })
   @ApiBadRequestResponse({ description: 'Dados inválidos.' })
   @ApiConflictResponse({ description: 'E-mail já utilizado.' })

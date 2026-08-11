@@ -7,17 +7,21 @@ import { ApiError, type ApiErrorPayload } from './api-error';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
 
-type RequestOptions = RequestInit & { retryAfterRefresh?: boolean };
+type RequestOptions = RequestInit & { retryAfterRefresh?: boolean; notifyUnauthorized?: boolean };
+
+type SessionInvalidatedHandler = () => void;
 
 class ApiClient {
   private accessToken: string | null = null;
   private refreshPromise: Promise<AuthTokens> | null = null;
+  private sessionInvalidatedHandler: SessionInvalidatedHandler | null = null;
 
   async login(credentials: LoginCredentials): Promise<AuthTokens> {
     const tokens = await this.request<AuthTokens>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
       retryAfterRefresh: false,
+      notifyUnauthorized: false,
     });
     this.accessToken = tokens.accessToken;
     return tokens;
@@ -28,6 +32,7 @@ class ApiClient {
       this.refreshPromise = this.request<AuthTokens>('/auth/refresh', {
         method: 'POST',
         retryAfterRefresh: false,
+        notifyUnauthorized: false,
       }).finally(() => {
         this.refreshPromise = null;
       });
@@ -44,7 +49,11 @@ class ApiClient {
 
   async logout(): Promise<void> {
     try {
-      await this.request<void>('/auth/logout', { method: 'POST', retryAfterRefresh: false });
+      await this.request<void>('/auth/logout', {
+        method: 'POST',
+        retryAfterRefresh: false,
+        notifyUnauthorized: false,
+      });
     } finally {
       this.accessToken = null;
       this.refreshPromise = null;
@@ -56,8 +65,32 @@ class ApiClient {
     this.refreshPromise = null;
   }
 
+  setSessionInvalidatedHandler(handler: SessionInvalidatedHandler | null): void {
+    this.sessionInvalidatedHandler = handler;
+  }
+
+  get<T>(path: string): Promise<T> {
+    return this.request<T>(path);
+  }
+
+  post<TResponse, TBody>(path: string, body: TBody): Promise<TResponse> {
+    return this.request<TResponse>(path, { method: 'POST', body: JSON.stringify(body) });
+  }
+
+  patch<TResponse, TBody>(path: string, body: TBody): Promise<TResponse> {
+    return this.request<TResponse>(path, { method: 'PATCH', body: JSON.stringify(body) });
+  }
+
+  put<TResponse, TBody>(path: string, body: TBody): Promise<TResponse> {
+    return this.request<TResponse>(path, { method: 'PUT', body: JSON.stringify(body) });
+  }
+
+  delete(path: string): Promise<void> {
+    return this.request<void>(path, { method: 'DELETE' });
+  }
+
   private async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-    const { retryAfterRefresh = true, headers, ...init } = options;
+    const { retryAfterRefresh = true, notifyUnauthorized = true, headers, ...init } = options;
     const response = await this.fetch(path, {
       ...init,
       headers: {
@@ -74,6 +107,7 @@ class ApiClient {
         return this.request<T>(path, { ...options, retryAfterRefresh: false });
       } catch {
         this.clearSession();
+        if (notifyUnauthorized) this.sessionInvalidatedHandler?.();
       }
     }
 

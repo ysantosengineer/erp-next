@@ -1,4 +1,9 @@
-import { ConflictException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import type { AuthenticatedUser } from '../auth/auth.types';
@@ -17,7 +22,7 @@ describe('UsersService', () => {
     email: 'admin@erp.local',
     authVersion: 1,
     roles: ['Administrator'],
-    permissions: ['users.read'],
+    permissions: ['users.read', 'users.create', 'users.manage_roles'],
   };
   const role = {
     id: '30000000-0000-4000-8000-000000000001',
@@ -118,6 +123,17 @@ describe('UsersService', () => {
         'request-2',
       ),
     ).rejects.toEqual(expect.any(ConflictException));
+  });
+
+  it('bloqueia atribuição de papéis na criação sem users.manage_roles', async () => {
+    await expect(
+      service.create(
+        { ...identity, permissions: ['users.create'] },
+        { name: 'User', email: user.email, password: 'password-with-12', roleIds: [role.id] },
+        'request-role-escalation',
+      ),
+    ).rejects.toEqual(expect.any(ForbiddenException));
+    expect(tx.user.create).not.toHaveBeenCalled();
   });
 
   it('limita a listagem à empresa autenticada', async () => {
