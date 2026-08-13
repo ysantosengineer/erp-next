@@ -35,6 +35,7 @@ Módulos iniciais: `auth`, `users`, `roles`, `customers`, `suppliers`, `catalog`
 - O contexto autenticado contém `userId`, `companyId` e `authVersion`, todos resolvidos novamente no banco pela estratégia JWT.
 - Controllers não aceitam `companyId`. Services limitam consultas e mutações ao `companyId` autenticado e retornam `404` para recursos de outra empresa.
 - Alterações de papéis e permissões invalidam as sessões afetadas por incremento de `authVersion` e revogação de refresh tokens.
+- Categorias, unidades e fornecedores também pertencem a `Company`. O módulo de fornecedores valida CPF/CNPJ no backend, não aceita tenant externo e acessa endereços somente através de um fornecedor previamente limitado à empresa autenticada.
 
 ## Frontend
 
@@ -43,6 +44,8 @@ Next.js organiza páginas por área funcional. Formulários usam React Hook Form
 O frontend possui áreas públicas (`/login`) e autenticadas (`/` e `/unauthorized`). Um provider de autenticação mantém o access token apenas em memória, recupera a sessão por cookie HttpOnly e centraliza renovação, logout e tratamento de `401`. A proteção do cliente direciona a navegação, mas não substitui os guards da API.
 
 As áreas administrativas `/users` e `/roles` permanecem no layout autenticado. Cada domínio possui tipos, schemas Zod, serviços HTTP, hooks TanStack Query e componentes próprios. Mutações invalidam somente as queries afetadas; alterações que possam invalidar a autorização atual renovam a sessão ou encerram o acesso conforme a resposta da API.
+
+O cadastro `/suppliers` segue essa organização por domínio. `SupplierAddress` é específico do fornecedor nesta fase: a modelagem aceita múltiplos endereços, enquanto a interface mantém somente o endereço principal. Um modelo genérico compartilhado será avaliado quando clientes forem implementados, evitando acoplamento prematuro.
 
 ## Integrações e observabilidade
 

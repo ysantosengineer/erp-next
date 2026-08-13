@@ -15,6 +15,8 @@ Nesta fundação, a rota `/login` apresenta campos identificados de e-mail e sen
 
 Na administração, `/users` oferece pesquisa com debounce, filtro de status, paginação no servidor, criação, edição, status e papéis. `/roles` oferece criação, edição, exclusão confirmada e permissões agrupadas por módulo. Links e ações são exibidos conforme as permissões atuais; acesso direto sem permissão leva a `/unauthorized`.
 
+Em Cadastros, `/suppliers` oferece pesquisa com debounce, filtros de status e PF/PJ, paginação, formulário dinâmico com endereço principal e confirmação de ativação/inativação. CPF/CNPJ, telefone e CEP recebem máscara apenas para entrada e apresentação. A tabela usa rolagem horizontal em telas menores.
+
 ## Padrões de tela
 
 - Listagens: título, ação principal autorizada, filtros, tabela paginada e estado vazio com próximo passo.

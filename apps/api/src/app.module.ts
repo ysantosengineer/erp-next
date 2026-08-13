@@ -8,6 +8,7 @@ import { PermissionsModule } from './permissions/permissions.module';
 import { RolesModule } from './roles/roles.module';
 import { UsersModule } from './users/users.module';
 import { UnitsModule } from './units/units.module';
+import { SuppliersModule } from './suppliers/suppliers.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UnitsModule } from './units/units.module';
     RolesModule,
     CategoriesModule,
     UnitsModule,
+    SuppliersModule,
   ],
   controllers: [AppController],
 })

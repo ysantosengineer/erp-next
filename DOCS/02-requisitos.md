@@ -91,7 +91,7 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 ## Cadastros
 
 - Clientes podem ser pessoa física ou jurídica, com nome, documento único quando informado, contatos, endereços, limite de crédito e status.
-- Fornecedores possuem razão/nome, documento, contato, endereço e status.
+- Fornecedores pertencem a uma empresa, podem ser pessoa física ou jurídica e possuem nome/razão social, CPF/CNPJ obrigatório e único por empresa, contatos opcionais, um endereço principal opcional e status. CPF/CNPJ, telefone e CEP são persistidos somente com dígitos; fornecedores inativos continuam consultáveis e preservados para históricos, mas futuramente não serão oferecidos por padrão em novas compras.
 - Produtos possuem SKU único, nome, categoria, preço de venda, custo, unidade, status e campos opcionais para EAN, NCM, peso, dimensões e imagem.
 - Categorias organizam produtos e não podem ser removidas enquanto tiverem produtos ativos.
 - Armazéns possuem nome e endereço opcional.

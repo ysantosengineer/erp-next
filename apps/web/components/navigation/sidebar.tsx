@@ -36,6 +36,11 @@ export function Sidebar() {
             Unidades de medida
           </Link>
         </Can>
+        <Can permission={PERMISSIONS.SUPPLIERS_READ}>
+          <Link className={linkClass('/suppliers')} href="/suppliers">
+            Fornecedores
+          </Link>
+        </Can>
         <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
           Administração
         </p>

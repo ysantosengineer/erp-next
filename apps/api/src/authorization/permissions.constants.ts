@@ -17,6 +17,10 @@ export const PERMISSIONS = {
   UNITS_CREATE: 'units.create',
   UNITS_UPDATE: 'units.update',
   UNITS_MANAGE_STATUS: 'units.manage_status',
+  SUPPLIERS_READ: 'suppliers.read',
+  SUPPLIERS_CREATE: 'suppliers.create',
+  SUPPLIERS_UPDATE: 'suppliers.update',
+  SUPPLIERS_MANAGE_STATUS: 'suppliers.manage_status',
 } as const;
 
 export const ADMINISTRATIVE_PERMISSIONS = Object.values(PERMISSIONS);

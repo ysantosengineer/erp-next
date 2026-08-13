@@ -45,4 +45,15 @@ describe('PermissionGate', () => {
     );
     await waitFor(() => expect(replace).toHaveBeenCalledWith('/unauthorized'));
   });
+
+  it('bloqueia /suppliers sem suppliers.read', async () => {
+    useAuthMock.mockReturnValue({ user: { permissions: [] } });
+    render(
+      <PermissionGate permission={PERMISSIONS.SUPPLIERS_READ}>
+        <p>Fornecedores</p>
+      </PermissionGate>,
+    );
+    expect(screen.queryByText('Fornecedores')).not.toBeInTheDocument();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/unauthorized'));
+  });
 });

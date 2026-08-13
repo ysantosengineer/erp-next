@@ -21,6 +21,14 @@
 - `GET,POST /categories`, `GET,PATCH /categories/:id` e `PATCH /categories/:id/status` exigem, respectivamente, permissões `categories.read`, `categories.create`, `categories.read`, `categories.update` e `categories.manage_status`.
 - `GET,POST /units`, `GET,PATCH /units/:id` e `PATCH /units/:id/status` seguem o mesmo contrato com permissões `units.*`.
 - As duas listagens aceitam `page`, `limit`, `search`, `status`, `sortBy` e `sortOrder`.
+
+### Fornecedores
+
+- `GET /suppliers` e `GET /suppliers/:id` exigem `suppliers.read`.
+- `POST /suppliers`, `PATCH /suppliers/:id` e `PATCH /suppliers/:id/status` exigem, respectivamente, `suppliers.create`, `suppliers.update` e `suppliers.manage_status`.
+- A listagem aceita `page`, `limit`, `search`, `status`, `type`, `sortBy` e `sortOrder`. A pesquisa cobre nome, nome fantasia, documento e e-mail.
+- `type` aceita `INDIVIDUAL` ou `COMPANY`. CPF/CNPJ é obrigatório, validado e normalizado pela API. O corpo pode conter um endereço principal opcional; `companyId` nunca é aceito.
+- Documento duplicado na mesma empresa retorna `409 SUPPLIER_DOCUMENT_EXISTS`; documento inválido retorna `400 INVALID_SUPPLIER_DOCUMENT`; recurso de outra empresa retorna `404`.
 | Vendas | `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm`, `POST /sales-orders/:id/cancel` |
 | Compras | Rotas equivalentes em `/purchase-orders`, com `POST /:id/receive` |
 | Estoque | `GET /inventory`, `GET /stock-movements`; movimentação manual somente por endpoint autorizado e motivo obrigatório |

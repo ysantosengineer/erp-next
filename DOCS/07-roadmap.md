@@ -14,6 +14,8 @@ Estado atual: autenticação, gestão de usuários/papéis, catálogo e atribui�
 
 Clientes, fornecedores, categorias, produtos, armazéns, busca/paginação e formulários validados.
 
+Estado atual: categorias, unidades de medida e fornecedores estão implementados em código com isolamento por empresa, permissões e interfaces autenticadas. A Sprint 2 permanece em andamento porque clientes, produtos e armazéns ainda não foram implementados e as migrations comerciais ainda precisam de validação em PostgreSQL real.
+
 ## Sprint 3 — Compras e estoque
 
 Pedidos de compra, recebimento, saldo por armazém e movimentações imutáveis.
