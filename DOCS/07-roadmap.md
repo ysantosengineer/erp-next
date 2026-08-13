@@ -8,6 +8,8 @@ Monorepo, Docker Compose para API/PostgreSQL/Redis, configuração de qualidade,
 
 Autenticação, usuários, papéis, permissões, proteção de rotas, redefinição de senha e auditoria inicial.
 
+Estado atual: autenticação, gestão de usuários/papéis, autorização por permissão e auditoria estão implementadas em código. A aplicação das migrations e os testes de integração com PostgreSQL permanecem pendentes; redefinição de senha continua fora desta entrega. A sprint ainda não está concluída.
+
 ## Sprint 2 — Cadastros e catálogo
 
 Clientes, fornecedores, categorias, produtos, armazéns, busca/paginação e formulários validados.

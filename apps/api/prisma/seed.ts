@@ -1,50 +1,69 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main(): Promise<void> {
-  await prisma.company.upsert({
+  const seedPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!seedPassword || seedPassword.length < 12 || seedPassword.startsWith('replace_')) {
+    throw new Error(
+      'Defina SEED_ADMIN_PASSWORD com ao menos 12 caracteres antes de executar o seed.',
+    );
+  }
+  const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? 'admin@erp.local').trim().toLowerCase();
+  const passwordHash = await bcrypt.hash(seedPassword, 12);
+
+  const company = await prisma.company.upsert({
     where: { document: '00000000000000' },
-    update: {},
-    create: {
-      name: 'ERP Next Local',
-      document: '00000000000000',
-    },
+    update: { isActive: true },
+    create: { name: 'ERP Next Local', document: '00000000000000' },
   });
 
+  const permissionCatalog = [
+    ['users', 'read', 'Consulta usuários.'],
+    ['users', 'create', 'Cria usuários.'],
+    ['users', 'update', 'Atualiza usuários.'],
+    ['users', 'manage_status', 'Ativa e inativa usuários.'],
+    ['users', 'manage_roles', 'Gerencia papéis de usuários.'],
+    ['roles', 'read', 'Consulta papéis.'],
+    ['roles', 'create', 'Cria papéis.'],
+    ['roles', 'update', 'Atualiza papéis.'],
+    ['roles', 'delete', 'Exclui papéis sem vínculos.'],
+    ['roles', 'manage_permissions', 'Gerencia permissões dos papéis.'],
+  ] as const;
   const permissions = await Promise.all(
-    [
-      {
-        resource: 'access',
-        action: 'manage',
-        description: 'Administra usuários e acessos.',
-      },
-      {
-        resource: 'roles',
-        action: 'manage',
-        description: 'Administra papéis e permissões.',
-      },
-    ].map((permission) =>
+    permissionCatalog.map(([resource, action, description]) =>
       prisma.permission.upsert({
-        where: {
-          resource_action: {
-            resource: permission.resource,
-            action: permission.action,
-          },
-        },
-        update: { description: permission.description },
-        create: permission,
+        where: { resource_action: { resource, action } },
+        update: { description },
+        create: { resource, action, description },
       }),
     ),
   );
 
   const administratorRole = await prisma.role.upsert({
-    where: { name: 'Administrator' },
+    where: { companyId_name: { companyId: company.id, name: 'Administrator' } },
     update: { description: 'Papel administrativo local.', isSystem: true },
     create: {
+      companyId: company.id,
       name: 'Administrator',
       description: 'Papel administrativo local.',
       isSystem: true,
+    },
+  });
+  const administrator = await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {
+      companyId: company.id,
+      name: 'Local Administrator',
+      passwordHash,
+      isActive: true,
+    },
+    create: {
+      companyId: company.id,
+      name: 'Local Administrator',
+      email: adminEmail,
+      passwordHash,
     },
   });
 
@@ -62,12 +81,15 @@ async function main(): Promise<void> {
       }),
     ),
   );
+  await prisma.userRole.upsert({
+    where: { userId_roleId: { userId: administrator.id, roleId: administratorRole.id } },
+    update: {},
+    create: { userId: administrator.id, roleId: administratorRole.id },
+  });
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
+  .then(async () => prisma.$disconnect())
   .catch(async (error: unknown) => {
     console.error(error);
     await prisma.$disconnect();

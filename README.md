@@ -20,6 +20,11 @@ No Windows PowerShell, use:
 Copy-Item .env.example .env
 ```
 
+Antes de executar o seed local, substitua `SEED_ADMIN_PASSWORD` no seu `.env` por uma senha
+exclusiva de desenvolvimento com ao menos 12 caracteres. O seed cria ou atualiza a empresa,
+o usuário definido por `SEED_ADMIN_EMAIL`, o papel administrativo e o catálogo inicial de
+permissões.
+
 ## Execução
 
 ```bash

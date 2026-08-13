@@ -12,8 +12,8 @@
 
 | Recurso | Rotas principais |
 | --- | --- |
-| Auth | `POST /auth/login`, `POST /auth/change-password` |
-| Usuários e acesso | `GET,POST /users`, `GET,PATCH /users/:id`, `POST /users/:id/deactivate`, `GET,POST /roles`, `GET,PATCH /roles/:id`, `GET /permissions` |
+| Auth | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me` |
+| Usuários e acesso | `GET,POST /users`, `GET,PATCH /users/:id`, `PATCH /users/:id/status`, `PUT /users/:id/roles`, `GET,POST /roles`, `GET,PATCH,DELETE /roles/:id`, `PUT /roles/:id/permissions` |
 | Cadastros | `GET,POST /customers`, `/suppliers`, `/categories`, `/products`, `/warehouses`; `GET,PATCH /:resource/:id` |
 | Vendas | `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm`, `POST /sales-orders/:id/cancel` |
 | Compras | Rotas equivalentes em `/purchase-orders`, com `POST /:id/receive` |
@@ -27,4 +27,6 @@
 - `PATCH` aceita somente campos mutáveis no estado atual; itens de pedido não são alteráveis depois da confirmação.
 - Os schemas de request e response são publicados no Swagger/OpenAPI e devem ser atualizados na mesma alteração de endpoint.
 - Endpoints de escrita relevantes devem gerar evento de auditoria.
-- `POST /auth/login` retorna token de acesso com expiração de 15 minutos. `POST /auth/change-password` exige JWT e senha atual; não há refresh, logout com estado nem recuperação de senha no MVP.
+- Todos os endpoints de usuários e papéis exigem Bearer JWT e permissão específica. O `companyId` é obtido da identidade autenticada; recursos externos à empresa retornam `404`.
+- `GET /users` aceita `page`, `limit` (máximo 100), `search`, `status`, `sortBy` e `sortOrder`, retornando `{ data, meta: { page, limit, total, totalPages } }`.
+- `POST /auth/login` retorna access e refresh tokens; o access token expira em 15 minutos. `POST /auth/refresh` rotaciona o refresh token, `POST /auth/logout` o revoga e `GET /auth/me` exige access token. Alteração e recuperação de senha permanecem fora do escopo atual.

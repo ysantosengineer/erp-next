@@ -23,7 +23,7 @@ O projeto é um portfólio profissional Full Stack, mas deve adotar práticas co
 5. Faturas, pagamentos e visão financeira básica.
 6. Dashboard, relatórios operacionais e trilha de auditoria.
 
-Fora do MVP: emissão fiscal oficial, integração bancária, e-commerce, app mobile e multiempresa. Esses temas devem ser planejados antes de implementação; nenhuma regra fiscal deve ser inferida.
+Fora do MVP: emissão fiscal oficial, integração bancária, e-commerce e app mobile. O módulo de acesso já adota isolamento lógico por empresa para usuários e papéis; os módulos comerciais só poderão ser tornados multiempresa mediante modelagem explícita. Nenhuma regra fiscal deve ser inferida.
 
 ## Requisitos de qualidade
 

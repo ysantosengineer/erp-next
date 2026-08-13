@@ -8,12 +8,15 @@
 
 ## Autenticação e controle de acesso
 
+Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empresa é resolvido a partir do usuário autenticado no banco e nunca é aceito de body, query ou header. Permissões formam um catálogo global; sua atribuição ocorre por papéis limitados à empresa.
+
 ### Requisitos funcionais
 
 - Usuários devem autenticar-se com e-mail e senha para acessar recursos protegidos.
-- O sistema deve disponibilizar login e alteração de senha para usuário autenticado. O logout do MVP remove o token do cliente; não há endpoint nem persistência de sessão.
-- Usuários com a permissão `access:manage` devem poder criar, consultar, editar, inativar e alterar papéis de usuários. Contas não são excluídas fisicamente.
-- Usuários com a permissão `roles:manage` devem poder criar, editar e atribuir papéis. Um usuário pode possuir mais de um papel, e um papel pode ser atribuído a vários usuários.
+- O sistema disponibiliza login, renovação de access token e logout com revogação do refresh token persistido somente como hash.
+- Usuários com as permissões específicas de `users.*` podem criar, consultar, editar, inativar e alterar papéis de usuários. Contas não são excluídas fisicamente.
+- Usuários com as permissões específicas de `roles.*` podem criar, consultar, editar, excluir papéis sem vínculos e atribuir permissões. Um usuário pode possuir mais de um papel, e um papel pode ser atribuído a vários usuários.
+- A gestão administrativa usa as permissões `users.read`, `users.create`, `users.update`, `users.manage_status`, `users.manage_roles`, `roles.read`, `roles.create`, `roles.update`, `roles.delete` e `roles.manage_permissions`.
 - Permissões devem ser definidas pelo par **recurso** e **ação** (por exemplo, `users:read` e `sales-orders:confirm`). O catálogo é controlado pelo sistema e somente pode ser consultado pela API; papéis agrupam essas permissões.
 - A API deve autenticar toda rota protegida e autorizar cada ação com base nas permissões atuais do usuário autenticado.
 - Inativar um usuário ou alterar sua senha deve invalidar imediatamente seus tokens de acesso emitidos anteriormente.
@@ -36,9 +39,11 @@
 - Somente usuários ativos podem obter token. Cada token carrega a versão de autenticação vigente; o guard rejeita token cuja versão não corresponda à do usuário.
 - Alterar a senha ou inativar o usuário incrementa sua versão de autenticação. Assim, o próximo uso de qualquer token anterior é rejeitado.
 - Ações administrativas exigem permissões específicas; o nome de um papel não concede autorização por si só.
+- Consultas e alterações de usuários, papéis e associações devem sempre incluir a empresa autenticada; recursos pertencentes a outra empresa são tratados como não encontrados.
+- Inativar usuário ou alterar seus papéis incrementa `authVersion` e revoga refresh tokens ativos. Uma empresa deve manter ao menos um usuário ativo com `users.manage_roles`.
 - O catálogo de permissões é versionado junto ao código e não pode ser criado, editado ou removido pela API. Papéis podem ser mantidos apenas com permissões existentes no catálogo.
 - Alterar um papel ou a atribuição de papéis a um usuário afeta a próxima requisição protegida, pois o servidor consulta permissões atuais; nenhuma permissão é aceita apenas a partir do cliente ou do JWT.
-- Uma conta administradora é um usuário ativo que possui a permissão `access:manage`. A inativação ou remoção dessa permissão da última conta administradora deve ser bloqueada em transação.
+- Uma conta administradora é um usuário ativo que possui a permissão `users.manage_roles`. A inativação ou remoção dessa permissão da última conta administradora deve ser bloqueada em transação.
 - Um usuário só pode alterar a própria senha informando corretamente a senha atual. A alteração é auditada, mas a senha anterior e a nova nunca são armazenadas no log.
 
 ### Critérios de aceite
@@ -50,7 +55,7 @@
 - Dado um usuário que recebeu um papel com uma permissão, quando fizer a próxima requisição protegida que exige essa permissão, então a API aplica a nova autorização sem exigir novo login; o audit log contém ator, ação, entidade, data UTC e `requestId`.
 - Dado um usuário autenticado que informa a senha atual correta e uma nova senha entre 12 e 128 caracteres, quando alterar a senha, então a nova senha autentica, a anterior falha e os tokens anteriores retornam `401`.
 - Dadas seis tentativas de login falhas com o mesmo IP e e-mail em 15 minutos, quando ocorrer a sexta tentativa, então a API retorna `429`.
-- Dada a última conta administradora ativa, quando houver tentativa de inativá-la ou remover `access:manage`, então a operação retorna `422` e a conta mantém a permissão.
+- Dada a última conta administradora ativa, quando houver tentativa de inativá-la ou remover `users.manage_roles`, então a operação retorna `422` e a conta mantém a permissão.
 
 ### Situações de erro
 
@@ -63,11 +68,11 @@
 | E-mail duplicado ao criar/alterar usuário | `409` com código de conflito |
 | Senha atual incorreta ou nova senha fora da política | `400` com código de validação de senha |
 | Sexta tentativa de login falha no intervalo definido | `429` com `Retry-After` |
-| Tentativa de remover `access:manage` da última conta administradora | `422` com código de regra de negócio |
+| Tentativa de remover `users.manage_roles` da última conta administradora | `422` com código de regra de negócio |
 
 ### Fora do escopo do MVP
 
-- Renovação de token, sessões persistidas, revogação administrativa manual e logout com invalidação no servidor.
+- Revogação administrativa seletiva de sessões e gerenciamento de dispositivos autenticados.
 - Redefinição de senha por e-mail, convites por e-mail e qualquer integração com provedor de e-mail.
 - Autenticação multifator (MFA), biometria e chaves de acesso.
 - Login social, SSO, SAML, OAuth como provedor de identidade e integração com diretórios corporativos.
