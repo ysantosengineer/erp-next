@@ -11,6 +11,12 @@
 
 Após login, a aplicação oferece dashboard e menu lateral agrupado em Cadastros, Operações, Financeiro, Relatórios e Administração. Itens indisponíveis por permissão podem ser ocultados, mas a API continua sendo a autoridade de acesso.
 
+Nesta fundação, a rota `/login` apresenta campos identificados de e-mail e senha, validação próxima ao campo, feedback de carregamento e controle para exibir a senha. A área autenticada possui sidebar, header com usuário/empresa, logout e dashboard sem indicadores empresariais fictícios.
+
+Na administração, `/users` oferece pesquisa com debounce, filtro de status, paginação no servidor, criação, edição, status e papéis. `/roles` oferece criação, edição, exclusão confirmada e permissões agrupadas por módulo. Links e ações são exibidos conforme as permissões atuais; acesso direto sem permissão leva a `/unauthorized`.
+
+Em Cadastros, `/suppliers` oferece pesquisa com debounce, filtros de status e PF/PJ, paginação, formulário dinâmico com endereço principal e confirmação de ativação/inativação. CPF/CNPJ, telefone e CEP recebem máscara apenas para entrada e apresentação. A tabela usa rolagem horizontal em telas menores.
+
 ## Padrões de tela
 
 - Listagens: título, ação principal autorizada, filtros, tabela paginada e estado vazio com próximo passo.

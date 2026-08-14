@@ -4,9 +4,6 @@ export class AuthTokensDto {
   @ApiProperty()
   accessToken!: string;
 
-  @ApiProperty()
-  refreshToken!: string;
-
   @ApiProperty({ example: 'Bearer' })
   tokenType!: 'Bearer';
 

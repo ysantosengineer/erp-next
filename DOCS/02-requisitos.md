@@ -10,6 +10,13 @@
 
 Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empresa é resolvido a partir do usuário autenticado no banco e nunca é aceito de body, query ou header. Permissões formam um catálogo global; sua atribuição ocorre por papéis limitados à empresa.
 
+### Sessão no navegador
+
+- O access token tem curta duração e é mantido somente em memória no cliente.
+- O refresh token é enviado pela API em cookie `HttpOnly`, com `SameSite=Lax`, escopo `/api/v1/auth` e `Secure` obrigatório em produção.
+- O cliente envia requisições autenticadas com credenciais de cookie, tenta uma única renovação controlada e nunca persiste tokens em `localStorage`.
+- A interface usa permissões retornadas por `GET /auth/me` apenas para experiência de navegação; a API permanece a autoridade de autorização.
+
 ### Requisitos funcionais
 
 - Usuários devem autenticar-se com e-mail e senha para acessar recursos protegidos.
@@ -17,7 +24,7 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 - Usuários com as permissões específicas de `users.*` podem criar, consultar, editar, inativar e alterar papéis de usuários. Contas não são excluídas fisicamente.
 - Usuários com as permissões específicas de `roles.*` podem criar, consultar, editar, excluir papéis sem vínculos e atribuir permissões. Um usuário pode possuir mais de um papel, e um papel pode ser atribuído a vários usuários.
 - A gestão administrativa usa as permissões `users.read`, `users.create`, `users.update`, `users.manage_status`, `users.manage_roles`, `roles.read`, `roles.create`, `roles.update`, `roles.delete` e `roles.manage_permissions`.
-- Permissões devem ser definidas pelo par **recurso** e **ação** (por exemplo, `users:read` e `sales-orders:confirm`). O catálogo é controlado pelo sistema e somente pode ser consultado pela API; papéis agrupam essas permissões.
+- Permissões devem ser definidas pelo par **recurso** e **ação** (por exemplo, `users.read` e `sales-orders.confirm`). O catálogo é controlado pelo sistema e somente pode ser consultado pela API; papéis agrupam essas permissões.
 - A API deve autenticar toda rota protegida e autorizar cada ação com base nas permissões atuais do usuário autenticado.
 - Inativar um usuário ou alterar sua senha deve invalidar imediatamente seus tokens de acesso emitidos anteriormente.
 - Logins bem-sucedidos e falhos, alterações de senha, usuários e papéis devem gerar registros de auditoria.
@@ -43,6 +50,7 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 - Inativar usuário ou alterar seus papéis incrementa `authVersion` e revoga refresh tokens ativos. Uma empresa deve manter ao menos um usuário ativo com `users.manage_roles`.
 - O catálogo de permissões é versionado junto ao código e não pode ser criado, editado ou removido pela API. Papéis podem ser mantidos apenas com permissões existentes no catálogo.
 - Alterar um papel ou a atribuição de papéis a um usuário afeta a próxima requisição protegida, pois o servidor consulta permissões atuais; nenhuma permissão é aceita apenas a partir do cliente ou do JWT.
+- Atribuir papéis durante a criação de usuário exige `users.manage_roles`, além de `users.create`. Atribuir permissões durante a criação de papel exige `roles.manage_permissions`, além de `roles.create`.
 - Uma conta administradora é um usuário ativo que possui a permissão `users.manage_roles`. A inativação ou remoção dessa permissão da última conta administradora deve ser bloqueada em transação.
 - Um usuário só pode alterar a própria senha informando corretamente a senha atual. A alteração é auditada, mas a senha anterior e a nova nunca são armazenadas no log.
 
@@ -56,6 +64,7 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 - Dado um usuário autenticado que informa a senha atual correta e uma nova senha entre 12 e 128 caracteres, quando alterar a senha, então a nova senha autentica, a anterior falha e os tokens anteriores retornam `401`.
 - Dadas seis tentativas de login falhas com o mesmo IP e e-mail em 15 minutos, quando ocorrer a sexta tentativa, então a API retorna `429`.
 - Dada a última conta administradora ativa, quando houver tentativa de inativá-la ou remover `users.manage_roles`, então a operação retorna `422` e a conta mantém a permissão.
+- Dado um usuário autorizado, quando utilizar as telas `/users` e `/roles`, então pesquisa, filtros, paginação, formulários e ações refletem as permissões de `/auth/me`, enquanto a API valida novamente cada operação.
 
 ### Situações de erro
 
@@ -82,7 +91,7 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 ## Cadastros
 
 - Clientes podem ser pessoa física ou jurídica, com nome, documento único quando informado, contatos, endereços, limite de crédito e status.
-- Fornecedores possuem razão/nome, documento, contato, endereço e status.
+- Fornecedores pertencem a uma empresa, podem ser pessoa física ou jurídica e possuem nome/razão social, CPF/CNPJ obrigatório e único por empresa, contatos opcionais, um endereço principal opcional e status. CPF/CNPJ, telefone e CEP são persistidos somente com dígitos; fornecedores inativos continuam consultáveis e preservados para históricos, mas futuramente não serão oferecidos por padrão em novas compras.
 - Produtos possuem SKU único, nome, categoria, preço de venda, custo, unidade, status e campos opcionais para EAN, NCM, peso, dimensões e imagem.
 - Categorias organizam produtos e não podem ser removidas enquanto tiverem produtos ativos.
 - Armazéns possuem nome e endereço opcional.

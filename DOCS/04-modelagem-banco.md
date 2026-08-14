@@ -11,7 +11,7 @@
 
 | Entidade | Campos principais | Relações |
 | --- | --- | --- |
-| Company | id, name, document, isActive | 1:N User, Role e AuditLog |
+| Company | id, name, document, isActive | 1:N User, Role, Category, UnitOfMeasure, Supplier e AuditLog |
 | User | id, companyId, name, email, passwordHash, authVersion, isActive, lastLoginAt | N:1 Company; N:N Role; 1:N AuditLog |
 | Role | id, companyId, name, description, isSystem | N:1 Company; N:N User e Permission |
 | Permission | id, resource, action, description | N:N Role; único por resource/action |
@@ -20,11 +20,25 @@ As associações são `UserRole(userId, roleId)` e `RolePermission(roleId, permi
 
 ## Cadastros e estoque
 
+### Category
+
+Categorias pertencem à empresa e usam `companyId`, `name`, `normalizedName`, `description`, `isActive`, timestamps e unicidade por `(companyId, normalizedName)`. A exclusão é lógica por status.
+
+### UnitOfMeasure
+
+Unidades de medida pertencem à empresa e usam `companyId`, `name`, `normalizedName`, `symbol`, `normalizedSymbol`, `description`, `isActive` e timestamps. Nome e símbolo são únicos dentro da empresa; o símbolo é normalizado para maiúsculas.
+
+### Supplier e SupplierAddress
+
+`Supplier` usa `SupplierType` (`INDIVIDUAL` ou `COMPANY`), pertence obrigatoriamente a `Company` e armazena `name`, `tradeName`, `document`, `email`, `phone`, `contactName`, `notes`, `isActive` e timestamps. `document` contém apenas dígitos e é único por `(companyId, document)`.
+
+`SupplierAddress` pertence a `Supplier`, possui CEP, logradouro, número, complemento, bairro, cidade, UF, país e indicação de endereço principal. A relação é 1:N para permitir evolução, mas a interface inicial gerencia um único endereço principal. A exclusão em cascata não é usada; fornecedores e endereços devem ser preservados para vínculos históricos futuros.
+
 | Entidade | Campos principais | Relações |
 | --- | --- | --- |
 | Customer | id, type, name, document, email, phone, creditLimit, isActive | 1:N SalesOrder, Address |
-| Supplier | id, name, document, email, phone, isActive | 1:N PurchaseOrder, Address |
-| Address | id, street, number, city, state, postalCode | pertence a Customer ou Supplier |
+| Supplier | id, companyId, type, name, tradeName, document, email, phone, contactName, notes, isActive | N:1 Company; 1:N SupplierAddress e futuramente PurchaseOrder |
+| SupplierAddress | id, supplierId, postalCode, street, number, complement, district, city, state, country, isPrimary | N:1 Supplier |
 | Category | id, name, description, isActive | 1:N Product |
 | Product | id, sku, name, salePrice, costPrice, unit, isActive | N:1 Category; itens e Inventory |
 | Warehouse | id, name, address, isActive | 1:N Inventory e StockMovement |

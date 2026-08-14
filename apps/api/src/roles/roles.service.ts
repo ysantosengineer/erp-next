@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -35,6 +36,12 @@ export class RolesService {
     dto: CreateRoleDto,
     requestId: string,
   ): Promise<RoleResponseDto> {
+    if (dto.permissionIds.length && !identity.permissions.includes('roles.manage_permissions')) {
+      throw new ForbiddenException({
+        code: 'ACCESS_DENIED',
+        message: 'Permissão insuficiente para atribuir permissões.',
+      });
+    }
     await this.getPermissions(dto.permissionIds);
     try {
       const role = await this.prisma.$transaction(async (tx) => {

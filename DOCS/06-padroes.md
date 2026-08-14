@@ -14,6 +14,7 @@
 - Erros de domínio são mapeados para o formato de API definido em `05-api.md`.
 - Não registrar segredos, senhas, JWTs ou dados pessoais desnecessários em logs.
 - Mudanças de estado e ações administrativas relevantes devem gerar auditoria.
+- Tokens nunca são persistidos em `localStorage`, logs ou mensagens de erro. Refresh tokens de navegador devem usar cookies `HttpOnly`; access tokens de curta duração permanecem somente em memória quando possível.
 
 ## Testes
 

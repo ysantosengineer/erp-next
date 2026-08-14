@@ -9,6 +9,18 @@ export const PERMISSIONS = {
   ROLES_UPDATE: 'roles.update',
   ROLES_DELETE: 'roles.delete',
   ROLES_MANAGE_PERMISSIONS: 'roles.manage_permissions',
+  CATEGORIES_READ: 'categories.read',
+  CATEGORIES_CREATE: 'categories.create',
+  CATEGORIES_UPDATE: 'categories.update',
+  CATEGORIES_MANAGE_STATUS: 'categories.manage_status',
+  UNITS_READ: 'units.read',
+  UNITS_CREATE: 'units.create',
+  UNITS_UPDATE: 'units.update',
+  UNITS_MANAGE_STATUS: 'units.manage_status',
+  SUPPLIERS_READ: 'suppliers.read',
+  SUPPLIERS_CREATE: 'suppliers.create',
+  SUPPLIERS_UPDATE: 'suppliers.update',
+  SUPPLIERS_MANAGE_STATUS: 'suppliers.manage_status',
 } as const;
 
 export const ADMINISTRATIVE_PERMISSIONS = Object.values(PERMISSIONS);

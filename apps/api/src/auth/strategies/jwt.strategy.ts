@@ -28,7 +28,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         authVersion: true,
         isActive: true,
         companyId: true,
-        company: { select: { isActive: true } },
+        company: { select: { isActive: true, name: true } },
+        roles: {
+          select: {
+            role: {
+              select: {
+                name: true,
+                permissions: {
+                  select: { permission: { select: { resource: true, action: true } } },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -47,9 +59,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return {
       userId: user.id,
       companyId: user.companyId,
+      companyName: user.company.name,
       name: user.name,
       email: user.email,
       authVersion: user.authVersion,
+      roles: user.roles.map(({ role }) => role.name),
+      permissions: [
+        ...new Set(
+          user.roles.flatMap(({ role }) =>
+            role.permissions.map(({ permission }) => `${permission.resource}.${permission.action}`),
+          ),
+        ),
+      ],
     };
   }
 }

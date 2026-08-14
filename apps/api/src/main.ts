@@ -1,11 +1,16 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import * as cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+
+  const webOrigin = process.env.WEB_ORIGIN ?? 'http://localhost:3000';
+  app.enableCors({ origin: webOrigin, credentials: true });
+  app.use(cookieParser());
 
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(

@@ -58,6 +58,10 @@ export class RolesController {
 
   @Post()
   @RequirePermissions(PERMISSIONS.ROLES_CREATE)
+  @ApiOperation({
+    summary: 'Cria um papel na empresa autenticada.',
+    description: 'Atribuir permissionIds exige também a permissão roles.manage_permissions.',
+  })
   @ApiCreatedResponse({ type: RoleResponseDto })
   @ApiBadRequestResponse({ description: 'Dados inválidos.' })
   @ApiConflictResponse({ description: 'Nome já utilizado na empresa.' })

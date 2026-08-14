@@ -10,7 +10,10 @@ export interface RefreshTokenPayload extends AccessTokenPayload {
 export interface AuthenticatedUser {
   userId: string;
   companyId: string;
+  companyName: string;
   name: string;
   email: string;
   authVersion: number;
+  roles: string[];
+  permissions: string[];
 }
