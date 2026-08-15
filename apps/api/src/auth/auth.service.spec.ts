@@ -42,8 +42,8 @@ describe('AuthService', () => {
   const configService = {
     getOrThrow: jest.fn((key: string) => {
       const values: Record<string, string | number> = {
-        JWT_ACCESS_TTL_SECONDS: 900,
-        JWT_REFRESH_TTL_SECONDS: 604800,
+        JWT_ACCESS_TTL_SECONDS: '900',
+        JWT_REFRESH_TTL_SECONDS: '604800',
         JWT_REFRESH_SECRET: 'refresh-secret',
       };
 
@@ -96,6 +96,14 @@ describe('AuthService', () => {
     );
     expect(transaction.refreshToken.create.mock.calls[0][0].data.tokenHash).not.toBe(
       'refresh-token',
+    );
+    expect(jwtService.signAsync).toHaveBeenNthCalledWith(1, expect.any(Object), {
+      expiresIn: 900,
+    });
+    expect(jwtService.signAsync).toHaveBeenNthCalledWith(
+      2,
+      expect.any(Object),
+      expect.objectContaining({ expiresIn: 604800 }),
     );
   });
 

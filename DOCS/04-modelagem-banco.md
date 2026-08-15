@@ -11,7 +11,7 @@
 
 | Entidade | Campos principais | Relações |
 | --- | --- | --- |
-| Company | id, name, document, isActive | 1:N User, Role, Category, UnitOfMeasure, Supplier e AuditLog |
+| Company | id, name, document, isActive | 1:N User, Role, Category, UnitOfMeasure, Supplier, Product e AuditLog |
 | User | id, companyId, name, email, passwordHash, authVersion, isActive, lastLoginAt | N:1 Company; N:N Role; 1:N AuditLog |
 | Role | id, companyId, name, description, isSystem | N:1 Company; N:N User e Permission |
 | Permission | id, resource, action, description | N:N Role; único por resource/action |
@@ -34,13 +34,19 @@ Unidades de medida pertencem à empresa e usam `companyId`, `name`, `normalizedN
 
 `SupplierAddress` pertence a `Supplier`, possui CEP, logradouro, número, complemento, bairro, cidade, UF, país e indicação de endereço principal. A relação é 1:N para permitir evolução, mas a interface inicial gerencia um único endereço principal. A exclusão em cascata não é usada; fornecedores e endereços devem ser preservados para vínculos históricos futuros.
 
+### Product
+
+`Product` pertence obrigatoriamente a `Company`, `Category` e `UnitOfMeasure`, podendo apontar para um `Supplier` principal. Armazena nome, descrição, SKU, código de barras, custo e venda em `Decimal(14,2)`, peso/dimensões/estoque mínimo em `Decimal(14,3)`, status e timestamps. Peso usa quilogramas e dimensões usam centímetros.
+
+SKU e código de barras são únicos pelos pares `(companyId, sku)` e `(companyId, barcode)`. O PostgreSQL permite múltiplos valores nulos no índice do código de barras. Preços, medidas e estoque mínimo possuem restrições `CHECK` não negativas. As chaves estrangeiras usam `RESTRICT`; o ciclo de vida é controlado por `isActive`, sem exclusão física.
+
 | Entidade | Campos principais | Relações |
 | --- | --- | --- |
 | Customer | id, type, name, document, email, phone, creditLimit, isActive | 1:N SalesOrder, Address |
-| Supplier | id, companyId, type, name, tradeName, document, email, phone, contactName, notes, isActive | N:1 Company; 1:N SupplierAddress e futuramente PurchaseOrder |
+| Supplier | id, companyId, type, name, tradeName, document, email, phone, contactName, notes, isActive | N:1 Company; 1:N SupplierAddress e Product; futuramente PurchaseOrder |
 | SupplierAddress | id, supplierId, postalCode, street, number, complement, district, city, state, country, isPrimary | N:1 Supplier |
 | Category | id, name, description, isActive | 1:N Product |
-| Product | id, sku, name, salePrice, costPrice, unit, isActive | N:1 Category; itens e Inventory |
+| Product | id, companyId, categoryId, unitId, primarySupplierId, name, description, sku, barcode, costPrice, salePrice, weight, dimensões, minimumStock, isActive | N:1 Company, Category, UnitOfMeasure e Supplier opcional; futuramente itens e Inventory |
 | Warehouse | id, name, address, isActive | 1:N Inventory e StockMovement |
 | Inventory | productId, warehouseId, quantity, minimumQuantity | único por productId/warehouseId |
 | StockMovement | id, type, quantity, occurredAt, referenceType, referenceId | N:1 Product, Warehouse, User |

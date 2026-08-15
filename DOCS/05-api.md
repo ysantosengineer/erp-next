@@ -29,6 +29,15 @@
 - A listagem aceita `page`, `limit`, `search`, `status`, `type`, `sortBy` e `sortOrder`. A pesquisa cobre nome, nome fantasia, documento e e-mail.
 - `type` aceita `INDIVIDUAL` ou `COMPANY`. CPF/CNPJ é obrigatório, validado e normalizado pela API. O corpo pode conter um endereço principal opcional; `companyId` nunca é aceito.
 - Documento duplicado na mesma empresa retorna `409 SUPPLIER_DOCUMENT_EXISTS`; documento inválido retorna `400 INVALID_SUPPLIER_DOCUMENT`; recurso de outra empresa retorna `404`.
+
+### Produtos
+
+- `GET /products` e `GET /products/:id` exigem `products.read`.
+- `POST /products`, `PATCH /products/:id` e `PATCH /products/:id/status` exigem, respectivamente, `products.create`, `products.update` e `products.manage_status`.
+- A listagem aceita `page`, `limit`, `search`, `status`, `categoryId`, `unitId`, `supplierId`, `sortBy` e `sortOrder`. A pesquisa cobre nome, SKU, código de barras e descrição.
+- O corpo nunca aceita `companyId`. Categoria e unidade são obrigatórias; fornecedor principal é opcional. Novos relacionamentos devem pertencer à empresa autenticada e estar ativos.
+- Valores monetários são strings decimais com duas casas no response; peso, dimensões e estoque mínimo são strings com três casas. SKU é normalizado para maiúsculas e código de barras aceita somente 8 a 14 dígitos.
+- Duplicidades retornam `409 PRODUCT_SKU_EXISTS` ou `409 PRODUCT_BARCODE_EXISTS`; relacionamento inativo retorna `422`; recurso ou relacionamento externo à empresa retorna `404`.
 | Vendas | `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm`, `POST /sales-orders/:id/cancel` |
 | Compras | Rotas equivalentes em `/purchase-orders`, com `POST /:id/receive` |
 | Estoque | `GET /inventory`, `GET /stock-movements`; movimentação manual somente por endpoint autorizado e motivo obrigatório |
