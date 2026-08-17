@@ -53,6 +53,10 @@ async function main(): Promise<void> {
     ['suppliers', 'create', 'Cria fornecedores.'],
     ['suppliers', 'update', 'Atualiza fornecedores.'],
     ['suppliers', 'manage_status', 'Ativa e inativa fornecedores.'],
+    ['products', 'read', 'Consulta produtos.'],
+    ['products', 'create', 'Cria produtos.'],
+    ['products', 'update', 'Atualiza produtos.'],
+    ['products', 'manage_status', 'Ativa e inativa produtos.'],
   ] as const;
   const newPermissions = await Promise.all(
     categoryAndUnitPermissions.map(([resource, action, description]) =>

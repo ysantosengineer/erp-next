@@ -216,8 +216,8 @@ export class AuthService {
   }
 
   private async issueTokens(user: LoginUser): Promise<IssuedTokens> {
-    const accessTtl = this.configService.getOrThrow<number>('JWT_ACCESS_TTL_SECONDS');
-    const refreshTtl = this.configService.getOrThrow<number>('JWT_REFRESH_TTL_SECONDS');
+    const accessTtl = Number(this.configService.getOrThrow<string>('JWT_ACCESS_TTL_SECONDS'));
+    const refreshTtl = Number(this.configService.getOrThrow<string>('JWT_REFRESH_TTL_SECONDS'));
     const refreshTokenId = randomUUID();
     const payload = { sub: user.id, authVersion: user.authVersion };
     const [accessToken, refreshToken] = await Promise.all([

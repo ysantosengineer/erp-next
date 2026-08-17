@@ -13,23 +13,24 @@ enum SupplierType {
 }
 
 model Company {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String
-  document  String?  @unique
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String          @id @default(uuid()) @db.Uuid
+  name       String
+  document   String?         @unique
+  isActive   Boolean         @default(true)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
   users      User[]
   roles      Role[]
   categories Category[]
   units      UnitOfMeasure[]
   suppliers  Supplier[]
+  products   Product[]
   auditLogs  AuditLog[]
 }
 
 model Supplier {
-  id          String         @id @default(uuid()) @db.Uuid
-  companyId   String         @db.Uuid
+  id          String            @id @default(uuid()) @db.Uuid
+  companyId   String            @db.Uuid
   type        SupplierType
   name        String
   tradeName   String?
@@ -38,11 +39,12 @@ model Supplier {
   phone       String?
   contactName String?
   notes       String?
-  isActive    Boolean        @default(true)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  company     Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  company     Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
   addresses   SupplierAddress[]
+  products    Product[]
 
   @@unique([companyId, document])
   @@index([companyId, isActive, type])
@@ -70,36 +72,72 @@ model SupplierAddress {
 }
 
 model Category {
-  id             String   @id @default(uuid()) @db.Uuid
-  companyId      String   @db.Uuid
+  id             String    @id @default(uuid()) @db.Uuid
+  companyId      String    @db.Uuid
   name           String
   normalizedName String
   description    String?
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  company        Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  company        Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  products       Product[]
 
   @@unique([companyId, normalizedName])
   @@index([companyId, isActive])
 }
 
 model UnitOfMeasure {
-  id               String   @id @default(uuid()) @db.Uuid
-  companyId        String   @db.Uuid
+  id               String    @id @default(uuid()) @db.Uuid
+  companyId        String    @db.Uuid
   name             String
   normalizedName   String
   symbol           String
   normalizedSymbol String
   description      String?
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  company          Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  company          Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  products         Product[]
 
   @@unique([companyId, normalizedName])
   @@unique([companyId, normalizedSymbol])
   @@index([companyId, isActive])
+}
+
+model Product {
+  id                String        @id @default(uuid()) @db.Uuid
+  companyId         String        @db.Uuid
+  categoryId        String        @db.Uuid
+  unitId            String        @db.Uuid
+  primarySupplierId String?       @db.Uuid
+  name              String
+  description       String?
+  sku               String
+  barcode           String?
+  costPrice         Decimal       @db.Decimal(14, 2)
+  salePrice         Decimal       @db.Decimal(14, 2)
+  weight            Decimal?      @db.Decimal(14, 3)
+  height            Decimal?      @db.Decimal(14, 3)
+  width             Decimal?      @db.Decimal(14, 3)
+  length            Decimal?      @db.Decimal(14, 3)
+  minimumStock      Decimal       @default(0) @db.Decimal(14, 3)
+  isActive          Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  company           Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  category          Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  unit              UnitOfMeasure @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  primarySupplier   Supplier?     @relation(fields: [primarySupplierId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, sku])
+  @@unique([companyId, barcode])
+  @@index([companyId, isActive])
+  @@index([companyId, name])
+  @@index([categoryId])
+  @@index([unitId])
+  @@index([primarySupplierId])
 }
 
 model User {

@@ -17,6 +17,8 @@ Na administração, `/users` oferece pesquisa com debounce, filtro de status, pa
 
 Em Cadastros, `/suppliers` oferece pesquisa com debounce, filtros de status e PF/PJ, paginação, formulário dinâmico com endereço principal e confirmação de ativação/inativação. CPF/CNPJ, telefone e CEP recebem máscara apenas para entrada e apresentação. A tabela usa rolagem horizontal em telas menores.
 
+Em `/products`, a listagem oferece busca com debounce, filtros de status, categoria, unidade e fornecedor, ordenação e paginação no servidor. Cadastro e edição usam páginas dedicadas (`/products/new` e `/products/:id/edit`) com seções de dados gerais, comerciais e logísticos. Valores são digitados no padrão brasileiro e convertidos para strings decimais canônicas apenas no transporte. Ações e rotas são condicionadas por `products.*`, e a tabela preserva rolagem horizontal em telas menores.
+
 ## Padrões de tela
 
 - Listagens: título, ação principal autorizada, filtros, tabela paginada e estado vazio com próximo passo.
