@@ -40,7 +40,7 @@ async function main(): Promise<void> {
       }),
     ),
   );
-  const categoryAndUnitPermissions = [
+  const businessPermissions = [
     ['categories', 'read', 'Consulta categorias.'],
     ['categories', 'create', 'Cria categorias.'],
     ['categories', 'update', 'Atualiza categorias.'],
@@ -57,9 +57,13 @@ async function main(): Promise<void> {
     ['products', 'create', 'Cria produtos.'],
     ['products', 'update', 'Atualiza produtos.'],
     ['products', 'manage_status', 'Ativa e inativa produtos.'],
+    ['customers', 'read', 'Consulta clientes.'],
+    ['customers', 'create', 'Cria clientes.'],
+    ['customers', 'update', 'Atualiza clientes.'],
+    ['customers', 'manage_status', 'Ativa e inativa clientes.'],
   ] as const;
   const newPermissions = await Promise.all(
-    categoryAndUnitPermissions.map(([resource, action, description]) =>
+    businessPermissions.map(([resource, action, description]) =>
       prisma.permission.upsert({
         where: { resource_action: { resource, action } },
         update: { description },

@@ -90,7 +90,7 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 
 ## Cadastros
 
-- Clientes podem ser pessoa física ou jurídica, com nome, documento único quando informado, contatos, endereços, limite de crédito e status.
+- Clientes pertencem a uma empresa, podem ser pessoa física ou jurídica e possuem nome/razão social, CPF/CNPJ obrigatório e único por empresa, contatos opcionais, um endereço principal opcional, limite de crédito não negativo em `Decimal(14,2)` e status. Documento, telefone e CEP são persistidos somente com dígitos; valores monetários trafegam como strings decimais para preservar precisão.
 - Fornecedores pertencem a uma empresa, podem ser pessoa física ou jurídica e possuem nome/razão social, CPF/CNPJ obrigatório e único por empresa, contatos opcionais, um endereço principal opcional e status. CPF/CNPJ, telefone e CEP são persistidos somente com dígitos; fornecedores inativos continuam consultáveis e preservados para históricos, mas futuramente não serão oferecidos por padrão em novas compras.
 - Produtos pertencem a uma empresa e possuem nome, SKU obrigatório e único por empresa, código de barras numérico opcional e único por empresa, categoria e unidade obrigatórias, fornecedor principal opcional, preços de custo e venda, peso, dimensões, estoque mínimo e status.
 - O SKU é persistido sem espaços e em maiúsculas. Código de barras aceita de 8 a 14 dígitos sem validação de checksum. Preços e quantidades são transportados como strings decimais para preservar precisão.

@@ -45,7 +45,7 @@ O frontend possui áreas públicas (`/login`) e autenticadas (`/` e `/unauthoriz
 
 As áreas administrativas `/users` e `/roles` permanecem no layout autenticado. Cada domínio possui tipos, schemas Zod, serviços HTTP, hooks TanStack Query e componentes próprios. Mutações invalidam somente as queries afetadas; alterações que possam invalidar a autorização atual renovam a sessão ou encerram o acesso conforme a resposta da API.
 
-O cadastro `/suppliers` segue essa organização por domínio. `SupplierAddress` é específico do fornecedor nesta fase: a modelagem aceita múltiplos endereços, enquanto a interface mantém somente o endereço principal. Um modelo genérico compartilhado será avaliado quando clientes forem implementados, evitando acoplamento prematuro.
+Os cadastros `/suppliers` e `/customers` seguem essa organização por domínio. `SupplierAddress` e `CustomerAddress` são entidades específicas porque os ciclos de vida dos domínios podem evoluir de forma independente. Ambos aceitam relação 1:N, enquanto a interface atual mantém somente um endereço principal. Validação e formatação estáveis de CPF, CNPJ, telefone e CEP são compartilhadas em utilitários, sem introduzir uma tabela polimórfica de endereços.
 
 ## Integrações e observabilidade
 

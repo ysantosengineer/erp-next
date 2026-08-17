@@ -14,7 +14,7 @@ Estado atual: autenticação, gestão de usuários/papéis, catálogo e atribui�
 
 Clientes, fornecedores, categorias, produtos, armazéns, busca/paginação e formulários validados.
 
-Estado atual: categorias, unidades de medida, fornecedores e produtos estão implementados com isolamento por empresa, permissões, auditoria, migrations e interfaces autenticadas. Produtos incluem catálogo pesquisável e paginado, filtros relacionais, preços e dados logísticos, formulário dedicado e status. A Sprint 2 permanece em andamento porque clientes e armazéns ainda não foram implementados.
+Estado atual: categorias, unidades de medida, fornecedores, produtos e clientes estão implementados com isolamento por empresa, permissões, auditoria, migrations e interfaces autenticadas. Clientes incluem PF/PJ, CPF/CNPJ, contato, endereço principal, limite de crédito decimal, busca, filtros, paginação e status. A Sprint 2 permanece em andamento porque armazéns ainda não foram implementados.
 
 ## Sprint 3 — Compras e estoque
 

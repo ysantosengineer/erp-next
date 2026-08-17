@@ -19,6 +19,8 @@ Em Cadastros, `/suppliers` oferece pesquisa com debounce, filtros de status e PF
 
 Em `/products`, a listagem oferece busca com debounce, filtros de status, categoria, unidade e fornecedor, ordenação e paginação no servidor. Cadastro e edição usam páginas dedicadas (`/products/new` e `/products/:id/edit`) com seções de dados gerais, comerciais e logísticos. Valores são digitados no padrão brasileiro e convertidos para strings decimais canônicas apenas no transporte. Ações e rotas são condicionadas por `products.*`, e a tabela preserva rolagem horizontal em telas menores.
 
+Em `/customers`, a listagem oferece busca com debounce, filtros de status e PF/PJ, paginação no servidor e tabela com limite de crédito formatado. Cadastro e edição usam formulário amplo dividido em identificação, contato e crédito, endereço principal e observações. CPF/CNPJ, telefone e CEP recebem máscara somente na interface; valores monetários são digitados no padrão brasileiro e enviados como strings decimais. A rota e as ações são condicionadas por `customers.*`, e a tabela preserva rolagem horizontal em telas menores.
+
 ## Padrões de tela
 
 - Listagens: título, ação principal autorizada, filtros, tabela paginada e estado vazio com próximo passo.

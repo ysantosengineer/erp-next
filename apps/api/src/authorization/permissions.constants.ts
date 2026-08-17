@@ -25,6 +25,10 @@ export const PERMISSIONS = {
   PRODUCTS_CREATE: 'products.create',
   PRODUCTS_UPDATE: 'products.update',
   PRODUCTS_MANAGE_STATUS: 'products.manage_status',
+  CUSTOMERS_READ: 'customers.read',
+  CUSTOMERS_CREATE: 'customers.create',
+  CUSTOMERS_UPDATE: 'customers.update',
+  CUSTOMERS_MANAGE_STATUS: 'customers.manage_status',
 } as const;
 
 export const ADMINISTRATIVE_PERMISSIONS = Object.values(PERMISSIONS);

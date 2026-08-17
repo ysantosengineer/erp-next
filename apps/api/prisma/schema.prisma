@@ -12,6 +12,11 @@ enum SupplierType {
   COMPANY
 }
 
+enum CustomerType {
+  INDIVIDUAL
+  COMPANY
+}
+
 model Company {
   id         String          @id @default(uuid()) @db.Uuid
   name       String
@@ -25,7 +30,50 @@ model Company {
   units      UnitOfMeasure[]
   suppliers  Supplier[]
   products   Product[]
+  customers  Customer[]
   auditLogs  AuditLog[]
+}
+
+model Customer {
+  id          String            @id @default(uuid()) @db.Uuid
+  companyId   String            @db.Uuid
+  type        CustomerType
+  name        String
+  tradeName   String?
+  document    String
+  email       String?
+  phone       String?
+  creditLimit Decimal           @default(0) @db.Decimal(14, 2)
+  notes       String?
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  company     Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  addresses   CustomerAddress[]
+
+  @@unique([companyId, document])
+  @@index([companyId, isActive, type])
+  @@index([companyId, name])
+}
+
+model CustomerAddress {
+  id         String   @id @default(uuid()) @db.Uuid
+  customerId String   @db.Uuid
+  type       String   @default("MAIN")
+  postalCode String?
+  street     String?
+  number     String?
+  complement String?
+  district   String?
+  city       String?
+  state      String?
+  country    String   @default("BR")
+  isPrimary  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@index([customerId, isPrimary])
 }
 
 model Supplier {
