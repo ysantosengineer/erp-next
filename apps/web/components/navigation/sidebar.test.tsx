@@ -28,4 +28,10 @@ describe('Sidebar', () => {
     expect(screen.queryByRole('link', { name: 'Usuários' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Papéis e permissões' })).not.toBeInTheDocument();
   });
+
+  it('exibe depósitos somente com permissão de leitura', () => {
+    useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.WAREHOUSES_READ] } });
+    render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Depósitos' })).toHaveAttribute('href', '/warehouses');
+  });
 });

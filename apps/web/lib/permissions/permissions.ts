@@ -29,6 +29,14 @@ export const PERMISSIONS = {
   CUSTOMERS_CREATE: 'customers.create',
   CUSTOMERS_UPDATE: 'customers.update',
   CUSTOMERS_MANAGE_STATUS: 'customers.manage_status',
+  WAREHOUSES_READ: 'warehouses.read',
+  WAREHOUSES_CREATE: 'warehouses.create',
+  WAREHOUSES_UPDATE: 'warehouses.update',
+  WAREHOUSES_MANAGE_STATUS: 'warehouses.manage_status',
+  STOCK_LOCATIONS_READ: 'stock_locations.read',
+  STOCK_LOCATIONS_CREATE: 'stock_locations.create',
+  STOCK_LOCATIONS_UPDATE: 'stock_locations.update',
+  STOCK_LOCATIONS_MANAGE_STATUS: 'stock_locations.manage_status',
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -64,6 +72,14 @@ export const PERMISSION_LABELS: Readonly<Record<string, string>> = {
   'customers.create': 'Criar clientes',
   'customers.update': 'Editar clientes',
   'customers.manage_status': 'Gerenciar status de clientes',
+  'warehouses.read': 'Visualizar depósitos',
+  'warehouses.create': 'Criar depósitos',
+  'warehouses.update': 'Editar depósitos',
+  'warehouses.manage_status': 'Gerenciar status de depósitos',
+  'stock_locations.read': 'Visualizar endereços de estoque',
+  'stock_locations.create': 'Criar endereços de estoque',
+  'stock_locations.update': 'Editar endereços de estoque',
+  'stock_locations.manage_status': 'Gerenciar status de endereços de estoque',
 };
 
 export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
@@ -74,4 +90,6 @@ export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
   suppliers: 'Fornecedores',
   products: 'Produtos',
   customers: 'Clientes',
+  warehouses: 'Depósitos',
+  stock_locations: 'Endereços de estoque',
 };

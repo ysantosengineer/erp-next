@@ -11,6 +11,8 @@ import { RolesModule } from './roles/roles.module';
 import { UsersModule } from './users/users.module';
 import { UnitsModule } from './units/units.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
+import { StockLocationsModule } from './stock-locations/stock-locations.module';
+import { WarehousesModule } from './warehouses/warehouses.module';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { SuppliersModule } from './suppliers/suppliers.module';
     UnitsModule,
     SuppliersModule,
     ProductsModule,
+    WarehousesModule,
+    StockLocationsModule,
   ],
   controllers: [AppController],
 })

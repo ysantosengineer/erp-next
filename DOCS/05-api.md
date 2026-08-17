@@ -47,6 +47,14 @@
 - `type` aceita `INDIVIDUAL` ou `COMPANY`. CPF/CNPJ é obrigatório, validado e normalizado pela API. O corpo pode conter um endereço principal opcional; `companyId` e `isActive` nunca são aceitos nos endpoints de criação e edição.
 - `creditLimit` é recebido e devolvido como string decimal canônica com duas casas, sendo persistido em `Decimal(14,2)`. Valores negativos são rejeitados.
 - Documento duplicado na mesma empresa retorna `409 CUSTOMER_DOCUMENT_EXISTS`; documento inválido retorna `400 INVALID_CUSTOMER_DOCUMENT`; recurso de outra empresa retorna `404 CUSTOMER_NOT_FOUND`.
+
+### Depósitos e endereços de estoque
+
+- `GET /warehouses` e `GET /warehouses/:id` exigem `warehouses.read`; criação, edição e status exigem, respectivamente, `warehouses.create`, `warehouses.update` e `warehouses.manage_status`.
+- A listagem de depósitos aceita `page`, `limit`, `search`, `status`, `sortBy` e `sortOrder`. O response inclui `locationCount`, calculado pela API. Códigos são normalizados para maiúsculas e únicos por empresa; duplicidade retorna `409 WAREHOUSE_CODE_EXISTS`.
+- Endereços usam as rotas contextuais `GET,POST /warehouses/:warehouseId/locations`, `GET,PATCH /warehouses/:warehouseId/locations/:id` e `PATCH /warehouses/:warehouseId/locations/:id/status`, protegidas pelas permissões equivalentes `stock_locations.*`.
+- A listagem de endereços aceita `page`, `limit`, `search`, `status`, `zone`, `sortBy` e `sortOrder`, e devolve `{ warehouse, data, meta }` para fornecer o contexto seguro do depósito sem exigir uma segunda permissão. Capacidade é uma string decimal canônica com três casas e não pode ser negativa.
+- Depósitos e endereços de outra empresa retornam `404`. A criação e reativação de endereço em depósito inativo retornam `422 WAREHOUSE_INACTIVE`; a inativação de depósito com endereços ativos retorna `422 WAREHOUSE_HAS_ACTIVE_LOCATIONS`.
 | Vendas | `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm`, `POST /sales-orders/:id/cancel` |
 | Compras | Rotas equivalentes em `/purchase-orders`, com `POST /:id/receive` |
 | Estoque | `GET /inventory`, `GET /stock-movements`; movimentação manual somente por endpoint autorizado e motivo obrigatório |

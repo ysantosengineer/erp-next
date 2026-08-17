@@ -15,6 +15,8 @@ const messages: Readonly<Record<string, string>> = {
   SYSTEM_ROLE_PROTECTED: 'Este papel do sistema é protegido.',
   SYSTEM_ROLE_PERMISSIONS_REQUIRED:
     'O papel do sistema deve manter as permissões administrativas essenciais.',
+  WAREHOUSE_HAS_ACTIVE_LOCATIONS: 'Inative todos os endereços ativos antes de inativar o depósito.',
+  WAREHOUSE_INACTIVE: 'Ative o depósito antes de criar ou reativar endereços.',
 };
 
 export function getApiErrorMessage(error: unknown, fallback: string): string {

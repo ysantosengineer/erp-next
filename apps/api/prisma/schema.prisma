@@ -31,7 +31,51 @@ model Company {
   suppliers  Supplier[]
   products   Product[]
   customers  Customer[]
+  warehouses Warehouse[]
+  locations  StockLocation[]
   auditLogs  AuditLog[]
+}
+
+model Warehouse {
+  id          String          @id @default(uuid()) @db.Uuid
+  companyId   String          @db.Uuid
+  name        String
+  code        String
+  description String?
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  company     Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  locations   StockLocation[]
+
+  @@unique([companyId, code])
+  @@unique([companyId, id])
+  @@index([companyId, isActive])
+  @@index([companyId, name])
+}
+
+model StockLocation {
+  id          String    @id @default(uuid()) @db.Uuid
+  companyId   String    @db.Uuid
+  warehouseId String    @db.Uuid
+  code        String
+  description String?
+  zone        String?
+  aisle       String?
+  rack        String?
+  level       String?
+  position    String?
+  capacity    Decimal?  @db.Decimal(14, 3)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  warehouse   Warehouse @relation(fields: [companyId, warehouseId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([warehouseId, code])
+  @@index([companyId, isActive])
+  @@index([warehouseId, isActive])
+  @@index([warehouseId, zone])
 }
 
 model Customer {

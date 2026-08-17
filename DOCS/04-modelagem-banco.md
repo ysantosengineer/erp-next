@@ -11,7 +11,7 @@
 
 | Entidade | Campos principais | Relações |
 | --- | --- | --- |
-| Company | id, name, document, isActive | 1:N User, Role, Category, UnitOfMeasure, Supplier, Product, Customer e AuditLog |
+| Company | id, name, document, isActive | 1:N User, Role, Category, UnitOfMeasure, Supplier, Product, Customer, Warehouse, StockLocation e AuditLog |
 | User | id, companyId, name, email, passwordHash, authVersion, isActive, lastLoginAt | N:1 Company; N:N Role; 1:N AuditLog |
 | Role | id, companyId, name, description, isSystem | N:1 Company; N:N User e Permission |
 | Permission | id, resource, action, description | N:N Role; único por resource/action |
@@ -46,6 +46,14 @@ SKU e código de barras são únicos pelos pares `(companyId, sku)` e `(companyI
 
 `CustomerAddress` pertence a `Customer` e armazena CEP, logradouro, número, complemento, bairro, cidade, UF, país e indicação de principal. A relação 1:N permite evolução, mas um índice parcial garante no máximo um endereço principal por cliente. A interface inicial gerencia esse endereço principal. Chaves estrangeiras usam `RESTRICT`, preservando dados necessários a vínculos históricos futuros.
 
+### Warehouse e StockLocation
+
+`Warehouse` pertence obrigatoriamente a `Company` e armazena nome, código humano normalizado em maiúsculas, descrição, status e timestamps. O código é único por `(companyId, code)`. Há uma chave candidata adicional `(companyId, id)` para sustentar o vínculo composto dos endereços.
+
+`StockLocation` representa um endereço dentro do depósito e pertence simultaneamente a `Company` e `Warehouse`. Armazena código, descrição, zona, corredor, prateleira, nível, posição, capacidade lógica opcional em `Decimal(14,3)`, status e timestamps. O código é único por `(warehouseId, code)` e a capacidade possui `CHECK` não negativa.
+
+A chave estrangeira composta `(companyId, warehouseId) → Warehouse(companyId, id)` impede que um endereço seja associado a um depósito de outra empresa. As relações usam `RESTRICT`; o ciclo de vida é controlado por `isActive`. Depósitos com endereços ativos não podem ser inativados. Não existe endereço padrão implícito no modelo: o seed de desenvolvimento usa apenas o código convencional `DEFAULT`.
+
 | Entidade | Campos principais | Relações |
 | --- | --- | --- |
 | Customer | id, companyId, type, name, tradeName, document, email, phone, creditLimit, notes, isActive | N:1 Company; 1:N CustomerAddress; futuramente SalesOrder |
@@ -54,11 +62,12 @@ SKU e código de barras são únicos pelos pares `(companyId, sku)` e `(companyI
 | SupplierAddress | id, supplierId, postalCode, street, number, complement, district, city, state, country, isPrimary | N:1 Supplier |
 | Category | id, name, description, isActive | 1:N Product |
 | Product | id, companyId, categoryId, unitId, primarySupplierId, name, description, sku, barcode, costPrice, salePrice, weight, dimensões, minimumStock, isActive | N:1 Company, Category, UnitOfMeasure e Supplier opcional; futuramente itens e Inventory |
-| Warehouse | id, name, address, isActive | 1:N Inventory e StockMovement |
+| Warehouse | id, companyId, name, code, description, isActive | N:1 Company; 1:N StockLocation; futuramente Inventory e StockMovement |
+| StockLocation | id, companyId, warehouseId, code, description, zone, aisle, rack, level, position, capacity, isActive | N:1 Company e Warehouse; futuramente saldos e movimentos |
 | Inventory | productId, warehouseId, quantity, minimumQuantity | único por productId/warehouseId |
 | StockMovement | id, type, quantity, occurredAt, referenceType, referenceId | N:1 Product, Warehouse, User |
 
-`Inventory` é o saldo atual; `StockMovement` é o livro razão imutável. A atualização dos dois ocorre na mesma transação.
+`Inventory` e `StockMovement` ainda não estão implementados. Futuramente, `Inventory` será o saldo atual e `StockMovement` o livro razão imutável; a atualização dos dois deverá ocorrer na mesma transação.
 
 ## Documentos comerciais e financeiro
 

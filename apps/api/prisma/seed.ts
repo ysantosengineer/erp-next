@@ -61,6 +61,14 @@ async function main(): Promise<void> {
     ['customers', 'create', 'Cria clientes.'],
     ['customers', 'update', 'Atualiza clientes.'],
     ['customers', 'manage_status', 'Ativa e inativa clientes.'],
+    ['warehouses', 'read', 'Consulta depósitos.'],
+    ['warehouses', 'create', 'Cria depósitos.'],
+    ['warehouses', 'update', 'Atualiza depósitos.'],
+    ['warehouses', 'manage_status', 'Ativa e inativa depósitos.'],
+    ['stock_locations', 'read', 'Consulta endereços de estoque.'],
+    ['stock_locations', 'create', 'Cria endereços de estoque.'],
+    ['stock_locations', 'update', 'Atualiza endereços de estoque.'],
+    ['stock_locations', 'manage_status', 'Ativa e inativa endereços de estoque.'],
   ] as const;
   const newPermissions = await Promise.all(
     businessPermissions.map(([resource, action, description]) =>
@@ -143,6 +151,27 @@ async function main(): Promise<void> {
       }),
     ),
   );
+
+  const mainWarehouse = await prisma.warehouse.upsert({
+    where: { companyId_code: { companyId: company.id, code: 'MAIN' } },
+    update: { name: 'Depósito Principal', isActive: true },
+    create: {
+      companyId: company.id,
+      name: 'Depósito Principal',
+      code: 'MAIN',
+      description: 'Depósito padrão do ambiente local.',
+    },
+  });
+  await prisma.stockLocation.upsert({
+    where: { warehouseId_code: { warehouseId: mainWarehouse.id, code: 'DEFAULT' } },
+    update: { companyId: company.id, isActive: true },
+    create: {
+      companyId: company.id,
+      warehouseId: mainWarehouse.id,
+      code: 'DEFAULT',
+      description: 'Endereço padrão do ambiente local.',
+    },
+  });
 }
 
 main()

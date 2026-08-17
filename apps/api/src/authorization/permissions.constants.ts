@@ -29,6 +29,14 @@ export const PERMISSIONS = {
   CUSTOMERS_CREATE: 'customers.create',
   CUSTOMERS_UPDATE: 'customers.update',
   CUSTOMERS_MANAGE_STATUS: 'customers.manage_status',
+  WAREHOUSES_READ: 'warehouses.read',
+  WAREHOUSES_CREATE: 'warehouses.create',
+  WAREHOUSES_UPDATE: 'warehouses.update',
+  WAREHOUSES_MANAGE_STATUS: 'warehouses.manage_status',
+  STOCK_LOCATIONS_READ: 'stock_locations.read',
+  STOCK_LOCATIONS_CREATE: 'stock_locations.create',
+  STOCK_LOCATIONS_UPDATE: 'stock_locations.update',
+  STOCK_LOCATIONS_MANAGE_STATUS: 'stock_locations.manage_status',
 } as const;
 
 export const ADMINISTRATIVE_PERMISSIONS = Object.values(PERMISSIONS);

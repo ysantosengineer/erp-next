@@ -97,6 +97,9 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 - Categorias, unidades e fornecedores precisam estar ativos para novas associações. Um produto existente pode manter uma associação posteriormente inativada até que o usuário escolha substituí-la.
 - NCM, imagens, estoque atual, variações, lotes e movimentações não fazem parte desta etapa de catálogo e serão tratados em módulos posteriores.
 - Categorias organizam produtos e não podem ser removidas enquanto tiverem produtos ativos.
+- Depósitos pertencem a uma empresa, têm nome, código único por empresa, descrição e status. Um depósito só pode ser inativado depois de todos os seus endereços ativos serem inativados.
+- Endereços de estoque pertencem simultaneamente à empresa e a um depósito, usam código único por depósito e podem informar zona, corredor, prateleira, nível, posição e capacidade lógica não negativa. Novos endereços e reativações exigem depósito ativo.
+- Esta etapa não mantém saldo, reserva ou movimentação de estoque; essas regras entram nos módulos transacionais posteriores.
 - Armazéns possuem nome e endereço opcional.
 
 ## Operações
