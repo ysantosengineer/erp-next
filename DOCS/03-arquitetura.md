@@ -55,6 +55,8 @@ As rotas `/inventory` e `/inventory/movements` usam TanStack Query para cache e 
 
 `/purchases/orders` usa lista, detalhe e opções com chaves de cache próprias. Criação/edição usam página dedicada e tabela dinâmica. Transições invalidam apenas pedidos, pois aprovação não altera estoque.
 
+`/purchases/receipts`, `/purchases/receipts/[id]` e `/purchases/orders/[id]/receive` usam queries próprias e não aplicam atualização otimista. Após confirmação, pedidos, recebimentos, saldos, produtos e movimentos afetados são invalidados somente depois do commit da API.
+
 Os cadastros `/suppliers` e `/customers` seguem essa organização por domínio. `SupplierAddress` e `CustomerAddress` são entidades específicas porque os ciclos de vida dos domínios podem evoluir de forma independente. Ambos aceitam relação 1:N, enquanto a interface atual mantém somente um endereço principal. Validação e formatação estáveis de CPF, CNPJ, telefone e CEP são compartilhadas em utilitários, sem introduzir uma tabela polimórfica de endereços.
 
 ## Integrações e observabilidade
@@ -69,4 +71,5 @@ OpenAPI é o contrato público da API. Logs devem ser estruturados e correlacion
 - Movimentações de estoque são executadas em transação `SERIALIZABLE`, com decremento condicional e até três tentativas para conflitos de serialização.
 - Ao iniciar inventário, o snapshot e a transição para `IN_PROGRESS` ocorrem atomicamente. Enquanto o status estiver entre `IN_PROGRESS` e `READY_FOR_APPROVAL`, movimentos que atinjam o depósito retornam `LOCATION_UNDER_INVENTORY`.
 - A aprovação bloqueia a linha do inventário com `FOR UPDATE`, revalida o estado e aplica todos os ajustes pela mesma rotina da Etapa 11 na transação serializável. Falha intermediária causa rollback total e o lock impede dupla aprovação.
-- Pedidos de compra usam atualização condicional por estado para submit, aprovação e cancelamento. A aprovação é uma decisão comercial sem efeito físico; somente o recebimento futuro poderá integrar estoque.
+- Pedidos de compra usam atualização condicional por estado para submit, aprovação e cancelamento. A aprovação é uma decisão comercial sem efeito físico.
+- Recebimentos bloqueiam a linha do pedido com `FOR UPDATE` em transação `SERIALIZABLE`, reutilizam o serviço transacional de estoque, atualizam histórico/acumulado/status atomicamente e repetem conflitos serializáveis até três vezes. Idempotência por empresa e hash canônico protege retries após timeout.

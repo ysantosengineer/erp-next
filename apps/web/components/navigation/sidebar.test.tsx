@@ -69,4 +69,14 @@ describe('Sidebar', () => {
       '/purchases/orders',
     );
   });
+
+  it('exibe recebimentos somente com permissão própria de leitura', () => {
+    useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.PURCHASE_RECEIPTS_READ] } });
+    render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Recebimentos' })).toHaveAttribute(
+      'href',
+      '/purchases/receipts',
+    );
+    expect(screen.queryByRole('link', { name: 'Pedidos de compra' })).not.toBeInTheDocument();
+  });
 });

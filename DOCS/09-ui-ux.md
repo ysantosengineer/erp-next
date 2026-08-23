@@ -25,7 +25,9 @@ Em `/inventory`, a tabela apresenta saldo por produto/endereço, unidade, estoqu
 
 Em `/inventory/counts`, a listagem mostra depósito, status, responsável, progresso, filtros e paginação. O detalhe em `/inventory/counts/[id]` apresenta resumo, itens paginados e entrada inline de quantidade, permitindo navegação por teclado sem modal por item. Divergências usam texto e badge além de cor. Início, recontagem, aprovação e cancelamento exigem confirmação; a aprovação informa os ajustes e só atualiza a tela, saldos e movimentos após confirmação do backend. O saldo teórico permanece visível no MVP; contagem cega é evolução documentada.
 
-Em Compras, `/purchases/orders` oferece pesquisa, filtros, período, tabela paginada e número humano. Criação e edição usam páginas dedicadas, pesquisa de produto e tabela dinâmica com quantidade, custo e cálculo instantâneo. O detalhe mostra snapshots, valores e responsáveis; submit, aprovação e cancelamento são condicionados por estado e permissão, com confirmação e motivo no cancelamento. Nenhuma dessas ações invalida a cache de estoque.
+Em Compras, `/purchases/orders` oferece pesquisa, filtros, período, tabela paginada e número humano. Criação e edição usam páginas dedicadas, pesquisa de produto e tabela dinâmica com quantidade, custo e cálculo instantâneo. O detalhe mostra snapshots, progresso e histórico; submit, aprovação, cancelamento e recebimento são condicionados por estado e permissão.
+
+`/purchases/receipts` lista entradas imutáveis. `/purchases/orders/[id]/receive` inicia todas as quantidades em zero, permite preenchimento explícito das pendências, localização por linha, divergências, resumo e confirmação acessível do efeito real no estoque. `/purchases/receipts/[id]` preserva rastreabilidade. Não há atualização otimista e o botão permanece desabilitado durante a confirmação idempotente.
 
 ## Padrões de tela
 

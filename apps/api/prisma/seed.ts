@@ -87,6 +87,8 @@ async function main(): Promise<void> {
     ['purchase_orders', 'submit', 'Envia pedidos de compra para aprovação.'],
     ['purchase_orders', 'approve', 'Aprova pedidos de compra.'],
     ['purchase_orders', 'cancel', 'Cancela pedidos de compra.'],
+    ['purchase_receipts', 'read', 'Consulta recebimentos de compras.'],
+    ['purchase_receipts', 'create', 'Confirma recebimentos e entradas de estoque.'],
   ] as const;
   const newPermissions = await Promise.all(
     businessPermissions.map(([resource, action, description]) =>

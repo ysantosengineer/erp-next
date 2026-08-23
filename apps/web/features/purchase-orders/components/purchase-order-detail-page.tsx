@@ -1,5 +1,5 @@
 'use client';
-import { ArrowLeft, Check, Pencil, Send, XCircle } from 'lucide-react';
+import { ArrowLeft, Check, Pencil, Send, Truck, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -30,6 +30,7 @@ import { formatCurrency, formatDecimalPtBr } from '../../../lib/decimal';
 import { PERMISSIONS } from '../../../lib/permissions/permissions';
 import { cn } from '../../../lib/utils';
 import { useAuth } from '../../auth/hooks/use-auth';
+import { usePurchaseReceiptsByOrder } from '../../purchase-receipts/hooks/use-purchase-receipts';
 import {
   useApprovePurchaseOrder,
   useCancelPurchaseOrder,
@@ -41,6 +42,8 @@ import { PurchaseOrderStatus } from './purchase-order-status';
 export function PurchaseOrderDetailPage({ orderId }: { orderId: string }) {
   const query = usePurchaseOrder(orderId);
   const { user } = useAuth();
+  const canReadReceipts = user?.permissions.includes(PERMISSIONS.PURCHASE_RECEIPTS_READ) ?? false;
+  const receipts = usePurchaseReceiptsByOrder(orderId, canReadReceipts);
   const submit = useSubmitPurchaseOrder();
   const approve = useApprovePurchaseOrder();
   const cancel = useCancelPurchaseOrder();
@@ -91,7 +94,7 @@ export function PurchaseOrderDetailPage({ orderId }: { orderId: string }) {
       <PageHeader
         eyebrow="Compras"
         title={order.number}
-        description="Pedido de compra — aprovação não gera entrada de estoque."
+        description="Pedido de compra com acompanhamento das quantidades recebidas."
         action={
           <div className="flex flex-wrap gap-2">
             <Link className={cn(buttonVariants({ variant: 'outline' }))} href="/purchases/orders">
@@ -112,6 +115,14 @@ export function PurchaseOrderDetailPage({ orderId }: { orderId: string }) {
             {order.status === 'PENDING_APPROVAL' && can(PERMISSIONS.PURCHASE_ORDERS_APPROVE) ? (
               <Button onClick={() => void run('approve')}>
                 <Check className="size-4" /> Aprovar
+              </Button>
+            ) : null}
+            {['APPROVED', 'PARTIALLY_RECEIVED'].includes(order.status) &&
+            can(PERMISSIONS.PURCHASE_RECEIPTS_CREATE) ? (
+              <Button asChild>
+                <Link href={`/purchases/orders/${order.id}/receive`}>
+                  <Truck className="size-4" /> Receber mercadoria
+                </Link>
               </Button>
             ) : null}
             {['DRAFT', 'PENDING_APPROVAL', 'APPROVED'].includes(order.status) &&
@@ -146,6 +157,8 @@ export function PurchaseOrderDetailPage({ orderId }: { orderId: string }) {
               <TableHead>SKU</TableHead>
               <TableHead>Unidade</TableHead>
               <TableHead>Quantidade</TableHead>
+              <TableHead>Recebido</TableHead>
+              <TableHead>Pendente</TableHead>
               <TableHead>Custo</TableHead>
               <TableHead>Subtotal</TableHead>
             </TableRow>
@@ -157,6 +170,13 @@ export function PurchaseOrderDetailPage({ orderId }: { orderId: string }) {
                 <TableCell className="font-mono">{item.productSku}</TableCell>
                 <TableCell>{item.unitSymbol}</TableCell>
                 <TableCell>{formatDecimalPtBr(item.quantity, 4)}</TableCell>
+                <TableCell>{formatDecimalPtBr(item.receivedQuantity, 4)}</TableCell>
+                <TableCell>
+                  {formatDecimalPtBr(
+                    Math.max(0, Number(item.quantity) - Number(item.receivedQuantity)).toFixed(4),
+                    4,
+                  )}
+                </TableCell>
                 <TableCell>{formatCurrency(item.unitCost)}</TableCell>
                 <TableCell>{formatCurrency(item.subtotal)}</TableCell>
               </TableRow>
@@ -164,6 +184,50 @@ export function PurchaseOrderDetailPage({ orderId }: { orderId: string }) {
           </TableBody>
         </Table>
       </div>
+      {canReadReceipts ? (
+        <div className="rounded-xl border bg-white p-5">
+          <h2 className="font-semibold">Recebimentos</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Histórico das entradas de estoque vinculadas a este pedido.
+          </p>
+          {receipts.isLoading ? (
+            <Skeleton className="mt-4 h-24" />
+          ) : receipts.data?.data.length ? (
+            <div className="mt-4 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Número</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Responsável</TableHead>
+                    <TableHead>Itens</TableHead>
+                    <TableHead>Quantidade</TableHead>
+                    <TableHead>Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {receipts.data.data.map((receipt) => (
+                    <TableRow key={receipt.id}>
+                      <TableCell className="font-mono">{receipt.number}</TableCell>
+                      <TableCell>{new Date(receipt.receivedAt).toLocaleString('pt-BR')}</TableCell>
+                      <TableCell>{receipt.receivedBy.name}</TableCell>
+                      <TableCell>{receipt.itemCount}</TableCell>
+                      <TableCell>{formatDecimalPtBr(receipt.totalQuantity, 4)}</TableCell>
+                      <TableCell>
+                        <Button asChild size="sm" variant="outline">
+                          <Link href={`/purchases/receipts/${receipt.id}`}>Detalhes</Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-slate-500">Nenhum recebimento confirmado.</p>
+          )}
+        </div>
+      ) : null}
       <div className="grid gap-4 rounded-xl border bg-white p-5 md:grid-cols-2">
         <div>
           <h2 className="font-semibold">Observações</h2>

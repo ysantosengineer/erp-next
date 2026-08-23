@@ -70,6 +70,8 @@ A chave estrangeira composta `(companyId, warehouseId) → Warehouse(companyId, 
 | InventoryCountItem | id, companyId, inventoryCountId, productId, locationId, systemQuantity, firstCountQuantity, recountQuantity, usuários e datas | N:1 InventoryCount, Product, StockLocation e usuários |
 | PurchaseOrder | id, companyId, number, status, supplierId, warehouseId, previsão, valores, usuários e datas | N:1 Company, Supplier, Warehouse e usuários; 1:N PurchaseOrderItem |
 | PurchaseOrderItem | id, companyId, purchaseOrderId, productId, snapshots, quantity, unitCost, subtotal, receivedQuantity | N:1 PurchaseOrder e Product |
+| PurchaseReceipt | id, companyId, purchaseOrderId, number, receivedAt, notes, receivedByUserId, idempotencyKey, requestHash | N:1 PurchaseOrder, Company e User; 1:N PurchaseReceiptItem |
+| PurchaseReceiptItem | id, companyId, receipt/orderItem/product/location, quantities históricas, unitCost, discrepancyReason | N:1 PurchaseReceipt, PurchaseOrderItem, Product e StockLocation |
 
 `InventoryBalance.quantity` possui `CHECK >= 0`. `StockMovement.quantity` possui `CHECK > 0`, e outro `CHECK` valida a combinação de tipo com origem/destino e exige motivo para ajustes. A chave opcional `(companyId, idempotencyKey)` é única. Relações compostas impedem referências entre empresas. Um trigger bloqueia `UPDATE` e `DELETE` de movimentações; a configuração de sessão `erp.allow_stock_movement_mutation=on` existe apenas para manutenção controlada.
 
@@ -88,4 +90,6 @@ A chave estrangeira composta `(companyId, warehouseId) → Warehouse(companyId, 
 
 Regras de integridade: um item não pode ter quantidade ou preço negativo; `total = quantidade × preço - desconto`; uma fatura não pode apontar simultaneamente para compra e venda; pagamentos cancelados não compõem saldo.
 
-`PurchaseOrder.status` usa `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `PARTIALLY_RECEIVED`, `RECEIVED` e `CANCELLED`; os estados de recebimento não são manipulados nesta etapa. Número é único por empresa. Produto é único por pedido. Checks garantem quantidade positiva, custos e valores não negativos e `receivedQuantity` entre zero e a quantidade pedida. Snapshots mínimos preservam nome, SKU e unidade históricos.
+`PurchaseOrder.status` usa `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `PARTIALLY_RECEIVED`, `RECEIVED` e `CANCELLED`. Número é único por empresa. Produto é único por pedido. Checks garantem quantidade positiva, custos e valores não negativos e `receivedQuantity` entre zero e a quantidade pedida. Snapshots mínimos preservam nome, SKU e unidade históricos.
+
+`PurchaseReceiptSequence` gera `PR-*` atomicamente por empresa. `PurchaseReceipt` é único por número e por `(companyId, idempotencyKey)`. `requestHash` diferencia retry idêntico de reutilização indevida. Os itens congelam as quantidades pedida, anterior, atual e restante e usam `CHECK` para preservar sua soma. Triggers bloqueiam atualização/exclusão de cabeçalho e itens, salvo manutenção explicitamente habilitada. Movimentos usam `referenceType=PURCHASE_RECEIPT` e `referenceId=receiptId`, sem FK polimórfica.

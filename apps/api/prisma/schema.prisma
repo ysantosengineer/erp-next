@@ -44,29 +44,32 @@ enum PurchaseOrderStatus {
 }
 
 model Company {
-  id                    String                 @id @default(uuid()) @db.Uuid
-  name                  String
-  document              String?                @unique
-  isActive              Boolean                @default(true)
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  users                 User[]
-  roles                 Role[]
-  categories            Category[]
-  units                 UnitOfMeasure[]
-  suppliers             Supplier[]
-  products              Product[]
-  customers             Customer[]
-  warehouses            Warehouse[]
-  locations             StockLocation[]
-  inventoryBalances     InventoryBalance[]
-  stockMovements        StockMovement[]
-  inventoryCounts       InventoryCount[]
-  inventoryCountItems   InventoryCountItem[]
-  purchaseOrders        PurchaseOrder[]
-  purchaseOrderItems    PurchaseOrderItem[]
-  purchaseOrderSequence PurchaseOrderSequence?
-  auditLogs             AuditLog[]
+  id                      String                   @id @default(uuid()) @db.Uuid
+  name                    String
+  document                String?                  @unique
+  isActive                Boolean                  @default(true)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  users                   User[]
+  roles                   Role[]
+  categories              Category[]
+  units                   UnitOfMeasure[]
+  suppliers               Supplier[]
+  products                Product[]
+  customers               Customer[]
+  warehouses              Warehouse[]
+  locations               StockLocation[]
+  inventoryBalances       InventoryBalance[]
+  stockMovements          StockMovement[]
+  inventoryCounts         InventoryCount[]
+  inventoryCountItems     InventoryCountItem[]
+  purchaseOrders          PurchaseOrder[]
+  purchaseOrderItems      PurchaseOrderItem[]
+  purchaseOrderSequence   PurchaseOrderSequence?
+  purchaseReceipts        PurchaseReceipt[]
+  purchaseReceiptItems    PurchaseReceiptItem[]
+  purchaseReceiptSequence PurchaseReceiptSequence?
+  auditLogs               AuditLog[]
 }
 
 model Warehouse {
@@ -90,9 +93,9 @@ model Warehouse {
 }
 
 model StockLocation {
-  id                   String               @id @default(uuid()) @db.Uuid
-  companyId            String               @db.Uuid
-  warehouseId          String               @db.Uuid
+  id                   String                @id @default(uuid()) @db.Uuid
+  companyId            String                @db.Uuid
+  warehouseId          String                @db.Uuid
   code                 String
   description          String?
   zone                 String?
@@ -100,16 +103,17 @@ model StockLocation {
   rack                 String?
   level                String?
   position             String?
-  capacity             Decimal?             @db.Decimal(14, 3)
-  isActive             Boolean              @default(true)
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
-  company              Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  warehouse            Warehouse            @relation(fields: [companyId, warehouseId], references: [companyId, id], onDelete: Restrict)
+  capacity             Decimal?              @db.Decimal(14, 3)
+  isActive             Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  company              Company               @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  warehouse            Warehouse             @relation(fields: [companyId, warehouseId], references: [companyId, id], onDelete: Restrict)
   inventoryBalances    InventoryBalance[]
-  sourceMovements      StockMovement[]      @relation("StockMovementSource")
-  destinationMovements StockMovement[]      @relation("StockMovementDestination")
+  sourceMovements      StockMovement[]       @relation("StockMovementSource")
+  destinationMovements StockMovement[]       @relation("StockMovementDestination")
   inventoryCountItems  InventoryCountItem[]
+  purchaseReceiptItems PurchaseReceiptItem[]
 
   @@unique([warehouseId, code])
   @@unique([companyId, id])
@@ -241,33 +245,34 @@ model UnitOfMeasure {
 }
 
 model Product {
-  id                  String               @id @default(uuid()) @db.Uuid
-  companyId           String               @db.Uuid
-  categoryId          String               @db.Uuid
-  unitId              String               @db.Uuid
-  primarySupplierId   String?              @db.Uuid
-  name                String
-  description         String?
-  sku                 String
-  barcode             String?
-  costPrice           Decimal              @db.Decimal(14, 2)
-  salePrice           Decimal              @db.Decimal(14, 2)
-  weight              Decimal?             @db.Decimal(14, 3)
-  height              Decimal?             @db.Decimal(14, 3)
-  width               Decimal?             @db.Decimal(14, 3)
-  length              Decimal?             @db.Decimal(14, 3)
-  minimumStock        Decimal              @default(0) @db.Decimal(14, 3)
-  isActive            Boolean              @default(true)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  company             Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  category            Category             @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  unit                UnitOfMeasure        @relation(fields: [unitId], references: [id], onDelete: Restrict)
-  primarySupplier     Supplier?            @relation(fields: [primarySupplierId], references: [id], onDelete: Restrict)
-  inventoryBalances   InventoryBalance[]
-  stockMovements      StockMovement[]
-  inventoryCountItems InventoryCountItem[]
-  purchaseOrderItems  PurchaseOrderItem[]
+  id                   String                @id @default(uuid()) @db.Uuid
+  companyId            String                @db.Uuid
+  categoryId           String                @db.Uuid
+  unitId               String                @db.Uuid
+  primarySupplierId    String?               @db.Uuid
+  name                 String
+  description          String?
+  sku                  String
+  barcode              String?
+  costPrice            Decimal               @db.Decimal(14, 2)
+  salePrice            Decimal               @db.Decimal(14, 2)
+  weight               Decimal?              @db.Decimal(14, 3)
+  height               Decimal?              @db.Decimal(14, 3)
+  width                Decimal?              @db.Decimal(14, 3)
+  length               Decimal?              @db.Decimal(14, 3)
+  minimumStock         Decimal               @default(0) @db.Decimal(14, 3)
+  isActive             Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  company              Company               @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  category             Category              @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  unit                 UnitOfMeasure         @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  primarySupplier      Supplier?             @relation(fields: [primarySupplierId], references: [id], onDelete: Restrict)
+  inventoryBalances    InventoryBalance[]
+  stockMovements       StockMovement[]
+  inventoryCountItems  InventoryCountItem[]
+  purchaseOrderItems   PurchaseOrderItem[]
+  purchaseReceiptItems PurchaseReceiptItem[]
 
   @@unique([companyId, sku])
   @@unique([companyId, barcode])
@@ -302,6 +307,7 @@ model User {
   createdPurchaseOrders    PurchaseOrder[]      @relation("PurchaseOrderCreator")
   approvedPurchaseOrders   PurchaseOrder[]      @relation("PurchaseOrderApprover")
   cancelledPurchaseOrders  PurchaseOrder[]      @relation("PurchaseOrderCanceller")
+  receivedPurchaseReceipts PurchaseReceipt[]    @relation("PurchaseReceiptReceiver")
   company                  Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
 
   @@unique([companyId, id])
@@ -419,6 +425,13 @@ model PurchaseOrderSequence {
   company    Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
 }
 
+model PurchaseReceiptSequence {
+  companyId  String   @id @db.Uuid
+  lastNumber Int      @default(0)
+  updatedAt  DateTime @updatedAt
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+}
+
 model PurchaseOrder {
   id                   String              @id @default(uuid()) @db.Uuid
   companyId            String              @db.Uuid
@@ -448,6 +461,7 @@ model PurchaseOrder {
   approvedBy           User?               @relation("PurchaseOrderApprover", fields: [companyId, approvedByUserId], references: [companyId, id], onDelete: Restrict)
   cancelledBy          User?               @relation("PurchaseOrderCanceller", fields: [companyId, cancelledByUserId], references: [companyId, id], onDelete: Restrict)
   items                PurchaseOrderItem[]
+  receipts             PurchaseReceipt[]
 
   @@unique([companyId, number])
   @@unique([companyId, id])
@@ -458,26 +472,81 @@ model PurchaseOrder {
 }
 
 model PurchaseOrderItem {
-  id               String        @id @default(uuid()) @db.Uuid
-  companyId        String        @db.Uuid
-  purchaseOrderId  String        @db.Uuid
-  productId        String        @db.Uuid
+  id               String                @id @default(uuid()) @db.Uuid
+  companyId        String                @db.Uuid
+  purchaseOrderId  String                @db.Uuid
+  productId        String                @db.Uuid
   productName      String
   productSku       String
   unitSymbol       String
-  quantity         Decimal       @db.Decimal(18, 4)
-  unitCost         Decimal       @db.Decimal(14, 2)
-  subtotal         Decimal       @db.Decimal(14, 2)
-  receivedQuantity Decimal       @default(0) @db.Decimal(18, 4)
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  company          Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  purchaseOrder    PurchaseOrder @relation(fields: [companyId, purchaseOrderId], references: [companyId, id], onDelete: Restrict)
-  product          Product       @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
+  quantity         Decimal               @db.Decimal(18, 4)
+  unitCost         Decimal               @db.Decimal(14, 2)
+  subtotal         Decimal               @db.Decimal(14, 2)
+  receivedQuantity Decimal               @default(0) @db.Decimal(18, 4)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  company          Company               @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  purchaseOrder    PurchaseOrder         @relation(fields: [companyId, purchaseOrderId], references: [companyId, id], onDelete: Restrict)
+  product          Product               @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
+  receiptItems     PurchaseReceiptItem[]
 
   @@unique([companyId, purchaseOrderId, productId])
+  @@unique([companyId, id])
   @@index([purchaseOrderId])
   @@index([productId])
+}
+
+model PurchaseReceipt {
+  id               String                @id @default(uuid()) @db.Uuid
+  companyId        String                @db.Uuid
+  purchaseOrderId  String                @db.Uuid
+  number           String
+  receivedAt       DateTime              @default(now())
+  notes            String?
+  receivedByUserId String                @db.Uuid
+  idempotencyKey   String
+  requestHash      String
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  company          Company               @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  purchaseOrder    PurchaseOrder         @relation(fields: [companyId, purchaseOrderId], references: [companyId, id], onDelete: Restrict)
+  receivedBy       User                  @relation("PurchaseReceiptReceiver", fields: [companyId, receivedByUserId], references: [companyId, id], onDelete: Restrict)
+  items            PurchaseReceiptItem[]
+
+  @@unique([companyId, number])
+  @@unique([companyId, idempotencyKey])
+  @@unique([companyId, id])
+  @@index([companyId, receivedAt])
+  @@index([purchaseOrderId, receivedAt])
+  @@index([receivedByUserId, receivedAt])
+}
+
+model PurchaseReceiptItem {
+  id                         String            @id @default(uuid()) @db.Uuid
+  companyId                  String            @db.Uuid
+  purchaseReceiptId          String            @db.Uuid
+  purchaseOrderItemId        String            @db.Uuid
+  productId                  String            @db.Uuid
+  locationId                 String            @db.Uuid
+  orderedQuantity            Decimal           @db.Decimal(18, 4)
+  previouslyReceivedQuantity Decimal           @db.Decimal(18, 4)
+  receivedQuantity           Decimal           @db.Decimal(18, 4)
+  remainingQuantity          Decimal           @db.Decimal(18, 4)
+  unitCost                   Decimal           @db.Decimal(14, 2)
+  discrepancyReason          String?
+  createdAt                  DateTime          @default(now())
+  updatedAt                  DateTime          @updatedAt
+  company                    Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  purchaseReceipt            PurchaseReceipt   @relation(fields: [companyId, purchaseReceiptId], references: [companyId, id], onDelete: Restrict)
+  purchaseOrderItem          PurchaseOrderItem @relation(fields: [companyId, purchaseOrderItemId], references: [companyId, id], onDelete: Restrict)
+  product                    Product           @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
+  location                   StockLocation     @relation(fields: [companyId, locationId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([companyId, purchaseReceiptId, purchaseOrderItemId])
+  @@index([purchaseReceiptId])
+  @@index([purchaseOrderItemId])
+  @@index([productId])
+  @@index([locationId])
 }
 
 model Role {

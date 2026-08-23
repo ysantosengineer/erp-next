@@ -81,9 +81,16 @@
 - A listagem aceita paginação, busca, status, fornecedor, depósito, períodos de criação/entrega e ordenação por whitelist. O response exibe o número humano e snapshots dos itens.
 - Criação e edição aceitam fornecedor, depósito, previsão `YYYY-MM-DD`, observações, valores adicionais e a lista completa de itens. Número, empresa, status, responsáveis, subtotais e total nunca vêm do cliente.
 - Somente `DRAFT` é editável. Submit produz `PENDING_APPROVAL`; approve produz `APPROVED`; cancel exige motivo. Concorrência ou transição inválida retorna `409` com código de domínio.
-- Nenhum endpoint de recebimento existe nesta etapa. Criar, editar, enviar, aprovar ou cancelar não altera saldos nem cria movimentações.
+- Criar, editar, enviar, aprovar ou cancelar pedido não altera saldos nem cria movimentações. Somente a confirmação de recebimento possui efeito físico.
+
+### Recebimentos de compras
+
+- `GET /purchase-receipts`, `GET /purchase-receipts/options` e `GET /purchase-receipts/:id` exigem `purchase_receipts.read`; `POST /purchase-receipts` e `GET /purchase-orders/:id/receivable` exigem `purchase_receipts.create`.
+- A listagem aceita paginação, pesquisa, pedido, fornecedor, depósito, período e ordenação. O detalhe retorna snapshots, quantidades, localização, responsável e pedido de origem.
+- A criação aceita apenas `purchaseOrderId`, `idempotencyKey`, observações e itens com `purchaseOrderItemId`, `locationId`, quantidade positiva e divergência opcional. Tenant, número, produto, custo, saldos, status e quantidades históricas são derivados pelo servidor.
+- Confirmações parciais e múltiplas geram movimentos `ENTRY` referenciados ao recebimento, atualizam saldo/acumulado/status atomicamente e são imutáveis. Excesso, estado inválido, inventário ativo, concorrência e idempotência reutilizada retornam códigos de domínio sem expor Prisma.
 | Vendas | `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm`, `POST /sales-orders/:id/cancel` |
-| Compras | `GET,POST /purchase-orders`, `GET,PATCH /purchase-orders/:id`, comandos `submit`, `approve` e `cancel` |
+| Compras | Pedidos em `/purchase-orders`; recebimentos em `GET,POST /purchase-receipts`, detalhe e `/purchase-orders/:id/receivable` |
 | Estoque | `GET /inventory`, `GET /inventory/products/:productId`, `GET /inventory/movements`; comandos em `/inventory/movements/{entry,exit,adjustment,transfer}` |
 | Financeiro | `GET,POST /invoices`, `GET /invoices/:id`, `POST /invoices/:id/payments`, `POST /payments/:id/cancel` |
 | Relatórios | `GET /reports/dashboard`, `GET /reports/sales`, `GET /reports/inventory`, `GET /reports/financial` |

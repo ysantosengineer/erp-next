@@ -112,6 +112,17 @@ export function Sidebar() {
             Pedidos de compra
           </Link>
         </Can>
+        <Can permission={PERMISSIONS.PURCHASE_RECEIPTS_READ}>
+          <Link
+            className={cn(
+              navigationClass,
+              pathname.startsWith('/purchases/receipts') && 'bg-slate-100 text-slate-950',
+            )}
+            href="/purchases/receipts"
+          >
+            Recebimentos
+          </Link>
+        </Can>
         <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
           Administração
         </p>

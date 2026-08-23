@@ -55,6 +55,8 @@ export const PERMISSIONS = {
   PURCHASE_ORDERS_SUBMIT: 'purchase_orders.submit',
   PURCHASE_ORDERS_APPROVE: 'purchase_orders.approve',
   PURCHASE_ORDERS_CANCEL: 'purchase_orders.cancel',
+  PURCHASE_RECEIPTS_READ: 'purchase_receipts.read',
+  PURCHASE_RECEIPTS_CREATE: 'purchase_receipts.create',
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -116,6 +118,8 @@ export const PERMISSION_LABELS: Readonly<Record<string, string>> = {
   'purchase_orders.submit': 'Enviar pedidos para aprovação',
   'purchase_orders.approve': 'Aprovar pedidos de compra',
   'purchase_orders.cancel': 'Cancelar pedidos de compra',
+  'purchase_receipts.read': 'Visualizar recebimentos de compras',
+  'purchase_receipts.create': 'Confirmar recebimentos de compras',
 };
 
 export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
@@ -132,4 +136,5 @@ export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
   'inventory.movements': 'Movimentações de estoque',
   inventory_counts: 'Inventários físicos',
   purchase_orders: 'Pedidos de compra',
+  purchase_receipts: 'Recebimentos de compras',
 };

@@ -20,7 +20,7 @@ Estado atual: categorias, unidades de medida, fornecedores, produtos, clientes, 
 
 Pedidos de compra, recebimento, saldo por armazém e movimentações imutáveis.
 
-Estado atual: o núcleo de estoque e o inventário físico estão implementados. Pedidos de compra também estão implementados com numeração concorrente por empresa, itens e custos congelados, cálculos decimais, aprovação, cancelamento, auditoria, permissões e interfaces `/purchases/orders`. Aprovação não altera estoque; recebimentos permanecem pendentes.
+Estado atual: núcleo de estoque, inventário físico, pedidos e recebimentos de compra estão implementados. Aprovação permanece comercial; recebimentos parciais/múltiplos/totais geram entradas, atualizam saldos e pedidos atomicamente, com concorrência, idempotência, auditoria e interfaces dedicadas. A Sprint 3 aguarda somente estabilização integrada e o escopo de vendas posterior não foi antecipado.
 
 ## Sprint 4 — Vendas
 

@@ -15,6 +15,12 @@ vi.mock('../hooks/use-purchase-orders', () => ({
   useApprovePurchaseOrder: () => ({ mutateAsync: approve }),
   useCancelPurchaseOrder: () => ({ mutateAsync: cancel, isPending: false }),
 }));
+vi.mock('../../purchase-receipts/hooks/use-purchase-receipts', () => ({
+  usePurchaseReceiptsByOrder: () => ({
+    isLoading: false,
+    data: { data: [], meta: { page: 1, limit: 100, total: 0, totalPages: 0 } },
+  }),
+}));
 const order = {
   id: 'order-1',
   number: 'PO-000001',
@@ -106,5 +112,19 @@ describe('PurchaseOrderDetailPage', () => {
     });
     render(<PurchaseOrderDetailPage orderId="order-1" />);
     expect(screen.queryByRole('link', { name: 'Editar' })).not.toBeInTheDocument();
+  });
+  it('oferece recebimento em pedido aprovado somente com permissão', () => {
+    permissions.push(PERMISSIONS.PURCHASE_RECEIPTS_CREATE);
+    detail.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: { ...order, status: 'APPROVED' },
+      refetch: vi.fn(),
+    });
+    render(<PurchaseOrderDetailPage orderId="order-1" />);
+    expect(screen.getByRole('link', { name: 'Receber mercadoria' })).toHaveAttribute(
+      'href',
+      '/purchases/orders/order-1/receive',
+    );
   });
 });

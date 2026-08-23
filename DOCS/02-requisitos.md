@@ -127,8 +127,17 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 - Aprovar pedido registra usuário/data, mas não altera `InventoryBalance`, não cria `StockMovement` e não atualiza o custo do produto. Recebimentos parciais e totais pertencem à etapa seguinte.
 - As permissões são `purchase_orders.read`, `create`, `update`, `submit`, `approve` e `cancel`.
 
+### Recebimentos de compras
+
+- Somente pedidos `APPROVED` ou `PARTIALLY_RECEIVED` podem ser recebidos. Cada confirmação é imutável, vinculada ao pedido e numerada como `PR-000001` por contador atômico da empresa.
+- O backend calcula a quantidade pendente, impede excesso e permite múltiplos recebimentos parciais. Cada item usa uma localização ativa do depósito do pedido; depósito/localização inativos ou bloqueados por inventário impedem a operação.
+- Histórico (`PurchaseReceiptItem`) e acumulado (`PurchaseOrderItem.receivedQuantity`) são atualizados juntamente com `InventoryBalance`, `StockMovement` de entrada e status do pedido em uma transação `SERIALIZABLE` com rollback total.
+- A chave de idempotência é obrigatória por empresa. Repetir o mesmo payload devolve o recebimento existente; reutilizar a chave com conteúdo diferente retorna conflito.
+- Produto ou fornecedor inativados depois da aprovação não invalidam o compromisso existente. Custo do produto, financeiro, fiscal, estorno e recebimento avulso não são alterados nesta etapa.
+- As permissões são `purchase_receipts.read` e `purchase_receipts.create`.
+
 - Pedidos de venda possuem cliente, itens, quantidades, preços congelados no item, descontos, totais e status: rascunho, confirmado, cancelado e faturado.
-- Compras possuem fornecedor, depósito, itens e custos congelados, totais e estados de rascunho, aprovação e cancelamento. Estados de recebimento existem somente para evolução do módulo.
+- Compras possuem fornecedor, depósito, itens e custos congelados, totais, aprovação e recebimentos parciais ou totais rastreáveis.
 - Confirmar venda reserva/baixa estoque somente segundo a política documentada na arquitetura; o MVP baixará estoque na confirmação. Estoque insuficiente bloqueia confirmação.
 - Receber compra gera entrada de estoque. Cancelamentos não podem deixar saldos negativos e devem criar estorno quando aplicável.
 - Cada alteração de estoque gera uma movimentação imutável com tipo, quantidade, origem e usuário responsável.

@@ -61,9 +61,10 @@ type MovementCommand = {
 };
 
 type MovementExecutionOptions = {
-  referenceType?: 'MANUAL' | 'INVENTORY';
+  referenceType?: 'MANUAL' | 'INVENTORY' | 'PURCHASE_RECEIPT';
   referenceId?: string;
   bypassInventoryLock?: boolean;
+  allowInactiveProduct?: boolean;
 };
 
 export type InventoryAdjustmentCommand = {
@@ -72,6 +73,14 @@ export type InventoryAdjustmentCommand = {
   locationId: string;
   quantity: string;
   direction: 'IN' | 'OUT';
+  reason: string;
+};
+
+export type PurchaseReceiptEntryCommand = {
+  purchaseReceiptId: string;
+  productId: string;
+  locationId: string;
+  quantity: string;
   reason: string;
 };
 
@@ -343,6 +352,32 @@ export class InventoryService {
     return movement.id;
   }
 
+  async applyPurchaseReceiptEntry(
+    tx: Prisma.TransactionClient,
+    identity: AuthenticatedUser,
+    command: PurchaseReceiptEntryCommand,
+    requestId: string,
+  ): Promise<string> {
+    const movement = await this.executeTransaction(
+      tx,
+      identity,
+      {
+        type: StockMovementType.ENTRY,
+        productId: command.productId,
+        quantity: command.quantity,
+        destinationLocationId: command.locationId,
+        reason: command.reason,
+      },
+      requestId,
+      {
+        referenceType: 'PURCHASE_RECEIPT',
+        referenceId: command.purchaseReceiptId,
+        allowInactiveProduct: true,
+      },
+    );
+    return movement.id;
+  }
+
   private async execute(identity: AuthenticatedUser, command: MovementCommand, requestId: string) {
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       try {
@@ -420,7 +455,7 @@ export class InventoryService {
         code: 'PRODUCT_NOT_FOUND',
         message: 'Produto não encontrado.',
       });
-    if (!product.isActive)
+    if (!product.isActive && !options.allowInactiveProduct)
       throw new UnprocessableEntityException({
         code: 'PRODUCT_INACTIVE',
         message: 'Produto inativo não pode ser movimentado.',
