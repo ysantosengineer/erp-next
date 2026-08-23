@@ -60,4 +60,13 @@ describe('Sidebar', () => {
       '/inventory/counts',
     );
   });
+
+  it('exibe pedidos de compra somente com permissão de leitura', () => {
+    useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.PURCHASE_ORDERS_READ] } });
+    render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Pedidos de compra' })).toHaveAttribute(
+      'href',
+      '/purchases/orders',
+    );
+  });
 });

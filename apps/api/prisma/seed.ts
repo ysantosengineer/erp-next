@@ -81,6 +81,12 @@ async function main(): Promise<void> {
     ['inventory_counts', 'recount', 'Solicita e registra recontagens.'],
     ['inventory_counts', 'approve', 'Aprova inventários e gera ajustes.'],
     ['inventory_counts', 'cancel', 'Cancela inventários físicos.'],
+    ['purchase_orders', 'read', 'Consulta pedidos de compra.'],
+    ['purchase_orders', 'create', 'Cria pedidos de compra.'],
+    ['purchase_orders', 'update', 'Edita pedidos de compra em rascunho.'],
+    ['purchase_orders', 'submit', 'Envia pedidos de compra para aprovação.'],
+    ['purchase_orders', 'approve', 'Aprova pedidos de compra.'],
+    ['purchase_orders', 'cancel', 'Cancela pedidos de compra.'],
   ] as const;
   const newPermissions = await Promise.all(
     businessPermissions.map(([resource, action, description]) =>

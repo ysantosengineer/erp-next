@@ -49,6 +49,12 @@ export const PERMISSIONS = {
   INVENTORY_COUNTS_RECOUNT: 'inventory_counts.recount',
   INVENTORY_COUNTS_APPROVE: 'inventory_counts.approve',
   INVENTORY_COUNTS_CANCEL: 'inventory_counts.cancel',
+  PURCHASE_ORDERS_READ: 'purchase_orders.read',
+  PURCHASE_ORDERS_CREATE: 'purchase_orders.create',
+  PURCHASE_ORDERS_UPDATE: 'purchase_orders.update',
+  PURCHASE_ORDERS_SUBMIT: 'purchase_orders.submit',
+  PURCHASE_ORDERS_APPROVE: 'purchase_orders.approve',
+  PURCHASE_ORDERS_CANCEL: 'purchase_orders.cancel',
 } as const;
 
 export const ADMINISTRATIVE_PERMISSIONS = Object.values(PERMISSIONS);

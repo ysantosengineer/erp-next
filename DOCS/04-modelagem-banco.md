@@ -68,6 +68,8 @@ A chave estrangeira composta `(companyId, warehouseId) → Warehouse(companyId, 
 | StockMovement | id, companyId, productId, type, quantity, sourceLocationId, destinationLocationId, reason, referenceType, referenceId, idempotencyKey, performedByUserId, createdAt | N:1 Company, Product, User; origem/destino opcionais conforme o tipo |
 | InventoryCount | id, companyId, warehouseId, status, description, datas do ciclo, createdByUserId, approvedByUserId, cancelledByUserId, timestamps | N:1 Company, Warehouse e usuários; 1:N InventoryCountItem |
 | InventoryCountItem | id, companyId, inventoryCountId, productId, locationId, systemQuantity, firstCountQuantity, recountQuantity, usuários e datas | N:1 InventoryCount, Product, StockLocation e usuários |
+| PurchaseOrder | id, companyId, number, status, supplierId, warehouseId, previsão, valores, usuários e datas | N:1 Company, Supplier, Warehouse e usuários; 1:N PurchaseOrderItem |
+| PurchaseOrderItem | id, companyId, purchaseOrderId, productId, snapshots, quantity, unitCost, subtotal, receivedQuantity | N:1 PurchaseOrder e Product |
 
 `InventoryBalance.quantity` possui `CHECK >= 0`. `StockMovement.quantity` possui `CHECK > 0`, e outro `CHECK` valida a combinação de tipo com origem/destino e exige motivo para ajustes. A chave opcional `(companyId, idempotencyKey)` é única. Relações compostas impedem referências entre empresas. Um trigger bloqueia `UPDATE` e `DELETE` de movimentações; a configuração de sessão `erp.allow_stock_movement_mutation=on` existe apenas para manutenção controlada.
 
@@ -79,10 +81,11 @@ A chave estrangeira composta `(companyId, warehouseId) → Warehouse(companyId, 
 | --- | --- | --- |
 | SalesOrder | id, number, status, subtotal, discount, total, confirmedAt | N:1 Customer; 1:N SalesOrderItem; 0:N Invoice |
 | SalesOrderItem | id, quantity, unitPrice, discount, total | N:1 SalesOrder e Product |
-| PurchaseOrder | id, number, status, subtotal, discount, total, receivedAt | N:1 Supplier; 1:N PurchaseOrderItem; 0:N Invoice |
-| PurchaseOrderItem | id, quantity, unitCost, discount, total | N:1 PurchaseOrder e Product |
+| PurchaseOrderSequence | companyId, lastNumber, updatedAt | 1:1 Company; contador atômico por empresa |
 | Invoice | id, direction, status, dueDate, amount, balance | opcionalmente ligada a venda ou compra; 1:N Payment |
 | Payment | id, paidAt, amount, method, status, reference | N:1 Invoice; N:1 User |
 | AuditLog | id, companyId, entity, entityId, action, before, after, occurredAt | N:1 User; N:1 Company opcional |
 
 Regras de integridade: um item não pode ter quantidade ou preço negativo; `total = quantidade × preço - desconto`; uma fatura não pode apontar simultaneamente para compra e venda; pagamentos cancelados não compõem saldo.
+
+`PurchaseOrder.status` usa `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `PARTIALLY_RECEIVED`, `RECEIVED` e `CANCELLED`; os estados de recebimento não são manipulados nesta etapa. Número é único por empresa. Produto é único por pedido. Checks garantem quantidade positiva, custos e valores não negativos e `receivedQuantity` entre zero e a quantidade pedida. Snapshots mínimos preservam nome, SKU e unidade históricos.

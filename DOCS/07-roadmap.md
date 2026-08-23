@@ -20,7 +20,7 @@ Estado atual: categorias, unidades de medida, fornecedores, produtos, clientes, 
 
 Pedidos de compra, recebimento, saldo por armazém e movimentações imutáveis.
 
-Estado atual: o núcleo de estoque por endereço está implementado com saldo decimal, entradas, saídas, ajustes, transferências, idempotência, concorrência serializável, auditoria, permissões e interfaces `/inventory` e `/inventory/movements`. O inventário físico por depósito também está implementado com snapshot, bloqueio operacional, contagem, recontagem, aprovação transacional, ajustes rastreáveis e interfaces próprias. Pedidos e recebimento de compras permanecem pendentes.
+Estado atual: o núcleo de estoque e o inventário físico estão implementados. Pedidos de compra também estão implementados com numeração concorrente por empresa, itens e custos congelados, cálculos decimais, aprovação, cancelamento, auditoria, permissões e interfaces `/purchases/orders`. Aprovação não altera estoque; recebimentos permanecem pendentes.
 
 ## Sprint 4 — Vendas
 

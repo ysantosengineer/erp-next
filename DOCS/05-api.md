@@ -74,8 +74,16 @@
 - `POST /inventory/counts/:id/approve` aprova atomicamente e gera ajustes; `POST /:id/cancel` cancela sem alterar saldo. Recursos aprovados e cancelados são imutáveis.
 - Os guards usam `inventory_counts.read`, `create`, `count`, `recount`, `approve` e `cancel`. O request nunca aceita tenant, snapshot, responsáveis ou datas controladas pelo servidor.
 - Movimentações externas no depósito ativo retornam `422 LOCATION_UNDER_INVENTORY`; estados inválidos usam códigos como `COUNT_REQUIRED`, `RECOUNT_REQUIRED`, `INVENTORY_NOT_READY`, `INVENTORY_ALREADY_APPROVED` e `INVENTORY_CANCELLED`.
+
+### Pedidos de compra
+
+- `GET,POST /purchase-orders`, `GET,PATCH /purchase-orders/:id`, `POST /:id/submit`, `/approve` e `/cancel` usam as permissões correspondentes `purchase_orders.*`. `GET /purchase-orders/options` fornece somente opções ativas do tenant e busca remota limitada de produtos.
+- A listagem aceita paginação, busca, status, fornecedor, depósito, períodos de criação/entrega e ordenação por whitelist. O response exibe o número humano e snapshots dos itens.
+- Criação e edição aceitam fornecedor, depósito, previsão `YYYY-MM-DD`, observações, valores adicionais e a lista completa de itens. Número, empresa, status, responsáveis, subtotais e total nunca vêm do cliente.
+- Somente `DRAFT` é editável. Submit produz `PENDING_APPROVAL`; approve produz `APPROVED`; cancel exige motivo. Concorrência ou transição inválida retorna `409` com código de domínio.
+- Nenhum endpoint de recebimento existe nesta etapa. Criar, editar, enviar, aprovar ou cancelar não altera saldos nem cria movimentações.
 | Vendas | `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm`, `POST /sales-orders/:id/cancel` |
-| Compras | Rotas equivalentes em `/purchase-orders`, com `POST /:id/receive` |
+| Compras | `GET,POST /purchase-orders`, `GET,PATCH /purchase-orders/:id`, comandos `submit`, `approve` e `cancel` |
 | Estoque | `GET /inventory`, `GET /inventory/products/:productId`, `GET /inventory/movements`; comandos em `/inventory/movements/{entry,exit,adjustment,transfer}` |
 | Financeiro | `GET,POST /invoices`, `GET /invoices/:id`, `POST /invoices/:id/payments`, `POST /payments/:id/cancel` |
 | Relatórios | `GET /reports/dashboard`, `GET /reports/sales`, `GET /reports/inventory`, `GET /reports/financial` |

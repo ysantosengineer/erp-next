@@ -49,6 +49,12 @@ export const PERMISSIONS = {
   INVENTORY_COUNTS_RECOUNT: 'inventory_counts.recount',
   INVENTORY_COUNTS_APPROVE: 'inventory_counts.approve',
   INVENTORY_COUNTS_CANCEL: 'inventory_counts.cancel',
+  PURCHASE_ORDERS_READ: 'purchase_orders.read',
+  PURCHASE_ORDERS_CREATE: 'purchase_orders.create',
+  PURCHASE_ORDERS_UPDATE: 'purchase_orders.update',
+  PURCHASE_ORDERS_SUBMIT: 'purchase_orders.submit',
+  PURCHASE_ORDERS_APPROVE: 'purchase_orders.approve',
+  PURCHASE_ORDERS_CANCEL: 'purchase_orders.cancel',
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -104,6 +110,12 @@ export const PERMISSION_LABELS: Readonly<Record<string, string>> = {
   'inventory_counts.recount': 'Solicitar e registrar recontagens',
   'inventory_counts.approve': 'Aprovar inventários físicos',
   'inventory_counts.cancel': 'Cancelar inventários físicos',
+  'purchase_orders.read': 'Visualizar pedidos de compra',
+  'purchase_orders.create': 'Criar pedidos de compra',
+  'purchase_orders.update': 'Editar pedidos de compra',
+  'purchase_orders.submit': 'Enviar pedidos para aprovação',
+  'purchase_orders.approve': 'Aprovar pedidos de compra',
+  'purchase_orders.cancel': 'Cancelar pedidos de compra',
 };
 
 export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
@@ -119,4 +131,5 @@ export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
   inventory: 'Estoque',
   'inventory.movements': 'Movimentações de estoque',
   inventory_counts: 'Inventários físicos',
+  purchase_orders: 'Pedidos de compra',
 };

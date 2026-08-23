@@ -118,8 +118,17 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 - As permissões específicas são `inventory_counts.read`, `inventory_counts.create`, `inventory_counts.count`, `inventory_counts.recount`, `inventory_counts.approve` e `inventory_counts.cancel`.
 - Reservas, lotes, números de série, compras e vendas integradas permanecem fora desta etapa.
 
+### Pedidos de compra
+
+- Pedidos de compra pertencem a uma empresa, exigem fornecedor e depósito de destino ativos e contêm ao menos um produto ativo. Recursos externos à empresa são tratados como não encontrados.
+- O número `PO-000001` é gerado por contador atômico por empresa. Itens congelam nome, SKU e símbolo da unidade; quantidade usa `Decimal(18,4)` e custos/totais usam `Decimal(14,2)`.
+- O backend calcula subtotal por item, subtotal do pedido e `total = subtotal - desconto + frete + outros`. Desconto é financeiro e aplicado somente ao pedido.
+- O fluxo é `DRAFT → PENDING_APPROVAL → APPROVED`; rascunhos, pendentes e aprovados podem ser cancelados com motivo. Somente rascunhos são editáveis e cancelados não reabrem.
+- Aprovar pedido registra usuário/data, mas não altera `InventoryBalance`, não cria `StockMovement` e não atualiza o custo do produto. Recebimentos parciais e totais pertencem à etapa seguinte.
+- As permissões são `purchase_orders.read`, `create`, `update`, `submit`, `approve` e `cancel`.
+
 - Pedidos de venda possuem cliente, itens, quantidades, preços congelados no item, descontos, totais e status: rascunho, confirmado, cancelado e faturado.
-- Compras possuem fornecedor, itens, custos congelados no item, totais e status: rascunho, confirmado, recebido e cancelado.
+- Compras possuem fornecedor, depósito, itens e custos congelados, totais e estados de rascunho, aprovação e cancelamento. Estados de recebimento existem somente para evolução do módulo.
 - Confirmar venda reserva/baixa estoque somente segundo a política documentada na arquitetura; o MVP baixará estoque na confirmação. Estoque insuficiente bloqueia confirmação.
 - Receber compra gera entrada de estoque. Cancelamentos não podem deixar saldos negativos e devem criar estorno quando aplicável.
 - Cada alteração de estoque gera uma movimentação imutável com tipo, quantidade, origem e usuário responsável.
