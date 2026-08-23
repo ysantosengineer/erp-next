@@ -99,10 +99,20 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 - Categorias organizam produtos e não podem ser removidas enquanto tiverem produtos ativos.
 - Depósitos pertencem a uma empresa, têm nome, código único por empresa, descrição e status. Um depósito só pode ser inativado depois de todos os seus endereços ativos serem inativados.
 - Endereços de estoque pertencem simultaneamente à empresa e a um depósito, usam código único por depósito e podem informar zona, corredor, prateleira, nível, posição e capacidade lógica não negativa. Novos endereços e reativações exigem depósito ativo.
-- Esta etapa não mantém saldo, reserva ou movimentação de estoque; essas regras entram nos módulos transacionais posteriores.
+- O cadastro de depósitos e endereços não altera saldos. Saldos e movimentações são mantidos pelo módulo transacional de estoque.
 - Armazéns possuem nome e endereço opcional.
 
 ## Operações
+
+### Estoque
+
+- O saldo atual é mantido por empresa, produto e endereço físico em `Decimal(18,4)` e nunca pode ficar negativo. Linhas com saldo zero são preservadas.
+- Entradas, saídas, ajustes de entrada/saída e transferências exigem produto, depósito e endereço ativos da empresa autenticada. Quantidades trafegam como strings decimais positivas.
+- Cada comando atualiza saldo, cria uma movimentação imutável e registra auditoria na mesma transação serializável. Saídas e transferências usam decremento condicional para impedir saldo negativo sob concorrência.
+- Transferências registram uma única movimentação com origem e destino distintos; podem atravessar depósitos da mesma empresa.
+- Uma chave de idempotência opcional é única por empresa. Repetir exatamente o mesmo comando devolve a movimentação existente; reutilizá-la com outro conteúdo retorna conflito.
+- As permissões são `inventory.read`, `inventory.entry`, `inventory.exit`, `inventory.adjust`, `inventory.transfer` e `inventory.movements.read`.
+- Reservas, lotes, números de série, inventário físico, compras e vendas integradas permanecem fora desta etapa.
 
 - Pedidos de venda possuem cliente, itens, quantidades, preços congelados no item, descontos, totais e status: rascunho, confirmado, cancelado e faturado.
 - Compras possuem fornecedor, itens, custos congelados no item, totais e status: rascunho, confirmado, recebido e cancelado.

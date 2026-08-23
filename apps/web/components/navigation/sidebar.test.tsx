@@ -34,4 +34,13 @@ describe('Sidebar', () => {
     render(<Sidebar />);
     expect(screen.getByRole('link', { name: 'Depósitos' })).toHaveAttribute('href', '/warehouses');
   });
+
+  it('exibe saldos somente com permissão de leitura de estoque', () => {
+    useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.INVENTORY_READ] } });
+    render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Saldos e movimentações' })).toHaveAttribute(
+      'href',
+      '/inventory',
+    );
+  });
 });

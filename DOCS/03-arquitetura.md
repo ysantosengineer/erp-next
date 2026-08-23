@@ -37,6 +37,7 @@ Módulos iniciais: `auth`, `users`, `roles`, `customers`, `suppliers`, `catalog`
 - Alterações de papéis e permissões invalidam as sessões afetadas por incremento de `authVersion` e revogação de refresh tokens.
 - Categorias, unidades e fornecedores também pertencem a `Company`. O módulo de fornecedores valida CPF/CNPJ no backend, não aceita tenant externo e acessa endereços somente através de um fornecedor previamente limitado à empresa autenticada.
 - Depósitos e endereços de estoque pertencem a `Company`. A relação de endereço com depósito usa chave estrangeira composta `(companyId, warehouseId)`, impedindo associação cross-tenant também no banco. Toda consulta de endereço combina `locationId`, `warehouseId` e `companyId`; IDs isolados nunca autorizam acesso.
+- Saldos e movimentações usam chaves estrangeiras compostas com `companyId` para produto, endereço e ator. O tenant sempre vem da identidade autenticada e nunca do request.
 
 ## Frontend
 
@@ -45,6 +46,8 @@ Next.js organiza páginas por área funcional. Formulários usam React Hook Form
 O frontend possui áreas públicas (`/login`) e autenticadas (`/` e `/unauthorized`). Um provider de autenticação mantém o access token apenas em memória, recupera a sessão por cookie HttpOnly e centraliza renovação, logout e tratamento de `401`. A proteção do cliente direciona a navegação, mas não substitui os guards da API.
 
 As áreas administrativas `/users` e `/roles` permanecem no layout autenticado. Cada domínio possui tipos, schemas Zod, serviços HTTP, hooks TanStack Query e componentes próprios. Mutações invalidam somente as queries afetadas; alterações que possam invalidar a autorização atual renovam a sessão ou encerram o acesso conforme a resposta da API.
+
+As rotas `/inventory` e `/inventory/movements` usam TanStack Query para cache e invalidação após comandos. Não há atualização otimista de saldo: a interface aguarda a transação confirmada pela API antes de atualizar saldos e histórico.
 
 Os cadastros `/suppliers` e `/customers` seguem essa organização por domínio. `SupplierAddress` e `CustomerAddress` são entidades específicas porque os ciclos de vida dos domínios podem evoluir de forma independente. Ambos aceitam relação 1:N, enquanto a interface atual mantém somente um endereço principal. Validação e formatação estáveis de CPF, CNPJ, telefone e CEP são compartilhadas em utilitários, sem introduzir uma tabela polimórfica de endereços.
 
@@ -57,3 +60,4 @@ OpenAPI é o contrato público da API. Logs devem ser estruturados e correlacion
 - Banco PostgreSQL compartilhado com isolamento lógico por `companyId` nos módulos de acesso e administração.
 - API REST versionada com prefixo `/api/v1`.
 - Sem acesso direto do frontend ao banco e sem regras fiscais implícitas.
+- Movimentações de estoque são executadas em transação `SERIALIZABLE`, com decremento condicional e até três tentativas para conflitos de serialização.

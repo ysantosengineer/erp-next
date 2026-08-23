@@ -20,6 +20,8 @@ Estado atual: categorias, unidades de medida, fornecedores, produtos, clientes, 
 
 Pedidos de compra, recebimento, saldo por armazém e movimentações imutáveis.
 
+Estado atual: o núcleo de estoque por endereço está implementado com saldo decimal, entradas, saídas, ajustes, transferências, idempotência, concorrência serializável, auditoria, permissões e interfaces `/inventory` e `/inventory/movements`. Pedidos e recebimento de compras permanecem pendentes.
+
 ## Sprint 4 — Vendas
 
 Pedidos de venda, confirmação com baixa de estoque, cancelamento com estorno e histórico do cliente.

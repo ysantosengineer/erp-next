@@ -21,6 +21,8 @@ Em `/products`, a listagem oferece busca com debounce, filtros de status, catego
 
 Em `/customers`, a listagem oferece busca com debounce, filtros de status e PF/PJ, paginação no servidor e tabela com limite de crédito formatado. Cadastro e edição usam formulário amplo dividido em identificação, contato e crédito, endereço principal e observações. CPF/CNPJ, telefone e CEP recebem máscara somente na interface; valores monetários são digitados no padrão brasileiro e enviados como strings decimais. A rota e as ações são condicionadas por `customers.*`, e a tabela preserva rolagem horizontal em telas menores.
 
+Em `/inventory`, a tabela apresenta saldo por produto/endereço, unidade, estoque mínimo e indicação visual de estoque baixo, com busca e filtros. Ações separadas registram entrada, saída, ajuste e transferência conforme as permissões `inventory.*`; saídas e transferências exibem o saldo conhecido na origem, mas a API continua sendo a autoridade concorrente. `/inventory/movements` apresenta o histórico imutável com filtros por produto, endereço, tipo e período. Após sucesso, os formulários fecham, exibem feedback e atualizam saldos, agregados do produto e histórico sem atualização otimista.
+
 ## Padrões de tela
 
 - Listagens: título, ação principal autorizada, filtros, tabela paginada e estado vazio com próximo passo.

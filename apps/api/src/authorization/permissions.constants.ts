@@ -37,6 +37,12 @@ export const PERMISSIONS = {
   STOCK_LOCATIONS_CREATE: 'stock_locations.create',
   STOCK_LOCATIONS_UPDATE: 'stock_locations.update',
   STOCK_LOCATIONS_MANAGE_STATUS: 'stock_locations.manage_status',
+  INVENTORY_READ: 'inventory.read',
+  INVENTORY_ENTRY: 'inventory.entry',
+  INVENTORY_EXIT: 'inventory.exit',
+  INVENTORY_ADJUST: 'inventory.adjust',
+  INVENTORY_TRANSFER: 'inventory.transfer',
+  INVENTORY_MOVEMENTS_READ: 'inventory.movements.read',
 } as const;
 
 export const ADMINISTRATIVE_PERMISSIONS = Object.values(PERMISSIONS);

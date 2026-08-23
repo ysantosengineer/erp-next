@@ -3,7 +3,7 @@
 ## Convenções
 
 - Chaves primárias usam UUID; `createdAt` e `updatedAt` existem em entidades mutáveis.
-- Valores monetários usam `Decimal(14,2)`; quantidades usam `Decimal(14,3)`.
+- Valores monetários usam `Decimal(14,2)`; medidas cadastrais usam `Decimal(14,3)` e saldos/movimentos de estoque usam `Decimal(18,4)`.
 - Status são enums; registros transacionais usam cancelamento, não exclusão física.
 - Campos de documento e SKU recebem índices únicos quando informados e aplicáveis.
 
@@ -61,13 +61,13 @@ A chave estrangeira composta `(companyId, warehouseId) → Warehouse(companyId, 
 | Supplier | id, companyId, type, name, tradeName, document, email, phone, contactName, notes, isActive | N:1 Company; 1:N SupplierAddress e Product; futuramente PurchaseOrder |
 | SupplierAddress | id, supplierId, postalCode, street, number, complement, district, city, state, country, isPrimary | N:1 Supplier |
 | Category | id, name, description, isActive | 1:N Product |
-| Product | id, companyId, categoryId, unitId, primarySupplierId, name, description, sku, barcode, costPrice, salePrice, weight, dimensões, minimumStock, isActive | N:1 Company, Category, UnitOfMeasure e Supplier opcional; futuramente itens e Inventory |
-| Warehouse | id, companyId, name, code, description, isActive | N:1 Company; 1:N StockLocation; futuramente Inventory e StockMovement |
-| StockLocation | id, companyId, warehouseId, code, description, zone, aisle, rack, level, position, capacity, isActive | N:1 Company e Warehouse; futuramente saldos e movimentos |
-| Inventory | productId, warehouseId, quantity, minimumQuantity | único por productId/warehouseId |
-| StockMovement | id, type, quantity, occurredAt, referenceType, referenceId | N:1 Product, Warehouse, User |
+| Product | id, companyId, categoryId, unitId, primarySupplierId, name, description, sku, barcode, costPrice, salePrice, weight, dimensões, minimumStock, isActive | N:1 Company, Category, UnitOfMeasure e Supplier opcional; 1:N InventoryBalance e StockMovement |
+| Warehouse | id, companyId, name, code, description, isActive | N:1 Company; 1:N StockLocation |
+| StockLocation | id, companyId, warehouseId, code, description, zone, aisle, rack, level, position, capacity, isActive | N:1 Company e Warehouse; 1:N InventoryBalance e movimentos de origem/destino |
+| InventoryBalance | id, companyId, productId, locationId, quantity, timestamps | N:1 Company, Product e StockLocation; único por empresa/produto/endereço |
+| StockMovement | id, companyId, productId, type, quantity, sourceLocationId, destinationLocationId, reason, referenceType, referenceId, idempotencyKey, performedByUserId, createdAt | N:1 Company, Product, User; origem/destino opcionais conforme o tipo |
 
-`Inventory` e `StockMovement` ainda não estão implementados. Futuramente, `Inventory` será o saldo atual e `StockMovement` o livro razão imutável; a atualização dos dois deverá ocorrer na mesma transação.
+`InventoryBalance.quantity` possui `CHECK >= 0`. `StockMovement.quantity` possui `CHECK > 0`, e outro `CHECK` valida a combinação de tipo com origem/destino e exige motivo para ajustes. A chave opcional `(companyId, idempotencyKey)` é única. Relações compostas impedem referências entre empresas. Um trigger bloqueia `UPDATE` e `DELETE` de movimentações; a configuração de sessão `erp.allow_stock_movement_mutation=on` existe apenas para manutenção controlada.
 
 ## Documentos comerciais e financeiro
 

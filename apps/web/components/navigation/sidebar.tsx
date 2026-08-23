@@ -65,6 +65,17 @@ export function Sidebar() {
             Depósitos
           </Link>
         </Can>
+        <Can permission={PERMISSIONS.INVENTORY_READ}>
+          <Link
+            className={cn(
+              navigationClass,
+              pathname.startsWith('/inventory') && 'bg-slate-100 text-slate-950',
+            )}
+            href="/inventory"
+          >
+            Saldos e movimentações
+          </Link>
+        </Can>
         <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
           Administração
         </p>

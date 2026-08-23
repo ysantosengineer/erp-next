@@ -69,6 +69,12 @@ async function main(): Promise<void> {
     ['stock_locations', 'create', 'Cria endereços de estoque.'],
     ['stock_locations', 'update', 'Atualiza endereços de estoque.'],
     ['stock_locations', 'manage_status', 'Ativa e inativa endereços de estoque.'],
+    ['inventory', 'read', 'Consulta saldos de estoque.'],
+    ['inventory', 'entry', 'Registra entradas de estoque.'],
+    ['inventory', 'exit', 'Registra saídas de estoque.'],
+    ['inventory', 'adjust', 'Registra ajustes de estoque.'],
+    ['inventory', 'transfer', 'Transfere estoque entre endereços.'],
+    ['inventory.movements', 'read', 'Consulta o histórico de movimentações.'],
   ] as const;
   const newPermissions = await Promise.all(
     businessPermissions.map(([resource, action, description]) =>

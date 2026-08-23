@@ -37,6 +37,12 @@ export const PERMISSIONS = {
   STOCK_LOCATIONS_CREATE: 'stock_locations.create',
   STOCK_LOCATIONS_UPDATE: 'stock_locations.update',
   STOCK_LOCATIONS_MANAGE_STATUS: 'stock_locations.manage_status',
+  INVENTORY_READ: 'inventory.read',
+  INVENTORY_ENTRY: 'inventory.entry',
+  INVENTORY_EXIT: 'inventory.exit',
+  INVENTORY_ADJUST: 'inventory.adjust',
+  INVENTORY_TRANSFER: 'inventory.transfer',
+  INVENTORY_MOVEMENTS_READ: 'inventory.movements.read',
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -80,6 +86,12 @@ export const PERMISSION_LABELS: Readonly<Record<string, string>> = {
   'stock_locations.create': 'Criar endereços de estoque',
   'stock_locations.update': 'Editar endereços de estoque',
   'stock_locations.manage_status': 'Gerenciar status de endereços de estoque',
+  'inventory.read': 'Visualizar saldos de estoque',
+  'inventory.entry': 'Registrar entradas de estoque',
+  'inventory.exit': 'Registrar saídas de estoque',
+  'inventory.adjust': 'Ajustar saldos de estoque',
+  'inventory.transfer': 'Transferir estoque',
+  'inventory.movements.read': 'Visualizar movimentações de estoque',
 };
 
 export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
@@ -92,4 +104,6 @@ export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
   customers: 'Clientes',
   warehouses: 'Depósitos',
   stock_locations: 'Endereços de estoque',
+  inventory: 'Estoque',
+  'inventory.movements': 'Movimentações de estoque',
 };

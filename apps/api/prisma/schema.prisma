@@ -17,23 +17,33 @@ enum CustomerType {
   COMPANY
 }
 
+enum StockMovementType {
+  ENTRY
+  EXIT
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
+  TRANSFER
+}
+
 model Company {
-  id         String          @id @default(uuid()) @db.Uuid
-  name       String
-  document   String?         @unique
-  isActive   Boolean         @default(true)
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
-  users      User[]
-  roles      Role[]
-  categories Category[]
-  units      UnitOfMeasure[]
-  suppliers  Supplier[]
-  products   Product[]
-  customers  Customer[]
-  warehouses Warehouse[]
-  locations  StockLocation[]
-  auditLogs  AuditLog[]
+  id                String             @id @default(uuid()) @db.Uuid
+  name              String
+  document          String?            @unique
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  users             User[]
+  roles             Role[]
+  categories        Category[]
+  units             UnitOfMeasure[]
+  suppliers         Supplier[]
+  products          Product[]
+  customers         Customer[]
+  warehouses        Warehouse[]
+  locations         StockLocation[]
+  inventoryBalances InventoryBalance[]
+  stockMovements    StockMovement[]
+  auditLogs         AuditLog[]
 }
 
 model Warehouse {
@@ -55,24 +65,28 @@ model Warehouse {
 }
 
 model StockLocation {
-  id          String    @id @default(uuid()) @db.Uuid
-  companyId   String    @db.Uuid
-  warehouseId String    @db.Uuid
-  code        String
-  description String?
-  zone        String?
-  aisle       String?
-  rack        String?
-  level       String?
-  position    String?
-  capacity    Decimal?  @db.Decimal(14, 3)
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  company     Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  warehouse   Warehouse @relation(fields: [companyId, warehouseId], references: [companyId, id], onDelete: Restrict)
+  id                   String             @id @default(uuid()) @db.Uuid
+  companyId            String             @db.Uuid
+  warehouseId          String             @db.Uuid
+  code                 String
+  description          String?
+  zone                 String?
+  aisle                String?
+  rack                 String?
+  level                String?
+  position             String?
+  capacity             Decimal?           @db.Decimal(14, 3)
+  isActive             Boolean            @default(true)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  company              Company            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  warehouse            Warehouse          @relation(fields: [companyId, warehouseId], references: [companyId, id], onDelete: Restrict)
+  inventoryBalances    InventoryBalance[]
+  sourceMovements      StockMovement[]    @relation("StockMovementSource")
+  destinationMovements StockMovement[]    @relation("StockMovementDestination")
 
   @@unique([warehouseId, code])
+  @@unique([companyId, id])
   @@index([companyId, isActive])
   @@index([warehouseId, isActive])
   @@index([warehouseId, zone])
@@ -199,32 +213,35 @@ model UnitOfMeasure {
 }
 
 model Product {
-  id                String        @id @default(uuid()) @db.Uuid
-  companyId         String        @db.Uuid
-  categoryId        String        @db.Uuid
-  unitId            String        @db.Uuid
-  primarySupplierId String?       @db.Uuid
+  id                String             @id @default(uuid()) @db.Uuid
+  companyId         String             @db.Uuid
+  categoryId        String             @db.Uuid
+  unitId            String             @db.Uuid
+  primarySupplierId String?            @db.Uuid
   name              String
   description       String?
   sku               String
   barcode           String?
-  costPrice         Decimal       @db.Decimal(14, 2)
-  salePrice         Decimal       @db.Decimal(14, 2)
-  weight            Decimal?      @db.Decimal(14, 3)
-  height            Decimal?      @db.Decimal(14, 3)
-  width             Decimal?      @db.Decimal(14, 3)
-  length            Decimal?      @db.Decimal(14, 3)
-  minimumStock      Decimal       @default(0) @db.Decimal(14, 3)
-  isActive          Boolean       @default(true)
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  company           Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  category          Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  unit              UnitOfMeasure @relation(fields: [unitId], references: [id], onDelete: Restrict)
-  primarySupplier   Supplier?     @relation(fields: [primarySupplierId], references: [id], onDelete: Restrict)
+  costPrice         Decimal            @db.Decimal(14, 2)
+  salePrice         Decimal            @db.Decimal(14, 2)
+  weight            Decimal?           @db.Decimal(14, 3)
+  height            Decimal?           @db.Decimal(14, 3)
+  width             Decimal?           @db.Decimal(14, 3)
+  length            Decimal?           @db.Decimal(14, 3)
+  minimumStock      Decimal            @default(0) @db.Decimal(14, 3)
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  company           Company            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  category          Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  unit              UnitOfMeasure      @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  primarySupplier   Supplier?          @relation(fields: [primarySupplierId], references: [id], onDelete: Restrict)
+  inventoryBalances InventoryBalance[]
+  stockMovements    StockMovement[]
 
   @@unique([companyId, sku])
   @@unique([companyId, barcode])
+  @@unique([companyId, id])
   @@index([companyId, isActive])
   @@index([companyId, name])
   @@index([categoryId])
@@ -233,22 +250,71 @@ model Product {
 }
 
 model User {
-  id            String         @id @default(uuid()) @db.Uuid
-  companyId     String         @db.Uuid
-  name          String
-  email         String         @unique
-  passwordHash  String
-  authVersion   Int            @default(1)
-  isActive      Boolean        @default(true)
-  lastLoginAt   DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  roles         UserRole[]
-  refreshTokens RefreshToken[]
-  auditLogs     AuditLog[]     @relation("AuditLogActor")
-  company       Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  id             String          @id @default(uuid()) @db.Uuid
+  companyId      String          @db.Uuid
+  name           String
+  email          String          @unique
+  passwordHash   String
+  authVersion    Int             @default(1)
+  isActive       Boolean         @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  roles          UserRole[]
+  refreshTokens  RefreshToken[]
+  auditLogs      AuditLog[]      @relation("AuditLogActor")
+  stockMovements StockMovement[]
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
 
+  @@unique([companyId, id])
   @@index([companyId])
+}
+
+model InventoryBalance {
+  id         String        @id @default(uuid()) @db.Uuid
+  companyId  String        @db.Uuid
+  productId  String        @db.Uuid
+  locationId String        @db.Uuid
+  quantity   Decimal       @default(0) @db.Decimal(18, 4)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  company    Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  product    Product       @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
+  location   StockLocation @relation(fields: [companyId, locationId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([companyId, productId, locationId])
+  @@index([companyId, quantity])
+  @@index([productId])
+  @@index([locationId])
+}
+
+model StockMovement {
+  id                    String            @id @default(uuid()) @db.Uuid
+  companyId             String            @db.Uuid
+  productId             String            @db.Uuid
+  type                  StockMovementType
+  quantity              Decimal           @db.Decimal(18, 4)
+  sourceLocationId      String?           @db.Uuid
+  destinationLocationId String?           @db.Uuid
+  reason                String?
+  referenceType         String            @default("MANUAL")
+  referenceId           String?
+  idempotencyKey        String?
+  performedByUserId     String            @db.Uuid
+  createdAt             DateTime          @default(now())
+  company               Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  product               Product           @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
+  sourceLocation        StockLocation?    @relation("StockMovementSource", fields: [companyId, sourceLocationId], references: [companyId, id], onDelete: Restrict)
+  destinationLocation   StockLocation?    @relation("StockMovementDestination", fields: [companyId, destinationLocationId], references: [companyId, id], onDelete: Restrict)
+  performedBy           User              @relation(fields: [companyId, performedByUserId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([companyId, idempotencyKey])
+  @@index([companyId, createdAt])
+  @@index([productId, createdAt])
+  @@index([sourceLocationId, createdAt])
+  @@index([destinationLocationId, createdAt])
+  @@index([performedByUserId, createdAt])
+  @@index([type, createdAt])
 }
 
 model Role {

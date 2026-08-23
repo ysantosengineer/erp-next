@@ -55,9 +55,17 @@
 - Endereços usam as rotas contextuais `GET,POST /warehouses/:warehouseId/locations`, `GET,PATCH /warehouses/:warehouseId/locations/:id` e `PATCH /warehouses/:warehouseId/locations/:id/status`, protegidas pelas permissões equivalentes `stock_locations.*`.
 - A listagem de endereços aceita `page`, `limit`, `search`, `status`, `zone`, `sortBy` e `sortOrder`, e devolve `{ warehouse, data, meta }` para fornecer o contexto seguro do depósito sem exigir uma segunda permissão. Capacidade é uma string decimal canônica com três casas e não pode ser negativa.
 - Depósitos e endereços de outra empresa retornam `404`. A criação e reativação de endereço em depósito inativo retornam `422 WAREHOUSE_INACTIVE`; a inativação de depósito com endereços ativos retorna `422 WAREHOUSE_HAS_ACTIVE_LOCATIONS`.
+
+### Saldos e movimentações de estoque
+
+- `GET /inventory`, `GET /inventory/:id`, `GET /inventory/products/:productId` e `GET /inventory/options` exigem `inventory.read`. A listagem filtra por busca, produto, depósito e endereço.
+- `GET /inventory/movements` e `GET /inventory/movements/:id` exigem `inventory.movements.read`; o histórico filtra por produto, depósito, endereço, tipo, período e responsável.
+- `POST /inventory/movements/entry`, `/exit`, `/adjustment` e `/transfer` exigem, respectivamente, `inventory.entry`, `inventory.exit`, `inventory.adjust` e `inventory.transfer`.
+- Quantidades são strings decimais positivas com até quatro casas. Saldo insuficiente retorna `422 INSUFFICIENT_STOCK`; produto, endereço ou depósito inativo retorna `422` com código específico; recurso inexistente ou externo à empresa retorna `404 RESOURCE_NOT_FOUND`, sem aceitar `companyId` no request.
+- `idempotencyKey` é opcional. Repetição idêntica retorna a movimentação original; reutilização divergente retorna `409 IDEMPOTENCY_KEY_REUSED`.
 | Vendas | `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm`, `POST /sales-orders/:id/cancel` |
 | Compras | Rotas equivalentes em `/purchase-orders`, com `POST /:id/receive` |
-| Estoque | `GET /inventory`, `GET /stock-movements`; movimentação manual somente por endpoint autorizado e motivo obrigatório |
+| Estoque | `GET /inventory`, `GET /inventory/products/:productId`, `GET /inventory/movements`; comandos em `/inventory/movements/{entry,exit,adjustment,transfer}` |
 | Financeiro | `GET,POST /invoices`, `GET /invoices/:id`, `POST /invoices/:id/payments`, `POST /payments/:id/cancel` |
 | Relatórios | `GET /reports/dashboard`, `GET /reports/sales`, `GET /reports/inventory`, `GET /reports/financial` |
 

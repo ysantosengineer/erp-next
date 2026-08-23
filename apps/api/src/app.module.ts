@@ -13,6 +13,7 @@ import { UnitsModule } from './units/units.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { StockLocationsModule } from './stock-locations/stock-locations.module';
 import { WarehousesModule } from './warehouses/warehouses.module';
+import { InventoryModule } from './inventory/inventory.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { WarehousesModule } from './warehouses/warehouses.module';
     ProductsModule,
     WarehousesModule,
     StockLocationsModule,
+    InventoryModule,
   ],
   controllers: [AppController],
 })
