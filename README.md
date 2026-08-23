@@ -1,6 +1,6 @@
 # ERP Next
 
-Monorepo do ERP Next para pequenas e médias empresas. O repositório contém uma aplicação web em Next.js, uma API NestJS, PostgreSQL via Prisma, autenticação, usuários, papéis e permissões, cadastros de categorias, unidades de medida, fornecedores, produtos, clientes, depósitos e endereços, além do núcleo de saldos e movimentações de estoque.
+Monorepo do ERP Next para pequenas e médias empresas. O repositório contém uma aplicação web em Next.js, uma API NestJS, PostgreSQL via Prisma, autenticação, usuários, papéis e permissões, cadastros de categorias, unidades de medida, fornecedores, produtos, clientes, depósitos e endereços, além de saldos, movimentações e inventário físico de estoque.
 
 ## Pré-requisitos
 
@@ -54,8 +54,11 @@ npm run dev
 - Depósitos: `http://localhost:3000/warehouses`
 - Saldos de estoque: `http://localhost:3000/inventory`
 - Movimentações: `http://localhost:3000/inventory/movements`
+- Inventários físicos: `http://localhost:3000/inventory/counts`
 
 O estoque é alterado exclusivamente por entradas, saídas, ajustes ou transferências. Quantidades usam `Decimal(18,4)`, saldo negativo é bloqueado e saldo/movimentação/auditoria são confirmados na mesma transação serializável. O histórico não possui endpoints de edição ou exclusão.
+
+O inventário físico captura um snapshot ao iniciar e bloqueia movimentações do depósito até aprovação ou cancelamento. Primeira contagem e recontagem não alteram saldo; a aprovação usa os mesmos ajustes transacionais do estoque, com referência ao inventário e rollback integral.
 
 ## Sessão web
 

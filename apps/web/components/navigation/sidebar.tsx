@@ -54,6 +54,39 @@ export function Sidebar() {
         <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
           Estoque
         </p>
+        <Can permission={PERMISSIONS.INVENTORY_READ}>
+          <Link
+            className={cn(
+              navigationClass,
+              pathname === '/inventory' && 'bg-slate-100 text-slate-950',
+            )}
+            href="/inventory"
+          >
+            Saldos
+          </Link>
+        </Can>
+        <Can permission={PERMISSIONS.INVENTORY_MOVEMENTS_READ}>
+          <Link
+            className={cn(
+              navigationClass,
+              pathname.startsWith('/inventory/movements') && 'bg-slate-100 text-slate-950',
+            )}
+            href="/inventory/movements"
+          >
+            Movimentações
+          </Link>
+        </Can>
+        <Can permission={PERMISSIONS.INVENTORY_COUNTS_READ}>
+          <Link
+            className={cn(
+              navigationClass,
+              pathname.startsWith('/inventory/counts') && 'bg-slate-100 text-slate-950',
+            )}
+            href="/inventory/counts"
+          >
+            Inventários
+          </Link>
+        </Can>
         <Can permission={PERMISSIONS.WAREHOUSES_READ}>
           <Link
             className={cn(
@@ -62,18 +95,7 @@ export function Sidebar() {
             )}
             href="/warehouses"
           >
-            Depósitos
-          </Link>
-        </Can>
-        <Can permission={PERMISSIONS.INVENTORY_READ}>
-          <Link
-            className={cn(
-              navigationClass,
-              pathname.startsWith('/inventory') && 'bg-slate-100 text-slate-950',
-            )}
-            href="/inventory"
-          >
-            Saldos e movimentações
+            Depósitos e endereços
           </Link>
         </Can>
         <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">

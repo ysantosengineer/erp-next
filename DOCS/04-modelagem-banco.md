@@ -66,8 +66,12 @@ A chave estrangeira composta `(companyId, warehouseId) → Warehouse(companyId, 
 | StockLocation | id, companyId, warehouseId, code, description, zone, aisle, rack, level, position, capacity, isActive | N:1 Company e Warehouse; 1:N InventoryBalance e movimentos de origem/destino |
 | InventoryBalance | id, companyId, productId, locationId, quantity, timestamps | N:1 Company, Product e StockLocation; único por empresa/produto/endereço |
 | StockMovement | id, companyId, productId, type, quantity, sourceLocationId, destinationLocationId, reason, referenceType, referenceId, idempotencyKey, performedByUserId, createdAt | N:1 Company, Product, User; origem/destino opcionais conforme o tipo |
+| InventoryCount | id, companyId, warehouseId, status, description, datas do ciclo, createdByUserId, approvedByUserId, cancelledByUserId, timestamps | N:1 Company, Warehouse e usuários; 1:N InventoryCountItem |
+| InventoryCountItem | id, companyId, inventoryCountId, productId, locationId, systemQuantity, firstCountQuantity, recountQuantity, usuários e datas | N:1 InventoryCount, Product, StockLocation e usuários |
 
 `InventoryBalance.quantity` possui `CHECK >= 0`. `StockMovement.quantity` possui `CHECK > 0`, e outro `CHECK` valida a combinação de tipo com origem/destino e exige motivo para ajustes. A chave opcional `(companyId, idempotencyKey)` é única. Relações compostas impedem referências entre empresas. Um trigger bloqueia `UPDATE` e `DELETE` de movimentações; a configuração de sessão `erp.allow_stock_movement_mutation=on` existe apenas para manutenção controlada.
+
+`InventoryCount.status` usa `DRAFT`, `IN_PROGRESS`, `RECOUNT_REQUIRED`, `READY_FOR_APPROVAL`, `APPROVED` e `CANCELLED`. Um índice parcial permite somente um inventário não finalizado por empresa/depósito. O item é único por inventário/produto/endereço e suas três quantidades persistidas possuem `CHECK >= 0`. `systemQuantity` é o snapshot; quantidade final e divergência são derivadas para evitar redundância. Ajustes são ligados pelo `StockMovement.referenceType/referenceId`, sem novas chaves estrangeiras.
 
 ## Documentos comerciais e financeiro
 

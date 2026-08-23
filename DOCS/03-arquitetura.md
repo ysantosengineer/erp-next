@@ -16,7 +16,7 @@ Cada domínio é um módulo NestJS. A direção de dependência é:
 - Prisma acessa somente PostgreSQL. Redis serve cache, rate limiting ou filas quando a necessidade for documentada.
 - Transações Prisma são obrigatórias em operações que modificam pedido/compra, estoque e financeiro de forma conjunta.
 
-Módulos iniciais: `auth`, `users`, `roles`, `customers`, `suppliers`, `catalog`, `warehouses`, `sales`, `purchases`, `inventory`, `billing`, `audit` e `reports`.
+Módulos iniciais: `auth`, `users`, `roles`, `customers`, `suppliers`, `catalog`, `warehouses`, `sales`, `purchases`, `inventory`, `inventory-counts`, `billing`, `audit` e `reports`.
 
 ## Segurança
 
@@ -38,6 +38,7 @@ Módulos iniciais: `auth`, `users`, `roles`, `customers`, `suppliers`, `catalog`
 - Categorias, unidades e fornecedores também pertencem a `Company`. O módulo de fornecedores valida CPF/CNPJ no backend, não aceita tenant externo e acessa endereços somente através de um fornecedor previamente limitado à empresa autenticada.
 - Depósitos e endereços de estoque pertencem a `Company`. A relação de endereço com depósito usa chave estrangeira composta `(companyId, warehouseId)`, impedindo associação cross-tenant também no banco. Toda consulta de endereço combina `locationId`, `warehouseId` e `companyId`; IDs isolados nunca autorizam acesso.
 - Saldos e movimentações usam chaves estrangeiras compostas com `companyId` para produto, endereço e ator. O tenant sempre vem da identidade autenticada e nunca do request.
+- Inventários e itens repetem `companyId` em suas relações compostas com depósito, produto, endereço e usuários. O escopo do depósito é validado no serviço e no banco, e recursos externos retornam `404`.
 
 ## Frontend
 
@@ -48,6 +49,8 @@ O frontend possui áreas públicas (`/login`) e autenticadas (`/` e `/unauthoriz
 As áreas administrativas `/users` e `/roles` permanecem no layout autenticado. Cada domínio possui tipos, schemas Zod, serviços HTTP, hooks TanStack Query e componentes próprios. Mutações invalidam somente as queries afetadas; alterações que possam invalidar a autorização atual renovam a sessão ou encerram o acesso conforme a resposta da API.
 
 As rotas `/inventory` e `/inventory/movements` usam TanStack Query para cache e invalidação após comandos. Não há atualização otimista de saldo: a interface aguarda a transação confirmada pela API antes de atualizar saldos e histórico.
+
+`/inventory/counts` e `/inventory/counts/[id]` mantêm queries separadas para lista e detalhe paginado. Contagem e recontagem invalidam o inventário; aprovação também invalida saldos e movimentações somente depois do commit confirmado.
 
 Os cadastros `/suppliers` e `/customers` seguem essa organização por domínio. `SupplierAddress` e `CustomerAddress` são entidades específicas porque os ciclos de vida dos domínios podem evoluir de forma independente. Ambos aceitam relação 1:N, enquanto a interface atual mantém somente um endereço principal. Validação e formatação estáveis de CPF, CNPJ, telefone e CEP são compartilhadas em utilitários, sem introduzir uma tabela polimórfica de endereços.
 
@@ -61,3 +64,5 @@ OpenAPI é o contrato público da API. Logs devem ser estruturados e correlacion
 - API REST versionada com prefixo `/api/v1`.
 - Sem acesso direto do frontend ao banco e sem regras fiscais implícitas.
 - Movimentações de estoque são executadas em transação `SERIALIZABLE`, com decremento condicional e até três tentativas para conflitos de serialização.
+- Ao iniciar inventário, o snapshot e a transição para `IN_PROGRESS` ocorrem atomicamente. Enquanto o status estiver entre `IN_PROGRESS` e `READY_FOR_APPROVAL`, movimentos que atinjam o depósito retornam `LOCATION_UNDER_INVENTORY`.
+- A aprovação bloqueia a linha do inventário com `FOR UPDATE`, revalida o estado e aplica todos os ajustes pela mesma rotina da Etapa 11 na transação serializável. Falha intermediária causa rollback total e o lock impede dupla aprovação.

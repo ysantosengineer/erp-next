@@ -5,7 +5,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { Prisma, StockMovementType } from '@prisma/client';
+import { InventoryCountStatus, Prisma, StockMovementType } from '@prisma/client';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -58,6 +58,21 @@ type MovementCommand = {
   destinationLocationId?: string;
   reason?: string;
   idempotencyKey?: string;
+};
+
+type MovementExecutionOptions = {
+  referenceType?: 'MANUAL' | 'INVENTORY';
+  referenceId?: string;
+  bypassInventoryLock?: boolean;
+};
+
+export type InventoryAdjustmentCommand = {
+  inventoryCountId: string;
+  productId: string;
+  locationId: string;
+  quantity: string;
+  direction: 'IN' | 'OUT';
+  reason: string;
 };
 
 @Injectable()
@@ -297,6 +312,37 @@ export class InventoryService {
     return this.execute(identity, { type: StockMovementType.TRANSFER, ...dto }, requestId);
   }
 
+  async applyInventoryAdjustment(
+    tx: Prisma.TransactionClient,
+    identity: AuthenticatedUser,
+    command: InventoryAdjustmentCommand,
+    requestId: string,
+  ): Promise<string> {
+    const movement = await this.executeTransaction(
+      tx,
+      identity,
+      {
+        type:
+          command.direction === 'IN'
+            ? StockMovementType.ADJUSTMENT_IN
+            : StockMovementType.ADJUSTMENT_OUT,
+        productId: command.productId,
+        quantity: command.quantity,
+        ...(command.direction === 'IN'
+          ? { destinationLocationId: command.locationId }
+          : { sourceLocationId: command.locationId }),
+        reason: command.reason,
+      },
+      requestId,
+      {
+        referenceType: 'INVENTORY',
+        referenceId: command.inventoryCountId,
+        bypassInventoryLock: true,
+      },
+    );
+    return movement.id;
+  }
+
   private async execute(identity: AuthenticatedUser, command: MovementCommand, requestId: string) {
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       try {
@@ -346,6 +392,7 @@ export class InventoryService {
     identity: AuthenticatedUser,
     command: MovementCommand,
     requestId: string,
+    options: MovementExecutionOptions = {},
   ): Promise<MovementWithRelations> {
     if (command.idempotencyKey) {
       const existing = await tx.stockMovement.findUnique({
@@ -386,7 +433,12 @@ export class InventoryService {
         id: { in: locationIds },
         companyId: identity.companyId,
       },
-      select: { id: true, isActive: true, warehouse: { select: { isActive: true } } },
+      select: {
+        id: true,
+        isActive: true,
+        warehouseId: true,
+        warehouse: { select: { isActive: true } },
+      },
     });
     if (locations.length !== locationIds.length)
       throw new NotFoundException({
@@ -403,6 +455,27 @@ export class InventoryService {
         code: 'WAREHOUSE_INACTIVE',
         message: 'Depósito inativo não pode receber movimentações.',
       });
+    if (!options.bypassInventoryLock) {
+      const activeInventory = await tx.inventoryCount.findFirst({
+        where: {
+          companyId: identity.companyId,
+          warehouseId: { in: [...new Set(locations.map((location) => location.warehouseId))] },
+          status: {
+            in: [
+              InventoryCountStatus.IN_PROGRESS,
+              InventoryCountStatus.RECOUNT_REQUIRED,
+              InventoryCountStatus.READY_FOR_APPROVAL,
+            ],
+          },
+        },
+        select: { id: true },
+      });
+      if (activeInventory)
+        throw new UnprocessableEntityException({
+          code: 'LOCATION_UNDER_INVENTORY',
+          message: 'O endereço está bloqueado por um inventário físico ativo.',
+        });
+    }
     const quantity = new Prisma.Decimal(command.quantity);
     if (command.sourceLocationId) {
       const updated = await tx.inventoryBalance.updateMany({
@@ -447,6 +520,8 @@ export class InventoryService {
         sourceLocationId: command.sourceLocationId,
         destinationLocationId: command.destinationLocationId,
         reason: command.reason?.trim() || null,
+        referenceType: options.referenceType ?? 'MANUAL',
+        referenceId: options.referenceId ?? null,
         idempotencyKey: command.idempotencyKey?.trim() || null,
         performedByUserId: identity.userId,
       },
@@ -465,6 +540,8 @@ export class InventoryService {
           sourceLocationId: command.sourceLocationId,
           destinationLocationId: command.destinationLocationId,
           reason: command.reason,
+          referenceType: options.referenceType ?? 'MANUAL',
+          referenceId: options.referenceId,
         },
         requestId,
       },

@@ -63,6 +63,17 @@
 - `POST /inventory/movements/entry`, `/exit`, `/adjustment` e `/transfer` exigem, respectivamente, `inventory.entry`, `inventory.exit`, `inventory.adjust` e `inventory.transfer`.
 - Quantidades são strings decimais positivas com até quatro casas. Saldo insuficiente retorna `422 INSUFFICIENT_STOCK`; produto, endereço ou depósito inativo retorna `422` com código específico; recurso inexistente ou externo à empresa retorna `404 RESOURCE_NOT_FOUND`, sem aceitar `companyId` no request.
 - `idempotencyKey` é opcional. Repetição idêntica retorna a movimentação original; reutilização divergente retorna `409 IDEMPOTENCY_KEY_REUSED`.
+
+### Inventário físico
+
+- `GET,POST /inventory/counts` listam e criam inventários. A listagem aceita `page`, `limit`, `search`, `warehouseId`, `status`, `startDate`, `endDate`, `sortBy` e `sortOrder`.
+- `GET /inventory/counts/:id` retorna cabeçalho, resumo, movimentos gerados e itens paginados por `itemsPage`, `itemsLimit` e `itemSearch`.
+- `GET /inventory/counts/options?warehouseId=...` exige `inventory_counts.count` e fornece somente produtos e endereços ativos da empresa para inclusão manual.
+- `POST /inventory/counts/:id/start` captura o snapshot; `POST /:id/items` inclui mercadoria sem saldo; `PUT /:id/items/:itemId/count` registra a primeira contagem.
+- `POST /inventory/counts/:id/recount` conclui a primeira contagem ou reabre divergências; `PUT /:id/items/:itemId/recount` registra a recontagem.
+- `POST /inventory/counts/:id/approve` aprova atomicamente e gera ajustes; `POST /:id/cancel` cancela sem alterar saldo. Recursos aprovados e cancelados são imutáveis.
+- Os guards usam `inventory_counts.read`, `create`, `count`, `recount`, `approve` e `cancel`. O request nunca aceita tenant, snapshot, responsáveis ou datas controladas pelo servidor.
+- Movimentações externas no depósito ativo retornam `422 LOCATION_UNDER_INVENTORY`; estados inválidos usam códigos como `COUNT_REQUIRED`, `RECOUNT_REQUIRED`, `INVENTORY_NOT_READY`, `INVENTORY_ALREADY_APPROVED` e `INVENTORY_CANCELLED`.
 | Vendas | `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm`, `POST /sales-orders/:id/cancel` |
 | Compras | Rotas equivalentes em `/purchase-orders`, com `POST /:id/receive` |
 | Estoque | `GET /inventory`, `GET /inventory/products/:productId`, `GET /inventory/movements`; comandos em `/inventory/movements/{entry,exit,adjustment,transfer}` |

@@ -75,6 +75,12 @@ async function main(): Promise<void> {
     ['inventory', 'adjust', 'Registra ajustes de estoque.'],
     ['inventory', 'transfer', 'Transfere estoque entre endereços.'],
     ['inventory.movements', 'read', 'Consulta o histórico de movimentações.'],
+    ['inventory_counts', 'read', 'Consulta inventários físicos.'],
+    ['inventory_counts', 'create', 'Cria e inicia inventários físicos.'],
+    ['inventory_counts', 'count', 'Registra a primeira contagem física.'],
+    ['inventory_counts', 'recount', 'Solicita e registra recontagens.'],
+    ['inventory_counts', 'approve', 'Aprova inventários e gera ajustes.'],
+    ['inventory_counts', 'cancel', 'Cancela inventários físicos.'],
   ] as const;
   const newPermissions = await Promise.all(
     businessPermissions.map(([resource, action, description]) =>

@@ -43,6 +43,12 @@ export const PERMISSIONS = {
   INVENTORY_ADJUST: 'inventory.adjust',
   INVENTORY_TRANSFER: 'inventory.transfer',
   INVENTORY_MOVEMENTS_READ: 'inventory.movements.read',
+  INVENTORY_COUNTS_READ: 'inventory_counts.read',
+  INVENTORY_COUNTS_CREATE: 'inventory_counts.create',
+  INVENTORY_COUNTS_COUNT: 'inventory_counts.count',
+  INVENTORY_COUNTS_RECOUNT: 'inventory_counts.recount',
+  INVENTORY_COUNTS_APPROVE: 'inventory_counts.approve',
+  INVENTORY_COUNTS_CANCEL: 'inventory_counts.cancel',
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -92,6 +98,12 @@ export const PERMISSION_LABELS: Readonly<Record<string, string>> = {
   'inventory.adjust': 'Ajustar saldos de estoque',
   'inventory.transfer': 'Transferir estoque',
   'inventory.movements.read': 'Visualizar movimentações de estoque',
+  'inventory_counts.read': 'Visualizar inventários físicos',
+  'inventory_counts.create': 'Criar e iniciar inventários físicos',
+  'inventory_counts.count': 'Registrar contagens físicas',
+  'inventory_counts.recount': 'Solicitar e registrar recontagens',
+  'inventory_counts.approve': 'Aprovar inventários físicos',
+  'inventory_counts.cancel': 'Cancelar inventários físicos',
 };
 
 export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
@@ -106,4 +118,5 @@ export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
   stock_locations: 'Endereços de estoque',
   inventory: 'Estoque',
   'inventory.movements': 'Movimentações de estoque',
+  inventory_counts: 'Inventários físicos',
 };

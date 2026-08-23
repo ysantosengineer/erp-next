@@ -43,6 +43,12 @@ export const PERMISSIONS = {
   INVENTORY_ADJUST: 'inventory.adjust',
   INVENTORY_TRANSFER: 'inventory.transfer',
   INVENTORY_MOVEMENTS_READ: 'inventory.movements.read',
+  INVENTORY_COUNTS_READ: 'inventory_counts.read',
+  INVENTORY_COUNTS_CREATE: 'inventory_counts.create',
+  INVENTORY_COUNTS_COUNT: 'inventory_counts.count',
+  INVENTORY_COUNTS_RECOUNT: 'inventory_counts.recount',
+  INVENTORY_COUNTS_APPROVE: 'inventory_counts.approve',
+  INVENTORY_COUNTS_CANCEL: 'inventory_counts.cancel',
 } as const;
 
 export const ADMINISTRATIVE_PERMISSIONS = Object.values(PERMISSIONS);

@@ -32,15 +32,32 @@ describe('Sidebar', () => {
   it('exibe depósitos somente com permissão de leitura', () => {
     useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.WAREHOUSES_READ] } });
     render(<Sidebar />);
-    expect(screen.getByRole('link', { name: 'Depósitos' })).toHaveAttribute('href', '/warehouses');
+    expect(screen.getByRole('link', { name: 'Depósitos e endereços' })).toHaveAttribute(
+      'href',
+      '/warehouses',
+    );
   });
 
   it('exibe saldos somente com permissão de leitura de estoque', () => {
     useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.INVENTORY_READ] } });
     render(<Sidebar />);
-    expect(screen.getByRole('link', { name: 'Saldos e movimentações' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Saldos' })).toHaveAttribute('href', '/inventory');
+  });
+
+  it('separa movimentações e inventários por permissão', () => {
+    useAuthMock.mockReturnValue({
+      user: {
+        permissions: [PERMISSIONS.INVENTORY_MOVEMENTS_READ, PERMISSIONS.INVENTORY_COUNTS_READ],
+      },
+    });
+    render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Movimentações' })).toHaveAttribute(
       'href',
-      '/inventory',
+      '/inventory/movements',
+    );
+    expect(screen.getByRole('link', { name: 'Inventários' })).toHaveAttribute(
+      'href',
+      '/inventory/counts',
     );
   });
 });

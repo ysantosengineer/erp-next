@@ -18,6 +18,7 @@
 | US007 | Como gestor, quero dashboard e relatórios. | Período filtrável e indicadores consistentes com os dados. |
 | US008 | Como administrador, quero consultar auditoria. | Alterações críticas registram ator, data, ação e dados alterados. |
 | US009 | Como operador, quero alertas de estoque baixo. | Produtos abaixo do mínimo são identificáveis no dashboard. |
+| US010 | Como gestor, quero conferir o estoque físico. | Snapshot, contagem, recontagem e aprovação geram ajustes atômicos e rastreáveis. |
 
 ## P2 — após o MVP
 
@@ -32,3 +33,4 @@ Exportação de relatórios, integrações, expansão do isolamento multiempresa
 - A parte de produtos da US003 está implementada com SKU/código de barras únicos por empresa, categoria, unidade, fornecedor principal opcional, preços, dimensões, estoque mínimo, busca, filtros, paginação, status e testes.
 - A parte de clientes da US003 está implementada com PF/PJ, CPF/CNPJ obrigatório e único por empresa, endereço principal, limite de crédito decimal, busca, filtros, paginação, status, controle por permissão e testes.
 - Depósitos e endereços de estoque concluem o escopo cadastral da US003. O núcleo transacional de estoque já mantém saldos por endereço e histórico imutável com entrada, saída, ajuste e transferência; a integração automática com compras (US004) e vendas (US005) permanece pendente.
+- A US010 está implementada por depósito com bloqueio de movimentos durante a contagem, inclusão manual de mercadoria sem saldo, aprovação serializável, rollback integral, prevenção de dupla aprovação e interface autenticada. Escopo por endereços e contagem cega permanecem como evolução.

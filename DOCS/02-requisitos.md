@@ -112,7 +112,11 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 - Transferências registram uma única movimentação com origem e destino distintos; podem atravessar depósitos da mesma empresa.
 - Uma chave de idempotência opcional é única por empresa. Repetir exatamente o mesmo comando devolve a movimentação existente; reutilizá-la com outro conteúdo retorna conflito.
 - As permissões são `inventory.read`, `inventory.entry`, `inventory.exit`, `inventory.adjust`, `inventory.transfer` e `inventory.movements.read`.
-- Reservas, lotes, números de série, inventário físico, compras e vendas integradas permanecem fora desta etapa.
+- Inventários físicos pertencem a uma empresa e a um depósito. Ao iniciar, o sistema captura um snapshot imutável dos saldos registrados, bloqueia movimentações no depósito e permite primeira contagem e recontagem com quantidades `Decimal(18,4)` não negativas.
+- Qualquer diferença exige recontagem. A quantidade final é a primeira contagem quando não há divergência e a recontagem quando existe. Nenhuma fase anterior à aprovação altera o saldo.
+- A aprovação exige todas as contagens concluídas, ocorre em transação serializável e reutiliza os ajustes `ADJUSTMENT_IN`/`ADJUSTMENT_OUT`, identificados por `referenceType=INVENTORY`. Cancelamento preserva o histórico e não gera ajustes.
+- As permissões específicas são `inventory_counts.read`, `inventory_counts.create`, `inventory_counts.count`, `inventory_counts.recount`, `inventory_counts.approve` e `inventory_counts.cancel`.
+- Reservas, lotes, números de série, compras e vendas integradas permanecem fora desta etapa.
 
 - Pedidos de venda possuem cliente, itens, quantidades, preços congelados no item, descontos, totais e status: rascunho, confirmado, cancelado e faturado.
 - Compras possuem fornecedor, itens, custos congelados no item, totais e status: rascunho, confirmado, recebido e cancelado.
