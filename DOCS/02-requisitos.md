@@ -136,11 +136,16 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 - Produto ou fornecedor inativados depois da aprovação não invalidam o compromisso existente. Custo do produto, financeiro, fiscal, estorno e recebimento avulso não são alterados nesta etapa.
 - As permissões são `purchase_receipts.read` e `purchase_receipts.create`.
 
-- Pedidos de venda possuem cliente, itens, quantidades, preços congelados no item, descontos, totais e status: rascunho, confirmado, cancelado e faturado.
-- Compras possuem fornecedor, depósito, itens e custos congelados, totais, aprovação e recebimentos parciais ou totais rastreáveis.
-- Confirmar venda reserva/baixa estoque somente segundo a política documentada na arquitetura; o MVP baixará estoque na confirmação. Estoque insuficiente bloqueia confirmação.
-- Receber compra gera entrada de estoque. Cancelamentos não podem deixar saldos negativos e devem criar estorno quando aplicável.
-- Cada alteração de estoque gera uma movimentação imutável com tipo, quantidade, origem e usuário responsável.
+### Pedidos de venda
+
+- Pedidos de venda pertencem à empresa, exigem cliente, depósito de origem e ao menos um produto ativo do tenant. O número `SO-000001` é gerado por contador atômico por empresa.
+- Itens congelam nome, SKU e símbolo da unidade. Quantidades e preparação de reserva usam `Decimal(18,4)`; preços, descontos e totais usam `Decimal(14,2)` e trafegam como strings.
+- O subtotal do item é o valor bruto arredondado menos o desconto da linha. O subtotal do pedido soma os itens líquidos; `total = subtotal - desconto geral + frete + outros`. O backend é a autoridade dos cálculos.
+- O fluxo desta etapa é `DRAFT → CONFIRMED` e `DRAFT|CONFIRMED → CANCELLED`. Somente rascunhos são editáveis; confirmação e cancelamento registram ator/data e estados finais preservam o histórico.
+- Cliente, depósito e produtos precisam estar ativos para criar, editar ou confirmar. O limite de crédito é apenas informativo porque ainda não existe saldo de contas a receber.
+- Confirmar ou cancelar pedido de venda não consulta saldo como condição, não altera `InventoryBalance`, não cria `StockMovement` e não cria reserva. `reservedQuantity` permanece zero como preparação estrutural para a Etapa 16.
+- As permissões são `sales_orders.read`, `create`, `update`, `confirm` e `cancel`.
+- Compras possuem fornecedor, depósito, itens e custos congelados, totais, aprovação e recebimentos parciais ou totais rastreáveis. Receber compra gera entrada de estoque.
 
 ## Financeiro e relatórios
 

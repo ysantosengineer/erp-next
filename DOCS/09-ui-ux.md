@@ -29,6 +29,10 @@ Em Compras, `/purchases/orders` oferece pesquisa, filtros, período, tabela pagi
 
 `/purchases/receipts` lista entradas imutáveis. `/purchases/orders/[id]/receive` inicia todas as quantidades em zero, permite preenchimento explícito das pendências, localização por linha, divergências, resumo e confirmação acessível do efeito real no estoque. `/purchases/receipts/[id]` preserva rastreabilidade. Não há atualização otimista e o botão permanece desabilitado durante a confirmação idempotente.
 
+Em Vendas, `/sales/orders` oferece busca, filtros de status, cliente, depósito e período, tabela paginada e número humano. Criação e edição usam páginas dedicadas com cliente, depósito de origem, datas, pesquisa de produto, tabela dinâmica, preço sugerido/editável, descontos por linha e geral e resumo em tempo real. O limite de crédito aparece como informação; eventual excesso gera warning sem bloqueio.
+
+O detalhe `/sales/orders/[id]` exibe snapshots, valores, histórico e ações por estado/permissão. A confirmação acessível informa explicitamente que ainda não reserva nem baixa estoque. Cancelamento exige motivo e pedidos confirmados/cancelados ficam somente para consulta. Mutações não invalidam queries de estoque.
+
 ## Padrões de tela
 
 - Listagens: título, ação principal autorizada, filtros, tabela paginada e estado vazio com próximo passo.

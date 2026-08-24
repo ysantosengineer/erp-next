@@ -1,6 +1,6 @@
 # ERP Next
 
-Monorepo do ERP Next para pequenas e médias empresas. O repositório contém uma aplicação web em Next.js, uma API NestJS, PostgreSQL via Prisma, autenticação, usuários, papéis e permissões, cadastros, estoque, inventário físico, pedidos e recebimentos de compra.
+Monorepo do ERP Next para pequenas e médias empresas. O repositório contém uma aplicação web em Next.js, uma API NestJS, PostgreSQL via Prisma, autenticação, usuários, papéis e permissões, cadastros, estoque, inventário físico, compras e pedidos de venda.
 
 ## Pré-requisitos
 
@@ -57,12 +57,15 @@ npm run dev
 - Inventários físicos: `http://localhost:3000/inventory/counts`
 - Pedidos de compra: `http://localhost:3000/purchases/orders`
 - Recebimentos de compras: `http://localhost:3000/purchases/receipts`
+- Pedidos de venda: `http://localhost:3000/sales/orders`
 
 O estoque é alterado exclusivamente por entradas, saídas, ajustes ou transferências. Quantidades usam `Decimal(18,4)`, saldo negativo é bloqueado e saldo/movimentação/auditoria são confirmados na mesma transação serializável. O histórico não possui endpoints de edição ou exclusão.
 
 O inventário físico captura um snapshot ao iniciar e bloqueia movimentações do depósito até aprovação ou cancelamento. Primeira contagem e recontagem não alteram saldo; a aprovação usa os mesmos ajustes transacionais do estoque, com referência ao inventário e rollback integral.
 
 Pedidos de compra usam numeração humana por empresa, itens e custos congelados, aprovação e cancelamento auditados. Aprovar não altera estoque. O recebimento físico aceita parciais e múltiplas confirmações, gera entradas `PURCHASE_RECEIPT`, atualiza saldo e pedido na mesma transação e protege retries por idempotência.
+
+Pedidos de venda usam numeração `SO-*` por empresa, snapshots, preços negociados, descontos por item e geral e transições auditadas. Confirmar ou cancelar não reserva, baixa ou movimenta estoque; a integração física pertence à Etapa 16.
 
 ## Sessão web
 

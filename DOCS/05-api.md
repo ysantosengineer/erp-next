@@ -89,6 +89,15 @@
 - A listagem aceita paginação, pesquisa, pedido, fornecedor, depósito, período e ordenação. O detalhe retorna snapshots, quantidades, localização, responsável e pedido de origem.
 - A criação aceita apenas `purchaseOrderId`, `idempotencyKey`, observações e itens com `purchaseOrderItemId`, `locationId`, quantidade positiva e divergência opcional. Tenant, número, produto, custo, saldos, status e quantidades históricas são derivados pelo servidor.
 - Confirmações parciais e múltiplas geram movimentos `ENTRY` referenciados ao recebimento, atualizam saldo/acumulado/status atomicamente e são imutáveis. Excesso, estado inválido, inventário ativo, concorrência e idempotência reutilizada retornam códigos de domínio sem expor Prisma.
+
+### Pedidos de venda
+
+- `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm` e `POST /sales-orders/:id/cancel` usam as permissões correspondentes `sales_orders.*`. `GET /sales-orders/options` fornece clientes, depósitos e produtos ativos do tenant.
+- A listagem aceita paginação, pesquisa, status, cliente, depósito, períodos do pedido/entrega e ordenação por whitelist. Pesquisa cobre número, cliente, nome e SKU congelados nos itens.
+- Criação e edição aceitam cliente, depósito, datas, observações, valores adicionais e representação completa dos itens. Empresa, número, status, snapshots, reservas, responsáveis e totais nunca vêm do cliente.
+- Item usa quantity com quatro casas, preço/desconto com duas e snapshot de produto. Desconto da linha não pode superar o bruto; desconto geral não pode superar o subtotal. O backend recalcula todos os valores.
+- Somente `DRAFT` é editável. Confirmar produz `CONFIRMED`; rascunho ou confirmado pode ser cancelado com motivo. Updates condicionais impedem transições concorrentes duplicadas.
+- Nenhum endpoint desta etapa altera saldo, cria `StockMovement` ou reserva estoque. O limite de crédito retornado é apenas informação cadastral.
 | Vendas | `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm`, `POST /sales-orders/:id/cancel` |
 | Compras | Pedidos em `/purchase-orders`; recebimentos em `GET,POST /purchase-receipts`, detalhe e `/purchase-orders/:id/receivable` |
 | Estoque | `GET /inventory`, `GET /inventory/products/:productId`, `GET /inventory/movements`; comandos em `/inventory/movements/{entry,exit,adjustment,transfer}` |

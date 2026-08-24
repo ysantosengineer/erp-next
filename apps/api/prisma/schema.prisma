@@ -43,6 +43,12 @@ enum PurchaseOrderStatus {
   CANCELLED
 }
 
+enum SalesOrderStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
 model Company {
   id                      String                   @id @default(uuid()) @db.Uuid
   name                    String
@@ -69,6 +75,9 @@ model Company {
   purchaseReceipts        PurchaseReceipt[]
   purchaseReceiptItems    PurchaseReceiptItem[]
   purchaseReceiptSequence PurchaseReceiptSequence?
+  salesOrders             SalesOrder[]
+  salesOrderItems         SalesOrderItem[]
+  salesOrderSequence      SalesOrderSequence?
   auditLogs               AuditLog[]
 }
 
@@ -85,6 +94,7 @@ model Warehouse {
   locations       StockLocation[]
   inventoryCounts InventoryCount[]
   purchaseOrders  PurchaseOrder[]
+  salesOrders     SalesOrder[]
 
   @@unique([companyId, code])
   @@unique([companyId, id])
@@ -138,7 +148,9 @@ model Customer {
   updatedAt   DateTime          @updatedAt
   company     Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
   addresses   CustomerAddress[]
+  salesOrders SalesOrder[]
 
+  @@unique([companyId, id])
   @@unique([companyId, document])
   @@index([companyId, isActive, type])
   @@index([companyId, name])
@@ -273,6 +285,7 @@ model Product {
   inventoryCountItems  InventoryCountItem[]
   purchaseOrderItems   PurchaseOrderItem[]
   purchaseReceiptItems PurchaseReceiptItem[]
+  salesOrderItems      SalesOrderItem[]
 
   @@unique([companyId, sku])
   @@unique([companyId, barcode])
@@ -308,6 +321,9 @@ model User {
   approvedPurchaseOrders   PurchaseOrder[]      @relation("PurchaseOrderApprover")
   cancelledPurchaseOrders  PurchaseOrder[]      @relation("PurchaseOrderCanceller")
   receivedPurchaseReceipts PurchaseReceipt[]    @relation("PurchaseReceiptReceiver")
+  createdSalesOrders       SalesOrder[]         @relation("SalesOrderCreator")
+  confirmedSalesOrders     SalesOrder[]         @relation("SalesOrderConfirmer")
+  cancelledSalesOrders     SalesOrder[]         @relation("SalesOrderCanceller")
   company                  Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
 
   @@unique([companyId, id])
@@ -430,6 +446,77 @@ model PurchaseReceiptSequence {
   lastNumber Int      @default(0)
   updatedAt  DateTime @updatedAt
   company    Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+}
+
+model SalesOrderSequence {
+  companyId  String   @id @db.Uuid
+  lastNumber Int      @default(0)
+  updatedAt  DateTime @updatedAt
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+}
+
+model SalesOrder {
+  id                   String           @id @default(uuid()) @db.Uuid
+  companyId            String           @db.Uuid
+  customerId           String           @db.Uuid
+  warehouseId          String           @db.Uuid
+  number               String
+  status               SalesOrderStatus @default(DRAFT)
+  orderDate            DateTime         @db.Date
+  expectedDeliveryDate DateTime?        @db.Date
+  notes                String?
+  subtotal             Decimal          @db.Decimal(14, 2)
+  discountAmount       Decimal          @default(0) @db.Decimal(14, 2)
+  freightAmount        Decimal          @default(0) @db.Decimal(14, 2)
+  otherAmount          Decimal          @default(0) @db.Decimal(14, 2)
+  totalAmount          Decimal          @db.Decimal(14, 2)
+  createdByUserId      String           @db.Uuid
+  confirmedByUserId    String?          @db.Uuid
+  confirmedAt          DateTime?
+  cancelledByUserId    String?          @db.Uuid
+  cancelledAt          DateTime?
+  cancellationReason   String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  company              Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  customer             Customer         @relation(fields: [companyId, customerId], references: [companyId, id], onDelete: Restrict)
+  warehouse            Warehouse        @relation(fields: [companyId, warehouseId], references: [companyId, id], onDelete: Restrict)
+  createdBy            User             @relation("SalesOrderCreator", fields: [companyId, createdByUserId], references: [companyId, id], onDelete: Restrict)
+  confirmedBy          User?            @relation("SalesOrderConfirmer", fields: [companyId, confirmedByUserId], references: [companyId, id], onDelete: Restrict)
+  cancelledBy          User?            @relation("SalesOrderCanceller", fields: [companyId, cancelledByUserId], references: [companyId, id], onDelete: Restrict)
+  items                SalesOrderItem[]
+
+  @@unique([companyId, number])
+  @@unique([companyId, id])
+  @@index([companyId, status, orderDate])
+  @@index([customerId, orderDate])
+  @@index([warehouseId, orderDate])
+  @@index([expectedDeliveryDate])
+}
+
+model SalesOrderItem {
+  id               String     @id @default(uuid()) @db.Uuid
+  companyId        String     @db.Uuid
+  salesOrderId     String     @db.Uuid
+  productId        String     @db.Uuid
+  productName      String
+  productSku       String
+  unitSymbol       String
+  quantity         Decimal    @db.Decimal(18, 4)
+  unitPrice        Decimal    @db.Decimal(14, 2)
+  discountAmount   Decimal    @default(0) @db.Decimal(14, 2)
+  subtotal         Decimal    @db.Decimal(14, 2)
+  reservedQuantity Decimal    @default(0) @db.Decimal(18, 4)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  company          Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  salesOrder       SalesOrder @relation(fields: [companyId, salesOrderId], references: [companyId, id], onDelete: Restrict)
+  product          Product    @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([companyId, salesOrderId, productId])
+  @@unique([companyId, id])
+  @@index([salesOrderId])
+  @@index([productId])
 }
 
 model PurchaseOrder {

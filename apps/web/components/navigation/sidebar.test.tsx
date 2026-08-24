@@ -79,4 +79,14 @@ describe('Sidebar', () => {
     );
     expect(screen.queryByRole('link', { name: 'Pedidos de compra' })).not.toBeInTheDocument();
   });
+
+  it('exibe pedidos de venda somente com a permissão própria de leitura', () => {
+    useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.SALES_ORDERS_READ] } });
+    render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Pedidos de venda' })).toHaveAttribute(
+      'href',
+      '/sales/orders',
+    );
+    expect(screen.queryByRole('link', { name: 'Pedidos de compra' })).not.toBeInTheDocument();
+  });
 });

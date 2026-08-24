@@ -89,6 +89,11 @@ async function main(): Promise<void> {
     ['purchase_orders', 'cancel', 'Cancela pedidos de compra.'],
     ['purchase_receipts', 'read', 'Consulta recebimentos de compras.'],
     ['purchase_receipts', 'create', 'Confirma recebimentos e entradas de estoque.'],
+    ['sales_orders', 'read', 'Consulta pedidos de venda.'],
+    ['sales_orders', 'create', 'Cria pedidos de venda.'],
+    ['sales_orders', 'update', 'Edita pedidos de venda em rascunho.'],
+    ['sales_orders', 'confirm', 'Confirma pedidos de venda sem alterar estoque.'],
+    ['sales_orders', 'cancel', 'Cancela pedidos de venda.'],
   ] as const;
   const newPermissions = await Promise.all(
     businessPermissions.map(([resource, action, description]) =>

@@ -17,6 +17,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { InventoryCountsModule } from './inventory-counts/inventory-counts.module';
 import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module';
 import { PurchaseReceiptsModule } from './purchase-receipts/purchase-receipts.module';
+import { SalesOrdersModule } from './sales-orders/sales-orders.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { PurchaseReceiptsModule } from './purchase-receipts/purchase-receipts.mo
     InventoryModule,
     PurchaseOrdersModule,
     PurchaseReceiptsModule,
+    SalesOrdersModule,
   ],
   controllers: [AppController],
 })

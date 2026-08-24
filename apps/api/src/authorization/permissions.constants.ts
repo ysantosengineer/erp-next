@@ -57,6 +57,11 @@ export const PERMISSIONS = {
   PURCHASE_ORDERS_CANCEL: 'purchase_orders.cancel',
   PURCHASE_RECEIPTS_READ: 'purchase_receipts.read',
   PURCHASE_RECEIPTS_CREATE: 'purchase_receipts.create',
+  SALES_ORDERS_READ: 'sales_orders.read',
+  SALES_ORDERS_CREATE: 'sales_orders.create',
+  SALES_ORDERS_UPDATE: 'sales_orders.update',
+  SALES_ORDERS_CONFIRM: 'sales_orders.confirm',
+  SALES_ORDERS_CANCEL: 'sales_orders.cancel',
 } as const;
 
 export const ADMINISTRATIVE_PERMISSIONS = Object.values(PERMISSIONS);

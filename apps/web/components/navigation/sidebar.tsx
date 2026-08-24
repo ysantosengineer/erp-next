@@ -124,6 +124,20 @@ export function Sidebar() {
           </Link>
         </Can>
         <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Vendas
+        </p>
+        <Can permission={PERMISSIONS.SALES_ORDERS_READ}>
+          <Link
+            className={cn(
+              navigationClass,
+              pathname.startsWith('/sales/orders') && 'bg-slate-100 text-slate-950',
+            )}
+            href="/sales/orders"
+          >
+            Pedidos de venda
+          </Link>
+        </Can>
+        <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
           Administração
         </p>
         <Can permission={PERMISSIONS.USERS_READ}>

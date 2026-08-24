@@ -81,14 +81,17 @@ A chave estrangeira composta `(companyId, warehouseId) → Warehouse(companyId, 
 
 | Entidade | Campos principais | Relações |
 | --- | --- | --- |
-| SalesOrder | id, number, status, subtotal, discount, total, confirmedAt | N:1 Customer; 1:N SalesOrderItem; 0:N Invoice |
-| SalesOrderItem | id, quantity, unitPrice, discount, total | N:1 SalesOrder e Product |
+| SalesOrder | id, companyId, customerId, warehouseId, number, status, datas, valores, usuários e cancelamento | N:1 Company, Customer, Warehouse e usuários; 1:N SalesOrderItem |
+| SalesOrderItem | id, companyId, salesOrderId, productId, snapshots, quantity, unitPrice, discountAmount, subtotal, reservedQuantity | N:1 SalesOrder e Product |
+| SalesOrderSequence | companyId, lastNumber, updatedAt | 1:1 Company; contador atômico por empresa |
 | PurchaseOrderSequence | companyId, lastNumber, updatedAt | 1:1 Company; contador atômico por empresa |
 | Invoice | id, direction, status, dueDate, amount, balance | opcionalmente ligada a venda ou compra; 1:N Payment |
 | Payment | id, paidAt, amount, method, status, reference | N:1 Invoice; N:1 User |
 | AuditLog | id, companyId, entity, entityId, action, before, after, occurredAt | N:1 User; N:1 Company opcional |
 
 Regras de integridade: um item não pode ter quantidade ou preço negativo; `total = quantidade × preço - desconto`; uma fatura não pode apontar simultaneamente para compra e venda; pagamentos cancelados não compõem saldo.
+
+`SalesOrder.status` usa somente `DRAFT`, `CONFIRMED` e `CANCELLED`. Número é único por empresa e produto é único por pedido. Checks garantem quantidade positiva, valores não negativos, descontos limitados, igualdade dos totais e metadados coerentes com o estado. Os itens congelam nome, SKU e unidade. `reservedQuantity` usa `Decimal(18,4)`, inicia em zero e não é atualizado na Etapa 15; sua faixa entre zero e a quantidade prepara reserva parcial futura sem criar uma reserva.
 
 `PurchaseOrder.status` usa `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `PARTIALLY_RECEIVED`, `RECEIVED` e `CANCELLED`. Número é único por empresa. Produto é único por pedido. Checks garantem quantidade positiva, custos e valores não negativos e `receivedQuantity` entre zero e a quantidade pedida. Snapshots mínimos preservam nome, SKU e unidade históricos.
 
