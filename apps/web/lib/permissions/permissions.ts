@@ -25,6 +25,10 @@ export const PERMISSIONS = {
   PRODUCTS_CREATE: 'products.create',
   PRODUCTS_UPDATE: 'products.update',
   PRODUCTS_MANAGE_STATUS: 'products.manage_status',
+  CUSTOMERS_READ: 'customers.read',
+  CUSTOMERS_CREATE: 'customers.create',
+  CUSTOMERS_UPDATE: 'customers.update',
+  CUSTOMERS_MANAGE_STATUS: 'customers.manage_status',
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -56,6 +60,10 @@ export const PERMISSION_LABELS: Readonly<Record<string, string>> = {
   'products.create': 'Criar produtos',
   'products.update': 'Editar produtos',
   'products.manage_status': 'Gerenciar status de produtos',
+  'customers.read': 'Visualizar clientes',
+  'customers.create': 'Criar clientes',
+  'customers.update': 'Editar clientes',
+  'customers.manage_status': 'Gerenciar status de clientes',
 };
 
 export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
@@ -65,4 +73,5 @@ export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
   units: 'Unidades de medida',
   suppliers: 'Fornecedores',
   products: 'Produtos',
+  customers: 'Clientes',
 };

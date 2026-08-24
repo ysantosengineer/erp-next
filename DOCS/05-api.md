@@ -38,6 +38,15 @@
 - O corpo nunca aceita `companyId`. Categoria e unidade são obrigatórias; fornecedor principal é opcional. Novos relacionamentos devem pertencer à empresa autenticada e estar ativos.
 - Valores monetários são strings decimais com duas casas no response; peso, dimensões e estoque mínimo são strings com três casas. SKU é normalizado para maiúsculas e código de barras aceita somente 8 a 14 dígitos.
 - Duplicidades retornam `409 PRODUCT_SKU_EXISTS` ou `409 PRODUCT_BARCODE_EXISTS`; relacionamento inativo retorna `422`; recurso ou relacionamento externo à empresa retorna `404`.
+
+### Clientes
+
+- `GET /customers` e `GET /customers/:id` exigem `customers.read`.
+- `POST /customers`, `PATCH /customers/:id` e `PATCH /customers/:id/status` exigem, respectivamente, `customers.create`, `customers.update` e `customers.manage_status`.
+- A listagem aceita `page`, `limit`, `search`, `status`, `type`, `sortBy` e `sortOrder`. A pesquisa cobre nome, nome fantasia, documento, e-mail e telefone; a ordenação usa uma whitelist com nome, documento, limite de crédito e timestamps.
+- `type` aceita `INDIVIDUAL` ou `COMPANY`. CPF/CNPJ é obrigatório, validado e normalizado pela API. O corpo pode conter um endereço principal opcional; `companyId` e `isActive` nunca são aceitos nos endpoints de criação e edição.
+- `creditLimit` é recebido e devolvido como string decimal canônica com duas casas, sendo persistido em `Decimal(14,2)`. Valores negativos são rejeitados.
+- Documento duplicado na mesma empresa retorna `409 CUSTOMER_DOCUMENT_EXISTS`; documento inválido retorna `400 INVALID_CUSTOMER_DOCUMENT`; recurso de outra empresa retorna `404 CUSTOMER_NOT_FOUND`.
 | Vendas | `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm`, `POST /sales-orders/:id/cancel` |
 | Compras | Rotas equivalentes em `/purchase-orders`, com `POST /:id/receive` |
 | Estoque | `GET /inventory`, `GET /stock-movements`; movimentação manual somente por endpoint autorizado e motivo obrigatório |

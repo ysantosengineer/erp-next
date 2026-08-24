@@ -1,6 +1,6 @@
 # ERP Next
 
-Monorepo do ERP Next para pequenas e médias empresas. O repositório contém uma aplicação web em Next.js, uma API NestJS, PostgreSQL via Prisma, autenticação, usuários, papéis e permissões, além dos cadastros iniciais de categorias, unidades de medida, fornecedores e produtos. Os demais módulos de negócio permanecem para próximas etapas.
+Monorepo do ERP Next para pequenas e médias empresas. O repositório contém uma aplicação web em Next.js, uma API NestJS, PostgreSQL via Prisma, autenticação, usuários, papéis e permissões, além dos cadastros iniciais de categorias, unidades de medida, fornecedores, produtos e clientes. Os demais módulos de negócio permanecem para próximas etapas.
 
 ## Pré-requisitos
 
@@ -50,6 +50,7 @@ npm run dev
 - Unidades de medida: `http://localhost:3000/units`
 - Fornecedores: `http://localhost:3000/suppliers`
 - Produtos: `http://localhost:3000/products`
+- Clientes: `http://localhost:3000/customers`
 
 ## Sessão web
 

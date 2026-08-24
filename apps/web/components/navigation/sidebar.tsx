@@ -46,6 +46,11 @@ export function Sidebar() {
             Produtos
           </Link>
         </Can>
+        <Can permission={PERMISSIONS.CUSTOMERS_READ}>
+          <Link className={linkClass('/customers')} href="/customers">
+            Clientes
+          </Link>
+        </Can>
         <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
           Administração
         </p>

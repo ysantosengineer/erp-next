@@ -11,7 +11,7 @@
 
 | Entidade | Campos principais | Relações |
 | --- | --- | --- |
-| Company | id, name, document, isActive | 1:N User, Role, Category, UnitOfMeasure, Supplier, Product e AuditLog |
+| Company | id, name, document, isActive | 1:N User, Role, Category, UnitOfMeasure, Supplier, Product, Customer e AuditLog |
 | User | id, companyId, name, email, passwordHash, authVersion, isActive, lastLoginAt | N:1 Company; N:N Role; 1:N AuditLog |
 | Role | id, companyId, name, description, isSystem | N:1 Company; N:N User e Permission |
 | Permission | id, resource, action, description | N:N Role; único por resource/action |
@@ -40,9 +40,16 @@ Unidades de medida pertencem à empresa e usam `companyId`, `name`, `normalizedN
 
 SKU e código de barras são únicos pelos pares `(companyId, sku)` e `(companyId, barcode)`. O PostgreSQL permite múltiplos valores nulos no índice do código de barras. Preços, medidas e estoque mínimo possuem restrições `CHECK` não negativas. As chaves estrangeiras usam `RESTRICT`; o ciclo de vida é controlado por `isActive`, sem exclusão física.
 
+### Customer e CustomerAddress
+
+`Customer` usa `CustomerType` (`INDIVIDUAL` ou `COMPANY`), pertence obrigatoriamente a `Company` e armazena `name`, `tradeName`, `document`, `email`, `phone`, `creditLimit`, `notes`, `isActive` e timestamps. CPF/CNPJ é obrigatório, contém somente dígitos e é único por `(companyId, document)`. `creditLimit` usa `Decimal(14,2)`, padrão zero e restrição `CHECK` não negativa.
+
+`CustomerAddress` pertence a `Customer` e armazena CEP, logradouro, número, complemento, bairro, cidade, UF, país e indicação de principal. A relação 1:N permite evolução, mas um índice parcial garante no máximo um endereço principal por cliente. A interface inicial gerencia esse endereço principal. Chaves estrangeiras usam `RESTRICT`, preservando dados necessários a vínculos históricos futuros.
+
 | Entidade | Campos principais | Relações |
 | --- | --- | --- |
-| Customer | id, type, name, document, email, phone, creditLimit, isActive | 1:N SalesOrder, Address |
+| Customer | id, companyId, type, name, tradeName, document, email, phone, creditLimit, notes, isActive | N:1 Company; 1:N CustomerAddress; futuramente SalesOrder |
+| CustomerAddress | id, customerId, postalCode, street, number, complement, district, city, state, country, isPrimary | N:1 Customer |
 | Supplier | id, companyId, type, name, tradeName, document, email, phone, contactName, notes, isActive | N:1 Company; 1:N SupplierAddress e Product; futuramente PurchaseOrder |
 | SupplierAddress | id, supplierId, postalCode, street, number, complement, district, city, state, country, isPrimary | N:1 Supplier |
 | Category | id, name, description, isActive | 1:N Product |
