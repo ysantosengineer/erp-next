@@ -104,6 +104,7 @@ async function main(): Promise<void> {
     ['finance', 'settle', 'Registra pagamentos e recebimentos.'],
     ['finance', 'cancel', 'Cancela títulos financeiros elegíveis.'],
     ['finance.cash_flow', 'read', 'Consulta fluxo de caixa previsto e realizado.'],
+    ['analytics.dashboard', 'read', 'Consulta o dashboard gerencial.'],
   ] as const;
   const newPermissions = await Promise.all(
     businessPermissions.map(([resource, action, description]) =>

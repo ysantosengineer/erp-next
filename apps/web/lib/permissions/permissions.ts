@@ -72,6 +72,7 @@ export const PERMISSIONS = {
   FINANCE_SETTLE: 'finance.settle',
   FINANCE_CANCEL: 'finance.cancel',
   FINANCE_CASH_FLOW_READ: 'finance.cash_flow.read',
+  ANALYTICS_DASHBOARD_READ: 'analytics.dashboard.read',
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -150,6 +151,7 @@ export const PERMISSION_LABELS: Readonly<Record<string, string>> = {
   'finance.settle': 'Registrar pagamentos e recebimentos',
   'finance.cancel': 'Cancelar títulos financeiros',
   'finance.cash_flow.read': 'Visualizar fluxo de caixa',
+  'analytics.dashboard.read': 'Visualizar dashboard gerencial',
 };
 
 export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
@@ -171,4 +173,5 @@ export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
   sales_orders: 'Pedidos de venda',
   finance: 'Financeiro',
   'finance.cash_flow': 'Fluxo de caixa',
+  'analytics.dashboard': 'Dashboard e análises',
 };

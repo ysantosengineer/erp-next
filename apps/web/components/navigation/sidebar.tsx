@@ -20,9 +20,11 @@ export function Sidebar() {
         ERP Next
       </Link>
       <nav aria-label="Navegação principal" className="flex flex-col gap-1">
-        <Link className={linkClass('/')} href="/">
-          Dashboard
-        </Link>
+        <Can permission={PERMISSIONS.ANALYTICS_DASHBOARD_READ}>
+          <Link className={linkClass('/')} href="/">
+            Dashboard
+          </Link>
+        </Can>
         <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
           Cadastros
         </p>
@@ -180,6 +182,53 @@ export function Sidebar() {
             href="/finance/cash-flow"
           >
             Fluxo de caixa
+          </Link>
+        </Can>
+        <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Relatórios
+        </p>
+        <Can permission={PERMISSIONS.SALES_ORDERS_READ}>
+          <Link
+            className={cn(
+              navigationClass,
+              pathname === '/reports/sales' && 'bg-slate-100 text-slate-950',
+            )}
+            href="/reports/sales"
+          >
+            Vendas
+          </Link>
+        </Can>
+        <Can permission={PERMISSIONS.PURCHASE_ORDERS_READ}>
+          <Link
+            className={cn(
+              navigationClass,
+              pathname === '/reports/purchases' && 'bg-slate-100 text-slate-950',
+            )}
+            href="/reports/purchases"
+          >
+            Compras
+          </Link>
+        </Can>
+        <Can permission={PERMISSIONS.INVENTORY_READ}>
+          <Link
+            className={cn(
+              navigationClass,
+              pathname === '/reports/inventory' && 'bg-slate-100 text-slate-950',
+            )}
+            href="/reports/inventory"
+          >
+            Estoque
+          </Link>
+        </Can>
+        <Can permission={PERMISSIONS.FINANCE_READ}>
+          <Link
+            className={cn(
+              navigationClass,
+              pathname === '/reports/finance' && 'bg-slate-100 text-slate-950',
+            )}
+            href="/reports/finance"
+          >
+            Financeiro
           </Link>
         </Can>
         <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">

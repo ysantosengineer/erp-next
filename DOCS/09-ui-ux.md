@@ -35,6 +35,10 @@ O detalhe `/sales/orders/[id]` exibe snapshots, alocações, valores, histórico
 
 Em Financeiro, `/finance/payables` e `/finance/receivables` mantêm contextos visuais separados sobre o mesmo contrato, com resumo, pesquisa, estado, vencimento e paginação. Criação/edição usa formulário dedicado, datas civis e moeda brasileira; o detalhe destaca original, liquidado, pendente, atraso e histórico imutável. Pagamento/recebimento e cancelamento aparecem somente quando estado e permissão permitem. `/finance/cash-flow` compara previsto e realizado por dia ou mês em tabela clara, sem antecipar dashboard avançado.
 
+O dashboard `/` oferece período global com atalhos de 7, 30 e 90 dias, cards de vendas, compras, estoque e financeiro, alertas acionáveis, evolução de pedidos e ranking limitado. Seções não autorizadas não são renderizadas. Estados de carregamento, erro e vazio são explícitos e gráficos mantêm alternativa textual acessível.
+
+A central `/reports` mostra somente relatórios autorizados. `/reports/sales`, `/reports/purchases`, `/reports/inventory` e `/reports/finance` possuem período, pesquisa, ordenação e paginação no servidor, tabelas responsivas e links para detalhamento. Quantidades exibem unidade e valores de pedidos não são rotulados como faturamento.
+
 ## Padrões de tela
 
 - Listagens: título, ação principal autorizada, filtros, tabela paginada e estado vazio com próximo passo.

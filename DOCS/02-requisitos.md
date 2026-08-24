@@ -158,6 +158,11 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 - A Etapa 17 não gera títulos automaticamente a partir de compras/vendas e não inclui estorno, contabilidade, banco, emissão fiscal, gateway ou dashboard avançado.
 - O dashboard mostra vendas, compras, contas em aberto e alertas de estoque baixo no período selecionado.
 - Relatórios do MVP oferecem filtros por período e exportação posterior, sem promessa de formato fiscal.
+- O período padrão do dashboard é de 30 dias civis, com seleção de até 366 dias e comparação com período anterior equivalente.
+- Vendas válidas para analytics são pedidos `CONFIRMED`, `RESERVED` e `SHIPPED`; rascunhos e cancelados não compõem os indicadores.
+- Quantidades são apresentadas por unidade de medida, sem somar unidades heterogêneas. Compras distinguem valores pedidos, aprovados e efetivamente recebidos.
+- Estoque baixo considera disponível maior que zero e menor ou igual ao mínimo; estoque zerado ou negativo é alerta separado.
+- Dados financeiros só são retornados a usuários com `finance.read`. Exportação permanece no backlog P2.
 
 ## Não funcionais
 

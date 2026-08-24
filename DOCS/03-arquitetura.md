@@ -65,6 +65,10 @@ As rotas `/inventory` e `/inventory/movements` usam TanStack Query para cache e 
 
 `/finance/payables`, `/finance/receivables`, `/finance/entries/[id]` e `/finance/cash-flow` compartilham contratos e query keys do domínio financeiro. Baixas e cancelamentos não usam atualização otimista; após commit invalidam listas, detalhe, resumo e fluxo de caixa.
 
+O módulo `analytics` é uma camada somente de leitura sobre vendas, compras, estoque e financeiro. Agregações são executadas sob demanda no PostgreSQL, por tenant e período, sem tabelas-resumo. SQL parametrizado é usado apenas quando `groupBy`/`aggregate` do Prisma não expressam adequadamente a consulta. O cache inicial é exclusivamente cliente, via TanStack Query; Redis depende de medição real de latência e volume.
+
+Datas civis chegam como `YYYY-MM-DD`; consultas sobre `DateTime` usam intervalo semiaberto `[início, dia seguinte ao fim)`. Até existir timezone configurável por empresa, analytics usa UTC explicitamente.
+
 Os cadastros `/suppliers` e `/customers` seguem essa organização por domínio. `SupplierAddress` e `CustomerAddress` são entidades específicas porque os ciclos de vida dos domínios podem evoluir de forma independente. Ambos aceitam relação 1:N, enquanto a interface atual mantém somente um endereço principal. Validação e formatação estáveis de CPF, CNPJ, telefone e CEP são compartilhadas em utilitários, sem introduzir uma tabela polimórfica de endereços.
 
 ## Integrações e observabilidade

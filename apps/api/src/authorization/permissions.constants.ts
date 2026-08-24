@@ -72,6 +72,7 @@ export const PERMISSIONS = {
   FINANCE_SETTLE: 'finance.settle',
   FINANCE_CANCEL: 'finance.cancel',
   FINANCE_CASH_FLOW_READ: 'finance.cash_flow.read',
+  ANALYTICS_DASHBOARD_READ: 'analytics.dashboard.read',
 } as const;
 
 export const ADMINISTRATIVE_PERMISSIONS = Object.values(PERMISSIONS);

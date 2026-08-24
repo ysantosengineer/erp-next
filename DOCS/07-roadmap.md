@@ -28,7 +28,7 @@ Pedidos de venda, confirmação comercial, cancelamento e histórico do cliente.
 
 ## Sprint 5 — Financeiro e relatórios
 
-Etapa 17 implementada: títulos unificados a pagar/receber, baixas parciais/totais imutáveis, vencimentos, numeração, idempotência, concorrência, fluxo de caixa simples, permissões, auditoria, multiempresa e interfaces. Dashboard gerencial e relatórios ampliados permanecem para a Etapa 18; contabilidade e integrações bancárias continuam fora do escopo.
+Etapas 17 e 18 implementadas: títulos unificados a pagar/receber, baixas, fluxo de caixa, dashboard gerencial com dados reais e relatórios de vendas, compras, estoque e financeiro. Analytics respeita período, comparação, permissões e isolamento multiempresa. Exportação, contabilidade e integrações bancárias continuam fora do escopo.
 
 ## Sprint 6 — Produção e estabilização
 

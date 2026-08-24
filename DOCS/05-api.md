@@ -126,3 +126,17 @@
 - A baixa exige valor, data, método e `idempotencyKey`; o mesmo payload pode ser repetido sem duplicação e reutilização divergente retorna `409`. Overpayment e estados inelegíveis retornam `422`.
 - `GET /finance/cash-flow` aceita período, `view=forecast|realized|combined` e `groupBy=day|month`. `GET /finance/summary` devolve totais simples; `GET /finance/options` lista parceiros ativos do tenant.
 - Guards usam `finance.read`, `finance.create`, `finance.update`, `finance.settle`, `finance.cancel` e `finance.cash_flow.read`. Empresa, número, estados, saldos, atores e hashes nunca são aceitos do cliente.
+
+### Analytics
+
+As rotas `/reports/*` representam páginas do frontend. A API gerencial real está sob `/api/v1/analytics`:
+
+| Método | Rota | Permissão | Descrição |
+| --- | --- | --- | --- |
+| GET | `/analytics/dashboard` | `analytics.dashboard.read` | Agrega somente seções cujas permissões de domínio o usuário possui. |
+| GET | `/analytics/sales` | `sales_orders.read` | Relatório paginado de pedidos válidos. |
+| GET | `/analytics/purchases` | `purchase_orders.read` | Relatório paginado de compras e recebimentos. |
+| GET | `/analytics/inventory` | `inventory.read` | Posição atual por produto e endereço. |
+| GET | `/analytics/finance` | `finance.read` | Títulos financeiros paginados. |
+
+Dashboard, vendas e compras aceitam `startDate`, `endDate` e `warehouseId` opcional. O padrão é 30 dias e o máximo é 366. Relatórios aceitam paginação, pesquisa e ordenação por whitelist. O dashboard retorna `null` para domínios sem autorização, evitando zeros que revelem dados protegidos.
