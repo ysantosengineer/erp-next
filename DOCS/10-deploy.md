@@ -56,6 +56,17 @@ Os planos gratuitos são adequados a demonstração: o Render hiberna após inat
 para responder; Neon e Vercel têm cotas. Um ambiente comercial deve usar planos pagos, backups
 testados, alertas, região definida e orçamento aprovado.
 
+## Diagrama de produção
+
+```mermaid
+flowchart LR
+  U[Usuário] -->|HTTPS| W[Vercel / Next.js]
+  W -->|HTTPS + Bearer/cookie| A[Render / API Docker]
+  A -->|TLS + conexão pooled| D[(Neon PostgreSQL)]
+  G[GitHub Actions] -->|migrate deploy| D
+  G -->|deploy hook após CI| A
+```
+
 ## Configuração do GitHub
 
 Crie o Environment `production` e cadastre:
@@ -89,3 +100,17 @@ deploy corretivo.
 
 Monitore disponibilidade de `/health` e `/ready`, latência, `5xx`, `429` e falhas do workflow.
 Logs seguem para stdout com request ID; segredos, tokens, cookies e corpos não devem ser logados.
+
+## Troubleshooting
+
+- CI sem conectar ao PostgreSQL: confira o healthcheck do service container e se ambas as URLs
+  apontam para `erp_next_test`.
+- Refresh retorna `403 INVALID_ORIGIN`: use a origem completa e exata do frontend em
+  `CORS_ORIGINS`, sem barra final.
+- Cookie não é enviado entre Vercel e Render: confirme HTTPS, `AUTH_COOKIE_SECURE=true`,
+  `AUTH_COOKIE_SAME_SITE=none` e `credentials: include`.
+- API não inicia no Render: valide secrets, `PORT`, `/api/v1/ready` e o log da validação de ambiente.
+- Deploy não inicia: confirme o GitHub Environment, as quatro variables/secrets documentadas e
+  `PRODUCTION_DEPLOY_ENABLED=true`.
+- Migration falha: não acione seed nem force alteração manual; preserve o deploy anterior, revise a
+  migration e teste a restauração antes de tentar novamente.
