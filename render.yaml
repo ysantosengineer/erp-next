@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: erp-next-api
+    runtime: docker
+    plan: free
+    region: virginia
+    branch: main
+    dockerContext: .
+    dockerfilePath: ./apps/api/Dockerfile
+    healthCheckPath: /api/v1/ready
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: JWT_ACCESS_TTL_SECONDS
+        value: 900
+      - key: JWT_REFRESH_TTL_SECONDS
+        value: 604800
+      - key: JWT_ISSUER
+        value: erp-next-api
+      - key: JWT_AUDIENCE
+        value: erp-next-web
+      - key: AUTH_COOKIE_SECURE
+        value: 'true'
+      - key: AUTH_COOKIE_SAME_SITE
+        value: none
+      - key: TRUST_PROXY_HOPS
+        value: 1
+      - key: SWAGGER_ENABLED
+        value: 'false'
+      - key: REQUEST_BODY_LIMIT
+        value: 256kb

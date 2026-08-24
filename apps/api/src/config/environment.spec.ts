@@ -14,8 +14,11 @@ describe('validateEnvironment', () => {
   it('normaliza defaults seguros', () => {
     expect(validateEnvironment(valid)).toMatchObject({
       AUTH_COOKIE_SECURE: 'false',
+      AUTH_COOKIE_SAME_SITE: 'lax',
+      PORT: 3001,
       REQUEST_BODY_LIMIT: '256kb',
       SWAGGER_ENABLED: 'true',
+      TRUST_PROXY_HOPS: 0,
     });
   });
 
@@ -24,6 +27,9 @@ describe('validateEnvironment', () => {
     [{ CORS_ORIGINS: '*' }, 'CORS_ORIGINS'],
     [{ REQUEST_BODY_LIMIT: '10mb' }, 'REQUEST_BODY_LIMIT'],
     [{ DATABASE_URL: 'mysql://localhost/database' }, 'PostgreSQL'],
+    [{ PORT: '70000' }, 'PORT'],
+    [{ TRUST_PROXY_HOPS: '-1' }, 'TRUST_PROXY_HOPS'],
+    [{ AUTH_COOKIE_SAME_SITE: 'invalid' }, 'AUTH_COOKIE_SAME_SITE'],
   ])('rejeita configuração insegura %#', (override, message) => {
     expect(() => validateEnvironment({ ...valid, ...override })).toThrow(message);
   });
@@ -31,6 +37,12 @@ describe('validateEnvironment', () => {
   it('exige cookie seguro em produção', () => {
     expect(() =>
       validateEnvironment({ ...valid, NODE_ENV: 'production', AUTH_COOKIE_SECURE: 'false' }),
+    ).toThrow('AUTH_COOKIE_SECURE=true');
+  });
+
+  it('exige cookie seguro para SameSite=None', () => {
+    expect(() =>
+      validateEnvironment({ ...valid, AUTH_COOKIE_SAME_SITE: 'none', AUTH_COOKIE_SECURE: 'false' }),
     ).toThrow('AUTH_COOKIE_SECURE=true');
   });
 });

@@ -1,0 +1,131 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_ENV: test
+  DATABASE_URL: postgresql://erp_next:erp_next@localhost:5432/erp_next_test?schema=public
+  JWT_ACCESS_SECRET: ci_access_secret_only_for_tests_32_characters_minimum
+  JWT_REFRESH_SECRET: ci_refresh_secret_only_for_tests_32_characters_minimum
+  JWT_ACCESS_TTL_SECONDS: 900
+  JWT_REFRESH_TTL_SECONDS: 604800
+  JWT_ISSUER: erp-next-api-ci
+  JWT_AUDIENCE: erp-next-web-ci
+  CORS_ORIGINS: http://localhost:3000
+  AUTH_COOKIE_SECURE: 'false'
+  AUTH_COOKIE_SAME_SITE: lax
+  SWAGGER_ENABLED: 'false'
+  NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
+  APP_VERSION: ${{ github.sha }}
+
+jobs:
+  quality:
+    name: Quality, tests and builds
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit and frontend tests
+        run: npm test
+
+      - name: Build API and web
+        run: npm run build
+
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev --audit-level=critical
+
+  postgres-tests:
+    name: PostgreSQL integration and E2E
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17.5-alpine
+        env:
+          POSTGRES_DB: erp_next_test
+          POSTGRES_USER: erp_next
+          POSTGRES_PASSWORD: erp_next
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U erp_next -d erp_next_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL_TEST: postgresql://erp_next:erp_next@localhost:5432/erp_next_test?schema=public
+      RUN_ANALYTICS_INTEGRATION: 'true'
+      RUN_FINANCE_INTEGRATION: 'true'
+      RUN_INVENTORY_COUNT_INTEGRATION: 'true'
+      RUN_INVENTORY_INTEGRATION: 'true'
+      RUN_PURCHASE_ORDER_INTEGRATION: 'true'
+      RUN_PURCHASE_RECEIPT_INTEGRATION: 'true'
+      RUN_SALES_ORDER_INTEGRATION: 'true'
+      RUN_STOCK_RESERVATION_INTEGRATION: 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      - name: Apply migrations to test database
+        run: npm run prisma:migrate:deploy
+
+      - name: Run backend tests with integrations
+        run: npm test --workspace @erp-next/api
+
+      - name: Run HTTP E2E tests
+        run: npm run test:e2e
+
+  docker-build:
+    name: Build API container
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: quality
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build production image
+        run: docker build --file apps/api/Dockerfile --tag erp-next-api:${{ github.sha }} .

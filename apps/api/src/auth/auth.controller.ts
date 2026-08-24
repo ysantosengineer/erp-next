@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Headers,
   HttpCode,
@@ -34,6 +35,7 @@ import { CurrentUserDto } from './dto/current-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Throttle } from '@nestjs/throttler';
+import { corsOrigins } from '../config/environment';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -75,6 +77,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
     @Headers('x-request-id') requestId?: string,
   ): Promise<AuthTokensDto> {
+    this.assertTrustedCookieOrigin(request);
     return this.authService
       .refresh(this.getRefreshToken(request), requestId ?? randomUUID())
       .then((tokens) => {
@@ -97,6 +100,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
     @Headers('x-request-id') requestId?: string,
   ): Promise<void> {
+    this.assertTrustedCookieOrigin(request);
     try {
       await this.authService.logout(this.getRefreshToken(request), requestId ?? randomUUID());
     } finally {
@@ -123,5 +127,17 @@ export class AuthController {
       return '';
     }
     return refreshToken;
+  }
+
+  private assertTrustedCookieOrigin(request: Request): void {
+    if (this.configService.get<string>('AUTH_COOKIE_SAME_SITE') !== 'none') return;
+    const origin = request.headers.origin;
+    const allowedOrigins = corsOrigins(this.configService.getOrThrow<string>('CORS_ORIGINS'));
+    if (typeof origin !== 'string' || !allowedOrigins.includes(origin)) {
+      throw new ForbiddenException({
+        code: 'INVALID_ORIGIN',
+        message: 'Origem não autorizada para esta operação de sessão.',
+      });
+    }
   }
 }

@@ -54,6 +54,18 @@ export function validateEnvironment(input: Record<string, unknown>): Record<stri
     throw new Error('REQUEST_BODY_LIMIT deve estar entre 1kb e 1mb.');
   }
   config.REQUEST_BODY_LIMIT = bodyLimit;
+  const port = Number(config.PORT ?? config.API_PORT ?? 3001);
+  if (!Number.isInteger(port) || port < 1 || port > 65_535)
+    throw new Error('PORT deve ser um inteiro entre 1 e 65535.');
+  config.PORT = port;
+  const trustProxyHops = Number(config.TRUST_PROXY_HOPS ?? 0);
+  if (!Number.isInteger(trustProxyHops) || trustProxyHops < 0 || trustProxyHops > 10)
+    throw new Error('TRUST_PROXY_HOPS deve ser um inteiro entre 0 e 10.');
+  config.TRUST_PROXY_HOPS = trustProxyHops;
+  const sameSite = String(config.AUTH_COOKIE_SAME_SITE ?? 'lax').toLowerCase();
+  if (!['lax', 'strict', 'none'].includes(sameSite))
+    throw new Error('AUTH_COOKIE_SAME_SITE deve ser lax, strict ou none.');
+  config.AUTH_COOKIE_SAME_SITE = sameSite;
   for (const key of ['AUTH_COOKIE_SECURE', 'SWAGGER_ENABLED'] as const) {
     const fallback =
       key === 'AUTH_COOKIE_SECURE' ? 'false' : nodeEnv === 'production' ? 'false' : 'true';
@@ -63,11 +75,14 @@ export function validateEnvironment(input: Record<string, unknown>): Record<stri
   }
   if (nodeEnv === 'production' && config.AUTH_COOKIE_SECURE !== 'true')
     throw new Error('AUTH_COOKIE_SECURE=true é obrigatório em produção.');
+  if (sameSite === 'none' && config.AUTH_COOKIE_SECURE !== 'true')
+    throw new Error('AUTH_COOKIE_SECURE=true é obrigatório com AUTH_COOKIE_SAME_SITE=none.');
   for (const key of ['JWT_ACCESS_TTL_SECONDS', 'JWT_REFRESH_TTL_SECONDS'] as const) {
     const value = Number(config[key]);
     if (!Number.isInteger(value) || value <= 0)
       throw new Error(`${key} deve ser inteiro positivo.`);
   }
+  config.APP_VERSION = String(config.APP_VERSION ?? '').trim() || undefined;
   return config;
 }
 

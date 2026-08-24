@@ -176,7 +176,7 @@ describeDb('PurchaseOrdersService PostgreSQL integration', () => {
     expect(order.number).toMatch(/^PO-\d{6}$/);
     expect(order.subtotal).toBe('30.63');
     expect(order.totalAmount).toBe('32.13');
-    expect(order.items[0]).toMatchObject({
+    expect(order.items.find((item) => item.productName === 'Product 0')).toMatchObject({
       productName: 'Product 0',
       quantity: '2.5000',
       unitCost: '10.25',

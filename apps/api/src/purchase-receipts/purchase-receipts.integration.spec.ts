@@ -219,7 +219,7 @@ describeDb('PurchaseReceiptsService PostgreSQL integration', () => {
     });
     return prisma.purchaseOrder.findUniqueOrThrow({
       where: { id: order.id },
-      include: { items: { orderBy: { createdAt: 'asc' } } },
+      include: { items: { orderBy: [{ productSku: 'asc' }, { id: 'asc' }] } },
     });
   }
 
@@ -283,7 +283,7 @@ describeDb('PurchaseReceiptsService PostgreSQL integration', () => {
     await service.create(identity, payload(order, [[1, '2']]), randomUUID());
     const completed = await prisma.purchaseOrder.findUniqueOrThrow({
       where: { id: order.id },
-      include: { items: { orderBy: { createdAt: 'asc' } } },
+      include: { items: { orderBy: [{ productSku: 'asc' }, { id: 'asc' }] } },
     });
     expect(completed.status).toBe(PurchaseOrderStatus.RECEIVED);
     expect(completed.items.map((item) => item.receivedQuantity.toFixed(4))).toEqual([
