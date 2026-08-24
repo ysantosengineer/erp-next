@@ -1,6 +1,6 @@
 # ERP Next
 
-Monorepo do ERP Next para pequenas e médias empresas. O repositório contém uma aplicação web em Next.js, uma API NestJS, PostgreSQL via Prisma, autenticação, usuários, papéis e permissões, cadastros, estoque, inventário físico, compras e pedidos de venda.
+Monorepo do ERP Next para pequenas e médias empresas. O repositório contém uma aplicação web em Next.js, uma API NestJS, PostgreSQL via Prisma, autenticação, usuários, papéis e permissões, cadastros, estoque, inventário físico, compras e pedidos de venda com reserva e expedição.
 
 ## Pré-requisitos
 
@@ -53,6 +53,7 @@ npm run dev
 - Clientes: `http://localhost:3000/customers`
 - Depósitos: `http://localhost:3000/warehouses`
 - Saldos de estoque: `http://localhost:3000/inventory`
+- Reservas de estoque: `http://localhost:3000/inventory/reservations`
 - Movimentações: `http://localhost:3000/inventory/movements`
 - Inventários físicos: `http://localhost:3000/inventory/counts`
 - Pedidos de compra: `http://localhost:3000/purchases/orders`
@@ -65,7 +66,7 @@ O inventário físico captura um snapshot ao iniciar e bloqueia movimentações 
 
 Pedidos de compra usam numeração humana por empresa, itens e custos congelados, aprovação e cancelamento auditados. Aprovar não altera estoque. O recebimento físico aceita parciais e múltiplas confirmações, gera entradas `PURCHASE_RECEIPT`, atualiza saldo e pedido na mesma transação e protege retries por idempotência.
 
-Pedidos de venda usam numeração `SO-*` por empresa, snapshots, preços negociados, descontos por item e geral e transições auditadas. Confirmar ou cancelar não reserva, baixa ou movimenta estoque; a integração física pertence à Etapa 16.
+Pedidos de venda usam numeração `SO-*` por empresa, snapshots, preços negociados, descontos e transições auditadas. Confirmar é comercial; reservar compromete o disponível por endereço sem alterar o físico, liberar devolve disponibilidade e expedir consome as reservas, gera saídas `SALES_ORDER` e reduz o físico atomicamente.
 
 ## Sessão web
 

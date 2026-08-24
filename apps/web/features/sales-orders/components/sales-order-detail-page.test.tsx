@@ -8,11 +8,17 @@ const permissions: string[] = [];
 const detail = vi.fn();
 const confirm = vi.fn();
 const cancel = vi.fn();
+const reserve = vi.fn();
+const release = vi.fn();
+const ship = vi.fn();
 vi.mock('../../auth/hooks/use-auth', () => ({ useAuth: () => ({ user: { permissions } }) }));
 vi.mock('../hooks/use-sales-orders', () => ({
   useSalesOrder: (...args: unknown[]) => detail(...args),
   useConfirmSalesOrder: () => ({ mutateAsync: confirm, isPending: false }),
   useCancelSalesOrder: () => ({ mutateAsync: cancel, isPending: false }),
+  useReserveSalesOrder: () => ({ mutateAsync: reserve, isPending: false }),
+  useReleaseSalesOrderReservation: () => ({ mutateAsync: release, isPending: false }),
+  useShipSalesOrder: () => ({ mutateAsync: ship, isPending: false }),
 }));
 
 const order = {
@@ -42,14 +48,20 @@ const order = {
       discountAmount: '0.00',
       subtotal: '10.00',
       reservedQuantity: '0.0000',
+      reservations: [],
     },
   ],
   createdBy: { id: 'u', name: 'Yuri' },
   confirmedBy: null,
+  reservedBy: null,
+  shippedBy: null,
   cancelledBy: null,
   createdAt: '2026-08-23T10:00:00Z',
   updatedAt: '2026-08-23T10:00:00Z',
   confirmedAt: null,
+  reservedAt: null,
+  shippedAt: null,
+  shipmentNotes: null,
   cancelledAt: null,
   cancellationReason: null,
 };
@@ -62,6 +74,9 @@ describe('SalesOrderDetailPage', () => {
       .mockReturnValue({ isLoading: false, isError: false, data: order, refetch: vi.fn() });
     confirm.mockReset().mockResolvedValue({});
     cancel.mockReset().mockResolvedValue({});
+    reserve.mockReset().mockResolvedValue({ orderId: order.id });
+    release.mockReset().mockResolvedValue({ orderId: order.id });
+    ship.mockReset().mockResolvedValue({ orderId: order.id });
   });
 
   it('exibe snapshots, valores e ações conforme permissões', () => {
@@ -80,9 +95,37 @@ describe('SalesOrderDetailPage', () => {
     permissions.push(PERMISSIONS.SALES_ORDERS_CONFIRM);
     render(<SalesOrderDetailPage orderId="order-1" />);
     await userEvent.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
-    expect(screen.getByRole('alertdialog')).toHaveTextContent('não baixa nem reserva o estoque');
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('não altera o estoque');
     await userEvent.click(screen.getByRole('button', { name: 'Confirmar pedido' }));
     expect(confirm).toHaveBeenCalledWith('order-1');
+  });
+
+  it('reserva pedido confirmado apenas com a permissão específica', async () => {
+    permissions.push(PERMISSIONS.INVENTORY_RESERVE);
+    detail.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: { ...order, status: 'CONFIRMED' },
+      refetch: vi.fn(),
+    });
+    render(<SalesOrderDetailPage orderId="order-1" />);
+    await userEvent.click(screen.getByRole('button', { name: 'Reservar estoque' }));
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('operação é integral');
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar reserva' }));
+    expect(reserve).toHaveBeenCalledWith('order-1');
+  });
+
+  it('oferece liberar e expedir quando o pedido está reservado', () => {
+    permissions.push(PERMISSIONS.INVENTORY_RELEASE, PERMISSIONS.INVENTORY_SHIP);
+    detail.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: { ...order, status: 'RESERVED' },
+      refetch: vi.fn(),
+    });
+    render(<SalesOrderDetailPage orderId="order-1" />);
+    expect(screen.getByRole('button', { name: 'Liberar reserva' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Expedir pedido' })).toBeInTheDocument();
   });
 
   it('exige motivo no cancelamento', async () => {

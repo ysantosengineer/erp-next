@@ -28,6 +28,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PERMISSIONS } from '../authorization/permissions.constants';
 import { PermissionsGuard } from '../authorization/permissions.guard';
 import { RequirePermissions } from '../authorization/require-permissions.decorator';
+import { ShipSalesOrderDto } from '../stock-reservations/dto/stock-reservation.dto';
+import { StockReservationsService } from '../stock-reservations/stock-reservations.service';
 import {
   CancelSalesOrderDto,
   CreateSalesOrderDto,
@@ -44,7 +46,10 @@ import { SalesOrdersService } from './sales-orders.service';
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('sales-orders')
 export class SalesOrdersController {
-  constructor(private readonly service: SalesOrdersService) {}
+  constructor(
+    private readonly service: SalesOrdersService,
+    private readonly stockReservations: StockReservationsService,
+  ) {}
 
   @Get()
   @RequirePermissions(PERMISSIONS.SALES_ORDERS_READ)
@@ -114,10 +119,58 @@ export class SalesOrdersController {
     return this.service.confirm(user, id, requestId ?? randomUUID());
   }
 
+  @Post(':id/reserve')
+  @HttpCode(200)
+  @RequirePermissions(PERMISSIONS.INVENTORY_RESERVE)
+  @ApiOperation({
+    summary: 'Reserva integralmente o estoque de um pedido confirmado.',
+    description:
+      'A alocação automática por endereço é atômica, não reduz o saldo físico e não cria movimentação.',
+  })
+  reserve(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Headers('x-request-id') requestId?: string,
+  ) {
+    return this.stockReservations.reserve(user, id, requestId ?? randomUUID());
+  }
+
+  @Post(':id/release-reservation')
+  @HttpCode(200)
+  @RequirePermissions(PERMISSIONS.INVENTORY_RELEASE)
+  @ApiOperation({ summary: 'Libera as reservas ativas sem alterar o saldo físico.' })
+  releaseReservation(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Headers('x-request-id') requestId?: string,
+  ) {
+    return this.stockReservations.release(user, id, requestId ?? randomUUID());
+  }
+
+  @Post(':id/ship')
+  @HttpCode(200)
+  @RequirePermissions(PERMISSIONS.INVENTORY_SHIP)
+  @ApiOperation({
+    summary: 'Realiza a baixa integral do pedido reservado.',
+    description:
+      'Reduz o saldo físico, consome reservas e cria movimentos EXIT referenciados ao pedido na mesma transação.',
+  })
+  ship(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body() dto: ShipSalesOrderDto,
+    @Headers('x-request-id') requestId?: string,
+  ) {
+    return this.stockReservations.ship(user, id, dto, requestId ?? randomUUID());
+  }
+
   @Post(':id/cancel')
   @HttpCode(200)
   @RequirePermissions(PERMISSIONS.SALES_ORDERS_CANCEL)
-  @ApiOperation({ summary: 'Cancela um pedido em rascunho ou confirmado sem alterar estoque.' })
+  @ApiOperation({
+    summary: 'Cancela um pedido ainda não baixado.',
+    description: 'Reservas ativas são liberadas atomicamente; o saldo físico não é alterado.',
+  })
   cancel(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,

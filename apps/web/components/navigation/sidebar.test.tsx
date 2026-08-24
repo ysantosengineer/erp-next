@@ -61,6 +61,18 @@ describe('Sidebar', () => {
     );
   });
 
+  it('exibe reservas somente com a permissão específica', () => {
+    useAuthMock.mockReturnValue({
+      user: { permissions: [PERMISSIONS.INVENTORY_RESERVATIONS_READ] },
+    });
+    render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Reservas' })).toHaveAttribute(
+      'href',
+      '/inventory/reservations',
+    );
+    expect(screen.queryByRole('link', { name: 'Saldos' })).not.toBeInTheDocument();
+  });
+
   it('exibe pedidos de compra somente com permissão de leitura', () => {
     useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.PURCHASE_ORDERS_READ] } });
     render(<Sidebar />);

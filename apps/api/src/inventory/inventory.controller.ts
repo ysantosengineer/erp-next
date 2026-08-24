@@ -141,7 +141,7 @@ export class InventoryController {
     return this.service.findMovement(user, id);
   }
 
-  @Get(':id')
+  @Get('balances/:id')
   @RequirePermissions(PERMISSIONS.INVENTORY_READ)
   @ApiNotFoundResponse({ description: 'Saldo não encontrado.' })
   findBalance(

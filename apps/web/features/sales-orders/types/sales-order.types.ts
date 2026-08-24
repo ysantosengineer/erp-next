@@ -1,4 +1,4 @@
-export type SalesOrderStatus = 'DRAFT' | 'CONFIRMED' | 'CANCELLED';
+export type SalesOrderStatus = 'DRAFT' | 'CONFIRMED' | 'RESERVED' | 'SHIPPED' | 'CANCELLED';
 
 export interface SalesOrderItemInput {
   productId: string;
@@ -27,6 +27,16 @@ export interface SalesOrderItem extends SalesOrderItemInput {
   grossAmount: string;
   subtotal: string;
   reservedQuantity: string;
+  reservations: Array<{
+    id: string;
+    status: 'ACTIVE' | 'RELEASED' | 'CONSUMED';
+    quantity: string;
+    location: {
+      id: string;
+      code: string;
+      warehouse: { id: string; name: string; code: string };
+    };
+  }>;
 }
 
 export interface SalesOrder {
@@ -46,12 +56,28 @@ export interface SalesOrder {
   items: SalesOrderItem[];
   createdBy: { id: string; name: string };
   confirmedBy: { id: string; name: string } | null;
+  reservedBy: { id: string; name: string } | null;
+  shippedBy: { id: string; name: string } | null;
   cancelledBy: { id: string; name: string } | null;
   createdAt: string;
   updatedAt: string;
   confirmedAt: string | null;
+  reservedAt: string | null;
+  shippedAt: string | null;
+  shipmentNotes: string | null;
   cancelledAt: string | null;
   cancellationReason: string | null;
+}
+
+export interface SalesOrderStockOperation {
+  orderId: string;
+  number: string;
+  status: SalesOrderStatus;
+  reservations: Array<{
+    id: string;
+    status: 'ACTIVE' | 'RELEASED' | 'CONSUMED';
+    quantity: string;
+  }>;
 }
 
 export interface SalesOrderFilters {

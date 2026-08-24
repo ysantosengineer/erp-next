@@ -62,6 +62,8 @@ describe('InventoryPage', () => {
           {
             id: 'balance',
             quantity: '3.0000',
+            reservedQuantity: '1.0000',
+            availableQuantity: '2.0000',
             createdAt: '2026-08-23T12:00:00Z',
             updatedAt: '2026-08-23T12:00:00Z',
             product: {
@@ -86,6 +88,8 @@ describe('InventoryPage', () => {
     render(<InventoryPage />);
     expect(screen.getByText('Café')).toBeInTheDocument();
     expect(screen.getByText('3.0000 UN')).toBeInTheDocument();
+    expect(screen.getByText('1.0000 UN')).toBeInTheDocument();
+    expect(screen.getByText('2.0000 UN')).toBeInTheDocument();
     expect(screen.getByText('5.000 UN')).toBeInTheDocument();
     expect(screen.getByText('Estoque baixo')).toBeInTheDocument();
   });

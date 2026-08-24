@@ -8,6 +8,8 @@ export type ProductSummary = { id: string; name: string; sku: string; unit: { sy
 export type InventoryBalance = {
   id: string;
   quantity: string;
+  reservedQuantity: string;
+  availableQuantity: string;
   product: ProductSummary & { minimumStock: string; isActive: boolean };
   location: LocationSummary & {
     isActive: boolean;
@@ -36,9 +38,53 @@ export type InventoryOptions = { products: ProductSummary[]; locations: Location
 export type ProductBalance = {
   product: ProductSummary;
   totalQuantity: string;
-  warehouses: Array<{ id: string; name: string; code: string; quantity: string }>;
-  locations: Array<LocationSummary & { quantity: string }>;
+  totalReservedQuantity: string;
+  totalAvailableQuantity: string;
+  warehouses: Array<{
+    id: string;
+    name: string;
+    code: string;
+    quantity: string;
+    reservedQuantity: string;
+    availableQuantity: string;
+  }>;
+  locations: Array<
+    LocationSummary & {
+      quantity: string;
+      reservedQuantity: string;
+      availableQuantity: string;
+    }
+  >;
 };
+
+export type StockReservationStatus = 'ACTIVE' | 'RELEASED' | 'CONSUMED';
+export type StockReservation = {
+  id: string;
+  status: StockReservationStatus;
+  quantity: string;
+  salesOrder: { id: string; number: string; status: string };
+  salesOrderItemId: string;
+  product: { id: string; name: string; sku: string; unitSymbol: string };
+  location: LocationSummary;
+  createdBy: { id: string; name: string };
+  releasedBy: { id: string; name: string } | null;
+  consumedBy: { id: string; name: string } | null;
+  createdAt: string;
+  releasedAt: string | null;
+  consumedAt: string | null;
+};
+export type ReservationParams = {
+  page: number;
+  limit: number;
+  salesOrderId?: string;
+  productId?: string;
+  warehouseId?: string;
+  locationId?: string;
+  status?: StockReservationStatus;
+  startDate?: string;
+  endDate?: string;
+};
+export type PaginatedReservations = { data: StockReservation[]; meta: PaginationMeta };
 export type BalanceParams = {
   page: number;
   limit: number;

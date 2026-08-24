@@ -76,6 +76,17 @@ export function Sidebar() {
             Movimentações
           </Link>
         </Can>
+        <Can permission={PERMISSIONS.INVENTORY_RESERVATIONS_READ}>
+          <Link
+            className={cn(
+              navigationClass,
+              pathname.startsWith('/inventory/reservations') && 'bg-slate-100 text-slate-950',
+            )}
+            href="/inventory/reservations"
+          >
+            Reservas
+          </Link>
+        </Can>
         <Can permission={PERMISSIONS.INVENTORY_COUNTS_READ}>
           <Link
             className={cn(

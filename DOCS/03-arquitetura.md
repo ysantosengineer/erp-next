@@ -58,7 +58,9 @@ As rotas `/inventory` e `/inventory/movements` usam TanStack Query para cache e 
 
 `/purchases/receipts`, `/purchases/receipts/[id]` e `/purchases/orders/[id]/receive` usam queries próprias e não aplicam atualização otimista. Após confirmação, pedidos, recebimentos, saldos, produtos e movimentos afetados são invalidados somente depois do commit da API.
 
-`/sales/orders`, `/sales/orders/new`, `/sales/orders/[id]` e `/sales/orders/[id]/edit` usam chaves próprias para lista, detalhe e opções. Confirmação e cancelamento aguardam o backend e invalidam somente pedidos de venda; queries de estoque e movimentações não são invalidadas porque a Etapa 15 não produz efeito físico.
+`/sales/orders`, `/sales/orders/new`, `/sales/orders/[id]` e `/sales/orders/[id]/edit` usam chaves próprias para lista, detalhe e opções. Confirmação invalida pedidos. Reserva, liberação, cancelamento reservado e expedição também invalidam reservas, saldos e agregados; expedição invalida movimentos. Não há atualização otimista para operações físicas.
+
+`/inventory/reservations` mantém cache paginado e filtrado próprio. O físico continua em `InventoryBalance`; reservado é agregado de `StockReservation` ativa e disponível é calculado no backend, evitando duas fontes mutáveis de verdade.
 
 Os cadastros `/suppliers` e `/customers` seguem essa organização por domínio. `SupplierAddress` e `CustomerAddress` são entidades específicas porque os ciclos de vida dos domínios podem evoluir de forma independente. Ambos aceitam relação 1:N, enquanto a interface atual mantém somente um endereço principal. Validação e formatação estáveis de CPF, CNPJ, telefone e CEP são compartilhadas em utilitários, sem introduzir uma tabela polimórfica de endereços.
 
@@ -76,4 +78,4 @@ OpenAPI é o contrato público da API. Logs devem ser estruturados e correlacion
 - A aprovação bloqueia a linha do inventário com `FOR UPDATE`, revalida o estado e aplica todos os ajustes pela mesma rotina da Etapa 11 na transação serializável. Falha intermediária causa rollback total e o lock impede dupla aprovação.
 - Pedidos de compra usam atualização condicional por estado para submit, aprovação e cancelamento. A aprovação é uma decisão comercial sem efeito físico.
 - Recebimentos bloqueiam a linha do pedido com `FOR UPDATE` em transação `SERIALIZABLE`, reutilizam o serviço transacional de estoque, atualizam histórico/acumulado/status atomicamente e repetem conflitos serializáveis até três vezes. Idempotência por empresa e hash canônico protege retries após timeout.
-- Pedidos de venda usam contador atômico por empresa e updates condicionais por estado para confirmação/cancelamento. A confirmação é exclusivamente comercial: reserva, baixa, picking e expedição pertencem à Etapa 16 ou posteriores.
+- Pedidos de venda usam contador atômico por empresa e updates condicionais por estado. Reserva, liberação e expedição bloqueiam o pedido e os saldos relevantes com `FOR UPDATE`, executam em `SERIALIZABLE` e repetem até três conflitos. A alocação é estável por código/id do endereço e integral; expedição reutiliza o núcleo transacional de movimentos.

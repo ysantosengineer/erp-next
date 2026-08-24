@@ -8,7 +8,7 @@
 | US002 | Como administrador, quero atribuir papéis e permissões. | A API bloqueia ações sem a permissão necessária. |
 | US003 | Como operador, quero manter clientes, fornecedores, produtos e categorias. | Validações, busca e paginação funcionam. |
 | US004 | Como compras, quero registrar e receber compras. | Recebimento cria movimentação e atualiza saldo atomicamente. |
-| US005 | Como vendas, quero registrar e confirmar pedidos. | Pedido é calculado e confirmado sem alterar estoque; reserva e baixa pertencem à Etapa 16. |
+| US005 | Como vendas, quero registrar, reservar e expedir pedidos. | Confirmação é comercial; reserva compromete disponibilidade integralmente e expedição consome a reserva e baixa o físico. |
 | US006 | Como financeiro, quero registrar pagamentos. | Pagamentos parciais atualizam saldo e status da fatura. |
 
 ## P1 — valor operacional
@@ -32,7 +32,7 @@ Exportação de relatórios, integrações, expansão do isolamento multiempresa
 - A parte de fornecedores da US003 está implementada em código com PF/PJ, CPF/CNPJ, endereço principal, busca, filtros, paginação, status e testes unitários. A US003 permanece aberta até os demais cadastros previstos e a validação integrada em PostgreSQL.
 - A parte de produtos da US003 está implementada com SKU/código de barras únicos por empresa, categoria, unidade, fornecedor principal opcional, preços, dimensões, estoque mínimo, busca, filtros, paginação, status e testes.
 - A parte de clientes da US003 está implementada com PF/PJ, CPF/CNPJ obrigatório e único por empresa, endereço principal, limite de crédito decimal, busca, filtros, paginação, status, controle por permissão e testes.
-- Depósitos e endereços de estoque concluem o escopo cadastral da US003. O núcleo transacional mantém saldos por endereço e histórico imutável; compras já o utilizam, enquanto reservas e baixas de vendas permanecem para a Etapa 16.
+- Depósitos e endereços de estoque concluem o escopo cadastral da US003. O núcleo transacional mantém físico, reservado e disponível por endereço; compras geram entradas e vendas expedidas geram saídas.
 - A US010 está implementada por depósito com bloqueio de movimentos durante a contagem, inclusão manual de mercadoria sem saldo, aprovação serializável, rollback integral, prevenção de dupla aprovação e interface autenticada. Escopo por endereços e contagem cega permanecem como evolução.
 - A US004 está implementada com pedidos e recebimentos parciais/múltiplos/totais, numeração segura, estoque e status atômicos, concorrência, idempotência, auditoria e isolamento por empresa.
-- A parte comercial da US005 está implementada com pedidos de venda, itens e preços congelados, descontos, confirmação/cancelamento, concorrência, auditoria, multiempresa e interface. Saldo e movimentações permanecem deliberadamente inalterados até a Etapa 16.
+- A US005 está implementada com pedidos de venda, itens e preços congelados, descontos, confirmação, reserva/liberação, cancelamento com liberação, expedição, concorrência, auditoria, multiempresa e interface.

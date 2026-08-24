@@ -8,6 +8,7 @@ import type {
   EntryInput,
   ExitInput,
   MovementParams,
+  ReservationParams,
   TransferInput,
 } from '../types/inventory.types';
 
@@ -19,6 +20,9 @@ export const inventoryQueryKeys = {
   movements: (params: MovementParams) => ['inventory', 'movements', params] as const,
   options: ['inventory', 'options'] as const,
   product: (id: string) => ['inventory', 'product', id] as const,
+  productRoot: ['inventory', 'product'] as const,
+  reservationRoot: ['stock-reservations'] as const,
+  reservations: (params: ReservationParams) => ['stock-reservations', params] as const,
 };
 export const useBalances = (params: BalanceParams) =>
   useQuery({
@@ -41,6 +45,11 @@ export const useProductBalance = (productId: string) =>
     queryKey: inventoryQueryKeys.product(productId),
     queryFn: () => inventoryService.getProductBalance(productId),
     enabled: Boolean(productId),
+  });
+export const useStockReservations = (params: ReservationParams) =>
+  useQuery({
+    queryKey: inventoryQueryKeys.reservations(params),
+    queryFn: () => inventoryService.getReservations(params),
   });
 
 const useInventoryMutation = <TInput extends { productId: string }>(

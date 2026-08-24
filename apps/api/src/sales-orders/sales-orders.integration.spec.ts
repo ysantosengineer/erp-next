@@ -2,13 +2,17 @@ import { SalesOrderStatus } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { PrismaService } from '../prisma/prisma.service';
+import { InventoryService } from '../inventory/inventory.service';
+import { StockReservationsService } from '../stock-reservations/stock-reservations.service';
 import { SalesOrdersService } from './sales-orders.service';
 
 const describeDb = process.env.RUN_SALES_ORDER_INTEGRATION === 'true' ? describe : describe.skip;
 
 describeDb('SalesOrdersService PostgreSQL integration', () => {
   const prisma = new PrismaService();
-  const service = new SalesOrdersService(prisma);
+  const inventoryService = new InventoryService(prisma);
+  const stockReservationsService = new StockReservationsService(prisma, inventoryService);
+  const service = new SalesOrdersService(prisma, stockReservationsService);
   const ids = {
     companyId: '',
     userId: '',

@@ -46,7 +46,15 @@ enum PurchaseOrderStatus {
 enum SalesOrderStatus {
   DRAFT
   CONFIRMED
+  RESERVED
+  SHIPPED
   CANCELLED
+}
+
+enum StockReservationStatus {
+  ACTIVE
+  RELEASED
+  CONSUMED
 }
 
 model Company {
@@ -78,6 +86,7 @@ model Company {
   salesOrders             SalesOrder[]
   salesOrderItems         SalesOrderItem[]
   salesOrderSequence      SalesOrderSequence?
+  stockReservations       StockReservation[]
   auditLogs               AuditLog[]
 }
 
@@ -124,6 +133,7 @@ model StockLocation {
   destinationMovements StockMovement[]       @relation("StockMovementDestination")
   inventoryCountItems  InventoryCountItem[]
   purchaseReceiptItems PurchaseReceiptItem[]
+  stockReservations    StockReservation[]
 
   @@unique([warehouseId, code])
   @@unique([companyId, id])
@@ -286,6 +296,7 @@ model Product {
   purchaseOrderItems   PurchaseOrderItem[]
   purchaseReceiptItems PurchaseReceiptItem[]
   salesOrderItems      SalesOrderItem[]
+  stockReservations    StockReservation[]
 
   @@unique([companyId, sku])
   @@unique([companyId, barcode])
@@ -298,33 +309,38 @@ model Product {
 }
 
 model User {
-  id                       String               @id @default(uuid()) @db.Uuid
-  companyId                String               @db.Uuid
-  name                     String
-  email                    String               @unique
-  passwordHash             String
-  authVersion              Int                  @default(1)
-  isActive                 Boolean              @default(true)
-  lastLoginAt              DateTime?
-  createdAt                DateTime             @default(now())
-  updatedAt                DateTime             @updatedAt
-  roles                    UserRole[]
-  refreshTokens            RefreshToken[]
-  auditLogs                AuditLog[]           @relation("AuditLogActor")
-  stockMovements           StockMovement[]
-  createdInventoryCounts   InventoryCount[]     @relation("InventoryCountCreator")
-  approvedInventoryCounts  InventoryCount[]     @relation("InventoryCountApprover")
-  cancelledInventoryCounts InventoryCount[]     @relation("InventoryCountCanceller")
-  countedInventoryItems    InventoryCountItem[] @relation("InventoryCountItemCounter")
-  recountedInventoryItems  InventoryCountItem[] @relation("InventoryCountItemRecounter")
-  createdPurchaseOrders    PurchaseOrder[]      @relation("PurchaseOrderCreator")
-  approvedPurchaseOrders   PurchaseOrder[]      @relation("PurchaseOrderApprover")
-  cancelledPurchaseOrders  PurchaseOrder[]      @relation("PurchaseOrderCanceller")
-  receivedPurchaseReceipts PurchaseReceipt[]    @relation("PurchaseReceiptReceiver")
-  createdSalesOrders       SalesOrder[]         @relation("SalesOrderCreator")
-  confirmedSalesOrders     SalesOrder[]         @relation("SalesOrderConfirmer")
-  cancelledSalesOrders     SalesOrder[]         @relation("SalesOrderCanceller")
-  company                  Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  id                        String               @id @default(uuid()) @db.Uuid
+  companyId                 String               @db.Uuid
+  name                      String
+  email                     String               @unique
+  passwordHash              String
+  authVersion               Int                  @default(1)
+  isActive                  Boolean              @default(true)
+  lastLoginAt               DateTime?
+  createdAt                 DateTime             @default(now())
+  updatedAt                 DateTime             @updatedAt
+  roles                     UserRole[]
+  refreshTokens             RefreshToken[]
+  auditLogs                 AuditLog[]           @relation("AuditLogActor")
+  stockMovements            StockMovement[]
+  createdInventoryCounts    InventoryCount[]     @relation("InventoryCountCreator")
+  approvedInventoryCounts   InventoryCount[]     @relation("InventoryCountApprover")
+  cancelledInventoryCounts  InventoryCount[]     @relation("InventoryCountCanceller")
+  countedInventoryItems     InventoryCountItem[] @relation("InventoryCountItemCounter")
+  recountedInventoryItems   InventoryCountItem[] @relation("InventoryCountItemRecounter")
+  createdPurchaseOrders     PurchaseOrder[]      @relation("PurchaseOrderCreator")
+  approvedPurchaseOrders    PurchaseOrder[]      @relation("PurchaseOrderApprover")
+  cancelledPurchaseOrders   PurchaseOrder[]      @relation("PurchaseOrderCanceller")
+  receivedPurchaseReceipts  PurchaseReceipt[]    @relation("PurchaseReceiptReceiver")
+  createdSalesOrders        SalesOrder[]         @relation("SalesOrderCreator")
+  confirmedSalesOrders      SalesOrder[]         @relation("SalesOrderConfirmer")
+  reservedSalesOrders       SalesOrder[]         @relation("SalesOrderReserver")
+  shippedSalesOrders        SalesOrder[]         @relation("SalesOrderShipper")
+  cancelledSalesOrders      SalesOrder[]         @relation("SalesOrderCanceller")
+  createdStockReservations  StockReservation[]   @relation("StockReservationCreator")
+  releasedStockReservations StockReservation[]   @relation("StockReservationReleaser")
+  consumedStockReservations StockReservation[]   @relation("StockReservationConsumer")
+  company                   Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
 
   @@unique([companyId, id])
   @@index([companyId])
@@ -456,35 +472,43 @@ model SalesOrderSequence {
 }
 
 model SalesOrder {
-  id                   String           @id @default(uuid()) @db.Uuid
-  companyId            String           @db.Uuid
-  customerId           String           @db.Uuid
-  warehouseId          String           @db.Uuid
+  id                   String             @id @default(uuid()) @db.Uuid
+  companyId            String             @db.Uuid
+  customerId           String             @db.Uuid
+  warehouseId          String             @db.Uuid
   number               String
-  status               SalesOrderStatus @default(DRAFT)
-  orderDate            DateTime         @db.Date
-  expectedDeliveryDate DateTime?        @db.Date
+  status               SalesOrderStatus   @default(DRAFT)
+  orderDate            DateTime           @db.Date
+  expectedDeliveryDate DateTime?          @db.Date
   notes                String?
-  subtotal             Decimal          @db.Decimal(14, 2)
-  discountAmount       Decimal          @default(0) @db.Decimal(14, 2)
-  freightAmount        Decimal          @default(0) @db.Decimal(14, 2)
-  otherAmount          Decimal          @default(0) @db.Decimal(14, 2)
-  totalAmount          Decimal          @db.Decimal(14, 2)
-  createdByUserId      String           @db.Uuid
-  confirmedByUserId    String?          @db.Uuid
+  subtotal             Decimal            @db.Decimal(14, 2)
+  discountAmount       Decimal            @default(0) @db.Decimal(14, 2)
+  freightAmount        Decimal            @default(0) @db.Decimal(14, 2)
+  otherAmount          Decimal            @default(0) @db.Decimal(14, 2)
+  totalAmount          Decimal            @db.Decimal(14, 2)
+  createdByUserId      String             @db.Uuid
+  confirmedByUserId    String?            @db.Uuid
   confirmedAt          DateTime?
-  cancelledByUserId    String?          @db.Uuid
+  reservedByUserId     String?            @db.Uuid
+  reservedAt           DateTime?
+  shippedByUserId      String?            @db.Uuid
+  shippedAt            DateTime?
+  shipmentNotes        String?
+  cancelledByUserId    String?            @db.Uuid
   cancelledAt          DateTime?
   cancellationReason   String?
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
-  company              Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  customer             Customer         @relation(fields: [companyId, customerId], references: [companyId, id], onDelete: Restrict)
-  warehouse            Warehouse        @relation(fields: [companyId, warehouseId], references: [companyId, id], onDelete: Restrict)
-  createdBy            User             @relation("SalesOrderCreator", fields: [companyId, createdByUserId], references: [companyId, id], onDelete: Restrict)
-  confirmedBy          User?            @relation("SalesOrderConfirmer", fields: [companyId, confirmedByUserId], references: [companyId, id], onDelete: Restrict)
-  cancelledBy          User?            @relation("SalesOrderCanceller", fields: [companyId, cancelledByUserId], references: [companyId, id], onDelete: Restrict)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  company              Company            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  customer             Customer           @relation(fields: [companyId, customerId], references: [companyId, id], onDelete: Restrict)
+  warehouse            Warehouse          @relation(fields: [companyId, warehouseId], references: [companyId, id], onDelete: Restrict)
+  createdBy            User               @relation("SalesOrderCreator", fields: [companyId, createdByUserId], references: [companyId, id], onDelete: Restrict)
+  confirmedBy          User?              @relation("SalesOrderConfirmer", fields: [companyId, confirmedByUserId], references: [companyId, id], onDelete: Restrict)
+  reservedBy           User?              @relation("SalesOrderReserver", fields: [companyId, reservedByUserId], references: [companyId, id], onDelete: Restrict)
+  shippedBy            User?              @relation("SalesOrderShipper", fields: [companyId, shippedByUserId], references: [companyId, id], onDelete: Restrict)
+  cancelledBy          User?              @relation("SalesOrderCanceller", fields: [companyId, cancelledByUserId], references: [companyId, id], onDelete: Restrict)
   items                SalesOrderItem[]
+  reservations         StockReservation[]
 
   @@unique([companyId, number])
   @@unique([companyId, id])
@@ -495,28 +519,62 @@ model SalesOrder {
 }
 
 model SalesOrderItem {
-  id               String     @id @default(uuid()) @db.Uuid
-  companyId        String     @db.Uuid
-  salesOrderId     String     @db.Uuid
-  productId        String     @db.Uuid
+  id               String             @id @default(uuid()) @db.Uuid
+  companyId        String             @db.Uuid
+  salesOrderId     String             @db.Uuid
+  productId        String             @db.Uuid
   productName      String
   productSku       String
   unitSymbol       String
-  quantity         Decimal    @db.Decimal(18, 4)
-  unitPrice        Decimal    @db.Decimal(14, 2)
-  discountAmount   Decimal    @default(0) @db.Decimal(14, 2)
-  subtotal         Decimal    @db.Decimal(14, 2)
-  reservedQuantity Decimal    @default(0) @db.Decimal(18, 4)
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-  company          Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  salesOrder       SalesOrder @relation(fields: [companyId, salesOrderId], references: [companyId, id], onDelete: Restrict)
-  product          Product    @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
+  quantity         Decimal            @db.Decimal(18, 4)
+  unitPrice        Decimal            @db.Decimal(14, 2)
+  discountAmount   Decimal            @default(0) @db.Decimal(14, 2)
+  subtotal         Decimal            @db.Decimal(14, 2)
+  reservedQuantity Decimal            @default(0) @db.Decimal(18, 4)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  company          Company            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  salesOrder       SalesOrder         @relation(fields: [companyId, salesOrderId], references: [companyId, id], onDelete: Restrict)
+  product          Product            @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
+  reservations     StockReservation[]
 
   @@unique([companyId, salesOrderId, productId])
   @@unique([companyId, id])
   @@index([salesOrderId])
   @@index([productId])
+}
+
+model StockReservation {
+  id               String                 @id @default(uuid()) @db.Uuid
+  companyId        String                 @db.Uuid
+  salesOrderId     String                 @db.Uuid
+  salesOrderItemId String                 @db.Uuid
+  productId        String                 @db.Uuid
+  locationId       String                 @db.Uuid
+  quantity         Decimal                @db.Decimal(18, 4)
+  status           StockReservationStatus @default(ACTIVE)
+  createdByUserId  String                 @db.Uuid
+  releasedByUserId String?                @db.Uuid
+  releasedAt       DateTime?
+  consumedByUserId String?                @db.Uuid
+  consumedAt       DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  company          Company                @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  salesOrder       SalesOrder             @relation(fields: [companyId, salesOrderId], references: [companyId, id], onDelete: Restrict)
+  salesOrderItem   SalesOrderItem         @relation(fields: [companyId, salesOrderItemId], references: [companyId, id], onDelete: Restrict)
+  product          Product                @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
+  location         StockLocation          @relation(fields: [companyId, locationId], references: [companyId, id], onDelete: Restrict)
+  createdBy        User                   @relation("StockReservationCreator", fields: [companyId, createdByUserId], references: [companyId, id], onDelete: Restrict)
+  releasedBy       User?                  @relation("StockReservationReleaser", fields: [companyId, releasedByUserId], references: [companyId, id], onDelete: Restrict)
+  consumedBy       User?                  @relation("StockReservationConsumer", fields: [companyId, consumedByUserId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([companyId, id])
+  @@index([companyId, status, createdAt])
+  @@index([salesOrderId, status])
+  @@index([salesOrderItemId, status])
+  @@index([productId, locationId, status])
+  @@index([locationId, status])
 }
 
 model PurchaseOrder {

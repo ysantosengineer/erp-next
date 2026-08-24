@@ -51,7 +51,7 @@ export function SalesOrdersPage() {
       <PageHeader
         eyebrow="Vendas"
         title="Pedidos de venda"
-        description="Registre compromissos comerciais. A confirmação ainda não reserva nem baixa estoque."
+        description="Registre pedidos e acompanhe confirmação, reserva e expedição."
         action={
           user?.permissions.includes(PERMISSIONS.SALES_ORDERS_CREATE) ? (
             <Button asChild>

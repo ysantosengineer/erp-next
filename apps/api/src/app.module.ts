@@ -18,6 +18,7 @@ import { InventoryCountsModule } from './inventory-counts/inventory-counts.modul
 import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module';
 import { PurchaseReceiptsModule } from './purchase-receipts/purchase-receipts.module';
 import { SalesOrdersModule } from './sales-orders/sales-orders.module';
+import { StockReservationsModule } from './stock-reservations/stock-reservations.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { SalesOrdersModule } from './sales-orders/sales-orders.module';
     PurchaseOrdersModule,
     PurchaseReceiptsModule,
     SalesOrdersModule,
+    StockReservationsModule,
   ],
   controllers: [AppController],
 })

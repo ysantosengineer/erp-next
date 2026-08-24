@@ -21,7 +21,7 @@ Em `/products`, a listagem oferece busca com debounce, filtros de status, catego
 
 Em `/customers`, a listagem oferece busca com debounce, filtros de status e PF/PJ, paginação no servidor e tabela com limite de crédito formatado. Cadastro e edição usam formulário amplo dividido em identificação, contato e crédito, endereço principal e observações. CPF/CNPJ, telefone e CEP recebem máscara somente na interface; valores monetários são digitados no padrão brasileiro e enviados como strings decimais. A rota e as ações são condicionadas por `customers.*`, e a tabela preserva rolagem horizontal em telas menores.
 
-Em `/inventory`, a tabela apresenta saldo por produto/endereço, unidade, estoque mínimo e indicação visual de estoque baixo, com busca e filtros. Ações separadas registram entrada, saída, ajuste e transferência conforme as permissões `inventory.*`; saídas e transferências exibem o saldo conhecido na origem, mas a API continua sendo a autoridade concorrente. `/inventory/movements` apresenta o histórico imutável com filtros por produto, endereço, tipo e período. Após sucesso, os formulários fecham, exibem feedback e atualizam saldos, agregados do produto e histórico sem atualização otimista.
+Em `/inventory`, a tabela apresenta físico, reservado e disponível por produto/endereço; o alerta de estoque baixo usa o disponível. Ações separadas registram entrada, saída, ajuste e transferência conforme as permissões `inventory.*`; a API continua sendo a autoridade concorrente e protege reservas ativas. `/inventory/movements` apresenta o histórico imutável. `/inventory/reservations` lista alocações com filtros, status e acesso ao pedido. Após sucesso, os caches afetados são invalidados sem atualização otimista.
 
 Em `/inventory/counts`, a listagem mostra depósito, status, responsável, progresso, filtros e paginação. O detalhe em `/inventory/counts/[id]` apresenta resumo, itens paginados e entrada inline de quantidade, permitindo navegação por teclado sem modal por item. Divergências usam texto e badge além de cor. Início, recontagem, aprovação e cancelamento exigem confirmação; a aprovação informa os ajustes e só atualiza a tela, saldos e movimentos após confirmação do backend. O saldo teórico permanece visível no MVP; contagem cega é evolução documentada.
 
@@ -31,7 +31,7 @@ Em Compras, `/purchases/orders` oferece pesquisa, filtros, período, tabela pagi
 
 Em Vendas, `/sales/orders` oferece busca, filtros de status, cliente, depósito e período, tabela paginada e número humano. Criação e edição usam páginas dedicadas com cliente, depósito de origem, datas, pesquisa de produto, tabela dinâmica, preço sugerido/editável, descontos por linha e geral e resumo em tempo real. O limite de crédito aparece como informação; eventual excesso gera warning sem bloqueio.
 
-O detalhe `/sales/orders/[id]` exibe snapshots, valores, histórico e ações por estado/permissão. A confirmação acessível informa explicitamente que ainda não reserva nem baixa estoque. Cancelamento exige motivo e pedidos confirmados/cancelados ficam somente para consulta. Mutações não invalidam queries de estoque.
+O detalhe `/sales/orders/[id]` exibe snapshots, alocações, valores, histórico e ações por estado/permissão. Confirmação, reserva integral, liberação, cancelamento e expedição possuem diálogos acessíveis que deixam explícito o efeito sobre disponível e físico.
 
 ## Padrões de tela
 

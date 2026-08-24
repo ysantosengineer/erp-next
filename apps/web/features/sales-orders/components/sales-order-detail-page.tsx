@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Check, Pencil, XCircle } from 'lucide-react';
+import { ArrowLeft, Check, PackageCheck, Pencil, Truck, Undo2, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -44,7 +44,10 @@ import { useAuth } from '../../auth/hooks/use-auth';
 import {
   useCancelSalesOrder,
   useConfirmSalesOrder,
+  useReleaseSalesOrderReservation,
+  useReserveSalesOrder,
   useSalesOrder,
+  useShipSalesOrder,
 } from '../hooks/use-sales-orders';
 import { SalesOrderStatus } from './sales-order-status';
 
@@ -53,9 +56,16 @@ export function SalesOrderDetailPage({ orderId }: { orderId: string }) {
   const { user } = useAuth();
   const confirm = useConfirmSalesOrder();
   const cancel = useCancelSalesOrder();
+  const reserve = useReserveSalesOrder();
+  const release = useReleaseSalesOrderReservation();
+  const ship = useShipSalesOrder();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState('');
+  const [reserveOpen, setReserveOpen] = useState(false);
+  const [releaseOpen, setReleaseOpen] = useState(false);
+  const [shipOpen, setShipOpen] = useState(false);
+  const [shipmentNotes, setShipmentNotes] = useState('');
 
   if (query.isLoading) return <Skeleton className="h-[600px]" />;
   if (query.isError || !query.data) {
@@ -82,10 +92,44 @@ export function SalesOrderDetailPage({ orderId }: { orderId: string }) {
   const cancelOrder = async () => {
     try {
       await cancel.mutateAsync({ id: order.id, reason });
-      toast.success('Pedido cancelado e preservado no histórico.');
+      toast.success(
+        order.status === 'RESERVED'
+          ? 'Pedido cancelado e reservas liberadas.'
+          : 'Pedido cancelado e preservado no histórico.',
+      );
       setCancelOpen(false);
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Não foi possível cancelar o pedido.'));
+    }
+  };
+
+  const reserveOrder = async () => {
+    try {
+      await reserve.mutateAsync(order.id);
+      toast.success('Estoque reservado integralmente.');
+      setReserveOpen(false);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Não foi possível reservar o estoque.'));
+    }
+  };
+
+  const releaseOrder = async () => {
+    try {
+      await release.mutateAsync(order.id);
+      toast.success('Reserva liberada; o estoque voltou a ficar disponível.');
+      setReleaseOpen(false);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Não foi possível liberar a reserva.'));
+    }
+  };
+
+  const shipOrder = async () => {
+    try {
+      await ship.mutateAsync({ id: order.id, notes: shipmentNotes.trim() || undefined });
+      toast.success('Pedido expedido e estoque físico baixado.');
+      setShipOpen(false);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Não foi possível expedir o pedido.'));
     }
   };
 
@@ -94,7 +138,7 @@ export function SalesOrderDetailPage({ orderId }: { orderId: string }) {
       <PageHeader
         eyebrow="Vendas"
         title={order.number}
-        description="Compromisso comercial sem reserva ou baixa de estoque nesta etapa."
+        description="Acompanhe a confirmação, reserva e expedição do pedido."
         action={
           <div className="flex flex-wrap gap-2">
             <Link className={cn(buttonVariants({ variant: 'outline' }))} href="/sales/orders">
@@ -112,7 +156,23 @@ export function SalesOrderDetailPage({ orderId }: { orderId: string }) {
                 <Check className="size-4" /> Confirmar pedido
               </Button>
             ) : null}
-            {order.status !== 'CANCELLED' && can(PERMISSIONS.SALES_ORDERS_CANCEL) ? (
+            {order.status === 'CONFIRMED' && can(PERMISSIONS.INVENTORY_RESERVE) ? (
+              <Button onClick={() => setReserveOpen(true)}>
+                <PackageCheck className="size-4" /> Reservar estoque
+              </Button>
+            ) : null}
+            {order.status === 'RESERVED' && can(PERMISSIONS.INVENTORY_RELEASE) ? (
+              <Button onClick={() => setReleaseOpen(true)} variant="outline">
+                <Undo2 className="size-4" /> Liberar reserva
+              </Button>
+            ) : null}
+            {order.status === 'RESERVED' && can(PERMISSIONS.INVENTORY_SHIP) ? (
+              <Button onClick={() => setShipOpen(true)}>
+                <Truck className="size-4" /> Expedir pedido
+              </Button>
+            ) : null}
+            {!['CANCELLED', 'SHIPPED'].includes(order.status) &&
+            can(PERMISSIONS.SALES_ORDERS_CANCEL) ? (
               <Button onClick={() => setCancelOpen(true)} variant="destructive">
                 <XCircle className="size-4" /> Cancelar
               </Button>
@@ -169,7 +229,14 @@ export function SalesOrderDetailPage({ orderId }: { orderId: string }) {
                 <TableCell>{formatCurrency(item.subtotal)}</TableCell>
                 <TableCell>
                   {formatDecimalPtBr(item.reservedQuantity, 4)}
-                  <span className="block text-xs text-slate-500">Etapa 16</span>
+                  {item.reservations
+                    .filter((reservation) => reservation.status === 'ACTIVE')
+                    .map((reservation) => (
+                      <span className="block text-xs text-slate-500" key={reservation.id}>
+                        {reservation.location.warehouse.code}/{reservation.location.code}:{' '}
+                        {formatDecimalPtBr(reservation.quantity, 4)}
+                      </span>
+                    ))}
                 </TableCell>
               </TableRow>
             ))}
@@ -191,6 +258,19 @@ export function SalesOrderDetailPage({ orderId }: { orderId: string }) {
             <p className="text-sm">
               Confirmado por {order.confirmedBy.name} em{' '}
               {new Date(order.confirmedAt!).toLocaleString('pt-BR')}.
+            </p>
+          ) : null}
+          {order.reservedBy ? (
+            <p className="text-sm">
+              Reservado por {order.reservedBy.name} em{' '}
+              {new Date(order.reservedAt!).toLocaleString('pt-BR')}.
+            </p>
+          ) : null}
+          {order.shippedBy ? (
+            <p className="text-sm text-emerald-700">
+              Expedido por {order.shippedBy.name} em{' '}
+              {new Date(order.shippedAt!).toLocaleString('pt-BR')}.
+              {order.shipmentNotes ? ` Observação: ${order.shipmentNotes}` : ''}
             </p>
           ) : null}
           {order.cancelledBy ? (
@@ -219,8 +299,8 @@ export function SalesOrderDetailPage({ orderId }: { orderId: string }) {
             <AlertDialogTitle>Confirmar {order.number}?</AlertDialogTitle>
             <AlertDialogDescription>
               Cliente: {order.customer.name}. {order.items.length} item(ns), total{' '}
-              {formatCurrency(order.totalAmount)}. A confirmação ainda não baixa nem reserva o
-              estoque; isso ocorrerá em fluxo posterior.
+              {formatCurrency(order.totalAmount)}. A confirmação não altera o estoque; a reserva é
+              uma ação separada.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -237,8 +317,9 @@ export function SalesOrderDetailPage({ orderId }: { orderId: string }) {
           <DialogHeader>
             <DialogTitle>Cancelar {order.number}</DialogTitle>
             <DialogDescription>
-              O pedido será cancelado e permanecerá disponível apenas para consulta. Nenhum saldo
-              será alterado.
+              {order.status === 'RESERVED'
+                ? 'O pedido será cancelado e todas as reservas ativas serão liberadas. O estoque físico não será alterado.'
+                : 'O pedido será cancelado e permanecerá disponível apenas para consulta.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -259,6 +340,83 @@ export function SalesOrderDetailPage({ orderId }: { orderId: string }) {
               variant="destructive"
             >
               Confirmar cancelamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={reserveOpen} onOpenChange={setReserveOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reservar estoque para {order.number}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O sistema distribuirá cada item pelos endereços ativos do depósito{' '}
+              {order.warehouse.code}. A operação é integral: se algum item não tiver
+              disponibilidade, nenhuma reserva será criada.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="max-h-56 overflow-auto rounded-md border p-3 text-sm">
+            {order.items.map((item) => (
+              <p className="flex justify-between gap-4" key={item.id}>
+                <span>
+                  {item.productSku} · {item.productName}
+                </span>
+                <strong>
+                  {formatDecimalPtBr(item.quantity, 4)} {item.unitSymbol}
+                </strong>
+              </p>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction disabled={reserve.isPending} onClick={() => void reserveOrder()}>
+              Confirmar reserva
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={releaseOpen} onOpenChange={setReleaseOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Liberar reserva de {order.number}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              As quantidades deixarão de estar comprometidas e o pedido voltará ao status
+              Confirmado. O estoque físico não será alterado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Manter reserva</AlertDialogCancel>
+            <AlertDialogAction disabled={release.isPending} onClick={() => void releaseOrder()}>
+              Liberar reserva
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={shipOpen} onOpenChange={setShipOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Expedir {order.number}</DialogTitle>
+            <DialogDescription>
+              Esta ação consumirá as reservas, registrará movimentações de saída e reduzirá
+              definitivamente o estoque físico. Não poderá ser desfeita por este fluxo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="shipment-notes">Observação da expedição (opcional)</Label>
+            <Textarea
+              id="shipment-notes"
+              value={shipmentNotes}
+              onChange={(event) => setShipmentNotes(event.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShipOpen(false)} variant="outline">
+              Voltar
+            </Button>
+            <Button disabled={ship.isPending} onClick={() => void shipOrder()}>
+              <Truck className="size-4" /> Confirmar expedição
             </Button>
           </DialogFooter>
         </DialogContent>

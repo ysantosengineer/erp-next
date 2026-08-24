@@ -160,6 +160,12 @@ export class SalesOrderItemResponseDto {
   @ApiProperty() discountAmount!: string;
   @ApiProperty() subtotal!: string;
   @ApiProperty() reservedQuantity!: string;
+  @ApiProperty({
+    type: 'array',
+    items: { type: 'object' },
+    description: 'Alocações históricas da reserva por localização.',
+  })
+  reservations!: object[];
 }
 
 class SalesOrderRelationDto {
@@ -184,10 +190,15 @@ export class SalesOrderResponseDto {
   @ApiProperty({ type: [SalesOrderItemResponseDto] }) items!: SalesOrderItemResponseDto[];
   @ApiProperty() createdBy!: SalesOrderRelationDto;
   @ApiProperty({ nullable: true }) confirmedBy!: SalesOrderRelationDto | null;
+  @ApiProperty({ nullable: true }) reservedBy!: SalesOrderRelationDto | null;
+  @ApiProperty({ nullable: true }) shippedBy!: SalesOrderRelationDto | null;
   @ApiProperty({ nullable: true }) cancelledBy!: SalesOrderRelationDto | null;
   @ApiProperty() createdAt!: string;
   @ApiProperty() updatedAt!: string;
   @ApiProperty({ nullable: true }) confirmedAt!: string | null;
+  @ApiProperty({ nullable: true }) reservedAt!: string | null;
+  @ApiProperty({ nullable: true }) shippedAt!: string | null;
+  @ApiProperty({ nullable: true }) shipmentNotes!: string | null;
   @ApiProperty({ nullable: true }) cancelledAt!: string | null;
   @ApiProperty({ nullable: true }) cancellationReason!: string | null;
 }

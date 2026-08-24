@@ -10,6 +10,9 @@ describe('SalesOrdersController permissions', () => {
     ['update', 'sales_orders.update'],
     ['confirm', 'sales_orders.confirm'],
     ['cancel', 'sales_orders.cancel'],
+    ['reserve', 'inventory.reserve'],
+    ['releaseReservation', 'inventory.release'],
+    ['ship', 'inventory.ship'],
   ] as const)('%s exige %s', (method, permission) => {
     expect(
       Reflect.getMetadata(REQUIRED_PERMISSIONS_KEY, SalesOrdersController.prototype[method]),

@@ -7,6 +7,7 @@ import {
 import { Prisma, SalesOrderStatus } from '@prisma/client';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { PrismaService } from '../prisma/prisma.service';
+import { StockReservationsService } from '../stock-reservations/stock-reservations.service';
 import {
   CreateSalesOrderDto,
   ListSalesOrdersQueryDto,
@@ -21,8 +22,26 @@ const orderInclude = {
   warehouse: { select: { id: true, name: true, code: true } },
   createdBy: { select: { id: true, name: true } },
   confirmedBy: { select: { id: true, name: true } },
+  reservedBy: { select: { id: true, name: true } },
+  shippedBy: { select: { id: true, name: true } },
   cancelledBy: { select: { id: true, name: true } },
-  items: { orderBy: { createdAt: 'asc' as const } },
+  items: {
+    include: {
+      reservations: {
+        include: {
+          location: {
+            select: {
+              id: true,
+              code: true,
+              warehouse: { select: { id: true, name: true, code: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'asc' as const },
+      },
+    },
+    orderBy: { createdAt: 'asc' as const },
+  },
 } satisfies Prisma.SalesOrderInclude;
 
 type OrderWithRelations = Prisma.SalesOrderGetPayload<{ include: typeof orderInclude }>;
@@ -30,7 +49,10 @@ type Tx = Prisma.TransactionClient;
 
 @Injectable()
 export class SalesOrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly stockReservationsService: StockReservationsService,
+  ) {}
 
   async findAll(identity: AuthenticatedUser, query: ListSalesOrdersQueryDto) {
     const where: Prisma.SalesOrderWhereInput = {
@@ -311,6 +333,17 @@ export class SalesOrdersService {
 
   async cancel(identity: AuthenticatedUser, id: string, reason: string, requestId: string) {
     return this.prisma.$transaction(async (tx) => {
+      const locked = await tx.$queryRaw<{ id: string }[]>`
+        SELECT "id" FROM "SalesOrder"
+        WHERE "id" = ${id}::uuid AND "companyId" = ${identity.companyId}::uuid
+        FOR UPDATE
+      `;
+      if (!locked.length) {
+        throw new NotFoundException({
+          code: 'SALES_ORDER_NOT_FOUND',
+          message: 'Pedido de venda não encontrado.',
+        });
+      }
       const current = await this.getScoped(tx, identity.companyId, id);
       if (current.status === SalesOrderStatus.CANCELLED) {
         throw new ConflictException({
@@ -318,12 +351,13 @@ export class SalesOrdersService {
           message: 'Este pedido já está cancelado.',
         });
       }
-      if (current.items.some((item) => item.reservedQuantity.gt(0))) {
+      if (current.status === SalesOrderStatus.SHIPPED) {
         throw new ConflictException({
-          code: 'SALES_ORDER_HAS_RESERVATIONS',
-          message: 'O pedido possui reservas e não pode ser cancelado por este fluxo.',
+          code: 'SALES_ORDER_ALREADY_SHIPPED',
+          message: 'Pedido já baixado não pode ser cancelado.',
         });
       }
+      await this.stockReservationsService.releaseForCancellation(tx, identity, current, requestId);
       const changed = await tx.salesOrder.updateMany({
         where: { id, companyId: identity.companyId, status: current.status },
         data: {
@@ -331,6 +365,8 @@ export class SalesOrdersService {
           cancelledByUserId: identity.userId,
           cancelledAt: new Date(),
           cancellationReason: reason.trim(),
+          reservedByUserId: null,
+          reservedAt: null,
         },
       });
       if (changed.count !== 1) this.concurrentTransition();
@@ -619,13 +655,24 @@ export class SalesOrdersService {
         discountAmount: item.discountAmount.toFixed(2),
         subtotal: item.subtotal.toFixed(2),
         reservedQuantity: item.reservedQuantity.toFixed(4),
+        reservations: item.reservations.map((reservation) => ({
+          id: reservation.id,
+          status: reservation.status,
+          quantity: reservation.quantity.toFixed(4),
+          location: reservation.location,
+        })),
       })),
       createdBy: order.createdBy,
       confirmedBy: order.confirmedBy,
+      reservedBy: order.reservedBy,
+      shippedBy: order.shippedBy,
       cancelledBy: order.cancelledBy,
       createdAt: order.createdAt.toISOString(),
       updatedAt: order.updatedAt.toISOString(),
       confirmedAt: order.confirmedAt?.toISOString() ?? null,
+      reservedAt: order.reservedAt?.toISOString() ?? null,
+      shippedAt: order.shippedAt?.toISOString() ?? null,
+      shipmentNotes: order.shipmentNotes,
       cancelledAt: order.cancelledAt?.toISOString() ?? null,
       cancellationReason: order.cancellationReason,
     };

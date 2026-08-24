@@ -84,7 +84,7 @@ export function InventoryPage() {
       <PageHeader
         eyebrow="Estoque"
         title="Saldos de estoque"
-        description="Consulte quantidades por produto, depósito e endereço físico."
+        description="Consulte estoque físico, reservado e disponível por endereço."
         action={actions}
       />
       <section
@@ -170,7 +170,9 @@ export function InventoryPage() {
                     <TableHead>Produto</TableHead>
                     <TableHead>Depósito</TableHead>
                     <TableHead>Endereço</TableHead>
-                    <TableHead className="text-right">Saldo</TableHead>
+                    <TableHead className="text-right">Físico</TableHead>
+                    <TableHead className="text-right">Reservado</TableHead>
+                    <TableHead className="text-right">Disponível</TableHead>
                     <TableHead className="text-right">Mínimo</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Atualizado em</TableHead>
@@ -189,12 +191,18 @@ export function InventoryPage() {
                         {balance.quantity} {balance.product.unit.symbol}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
+                        {balance.reservedQuantity} {balance.product.unit.symbol}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums">
+                        {balance.availableQuantity} {balance.product.unit.symbol}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
                         {balance.product.minimumStock} {balance.product.unit.symbol}
                       </TableCell>
                       <TableCell>
                         {!balance.product.isActive ? (
                           <Badge variant="muted">Produto inativo</Badge>
-                        ) : toScaledQuantity(balance.quantity) <
+                        ) : toScaledQuantity(balance.availableQuantity) <
                           toScaledQuantity(balance.product.minimumStock) ? (
                           <Badge variant="warning">Estoque baixo</Badge>
                         ) : (

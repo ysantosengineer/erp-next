@@ -24,7 +24,7 @@ Estado atual: núcleo de estoque, inventário físico, pedidos e recebimentos de
 
 ## Sprint 4 — Vendas
 
-Pedidos de venda, confirmação comercial, cancelamento e histórico do cliente. A Etapa 15 está implementada com numeração, snapshots, cálculos, permissões, auditoria e interface, sem efeito no estoque. Reserva e baixa foram explicitamente transferidas para a Etapa 16.
+Pedidos de venda, confirmação comercial, cancelamento e histórico do cliente. As Etapas 15 e 16 estão implementadas: numeração, snapshots, cálculos, reserva integral por endereço, liberação, expedição com baixa física, permissões, auditoria e interfaces. Picking avançado, separação parcial, transportadoras e faturamento permanecem posteriores.
 
 ## Sprint 5 — Financeiro e relatórios
 

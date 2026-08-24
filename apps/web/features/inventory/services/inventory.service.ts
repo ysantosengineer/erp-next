@@ -10,6 +10,8 @@ import type {
   MovementParams,
   PaginatedBalances,
   PaginatedMovements,
+  PaginatedReservations,
+  ReservationParams,
   StockMovement,
   TransferInput,
 } from '../types/inventory.types';
@@ -25,13 +27,15 @@ const queryString = (params: Record<string, string | number | undefined>) => {
 export const inventoryService = {
   getBalances: (params: BalanceParams) =>
     apiClient.get<PaginatedBalances>(`/inventory?${queryString(params)}`),
-  getBalance: (id: string) => apiClient.get<InventoryBalance>(`/inventory/${id}`),
+  getBalance: (id: string) => apiClient.get<InventoryBalance>(`/inventory/balances/${id}`),
   getProductBalance: (productId: string) =>
     apiClient.get<ProductBalance>(`/inventory/products/${productId}`),
   getOptions: () => apiClient.get<InventoryOptions>('/inventory/options'),
   getMovements: (params: MovementParams) =>
     apiClient.get<PaginatedMovements>(`/inventory/movements?${queryString(params)}`),
   getMovement: (id: string) => apiClient.get<StockMovement>(`/inventory/movements/${id}`),
+  getReservations: (params: ReservationParams) =>
+    apiClient.get<PaginatedReservations>(`/inventory/reservations?${queryString(params)}`),
   createEntry: (input: EntryInput) =>
     apiClient.post<StockMovement, EntryInput>('/inventory/movements/entry', input),
   createExit: (input: ExitInput) =>

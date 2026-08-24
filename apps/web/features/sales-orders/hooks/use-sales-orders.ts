@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { salesOrdersService } from '../services/sales-orders.service';
+import { inventoryQueryKeys } from '../../inventory/hooks/use-inventory';
 import type { SalesOrderFilters } from '../types/sales-order.types';
 
 export const salesOrderKeys = {
@@ -66,8 +67,52 @@ export function useConfirmSalesOrder() {
 
 export function useCancelSalesOrder() {
   const invalidate = useInvalidateSalesOrders();
+  const client = useQueryClient();
   return useMutation({
     mutationFn: salesOrdersService.cancel,
-    onSuccess: (order) => invalidate(order.id),
+    onSuccess: (order) => {
+      invalidate(order.id);
+      void client.invalidateQueries({ queryKey: inventoryQueryKeys.reservationRoot });
+      void client.invalidateQueries({ queryKey: inventoryQueryKeys.balanceRoot });
+      void client.invalidateQueries({ queryKey: inventoryQueryKeys.productRoot });
+    },
+  });
+}
+
+function useStockOperationInvalidation() {
+  const client = useQueryClient();
+  return (orderId: string, includesMovement = false) => {
+    void client.invalidateQueries({ queryKey: salesOrderKeys.all });
+    void client.invalidateQueries({ queryKey: salesOrderKeys.detail(orderId) });
+    void client.invalidateQueries({ queryKey: inventoryQueryKeys.reservationRoot });
+    void client.invalidateQueries({ queryKey: inventoryQueryKeys.balanceRoot });
+    void client.invalidateQueries({ queryKey: inventoryQueryKeys.productRoot });
+    if (includesMovement) {
+      void client.invalidateQueries({ queryKey: inventoryQueryKeys.movementRoot });
+    }
+  };
+}
+
+export function useReserveSalesOrder() {
+  const invalidate = useStockOperationInvalidation();
+  return useMutation({
+    mutationFn: salesOrdersService.reserve,
+    onSuccess: (result) => invalidate(result.orderId),
+  });
+}
+
+export function useReleaseSalesOrderReservation() {
+  const invalidate = useStockOperationInvalidation();
+  return useMutation({
+    mutationFn: salesOrdersService.releaseReservation,
+    onSuccess: (result) => invalidate(result.orderId),
+  });
+}
+
+export function useShipSalesOrder() {
+  const invalidate = useStockOperationInvalidation();
+  return useMutation({
+    mutationFn: salesOrdersService.ship,
+    onSuccess: (result) => invalidate(result.orderId, true),
   });
 }

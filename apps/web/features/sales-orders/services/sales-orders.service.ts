@@ -5,6 +5,7 @@ import type {
   SalesOrderFilters,
   SalesOrderInput,
   SalesOrderOptions,
+  SalesOrderStockOperation,
 } from '../types/sales-order.types';
 
 const listQuery = (filters: SalesOrderFilters) => {
@@ -38,4 +39,18 @@ export const salesOrdersService = {
     apiClient.post<SalesOrder, Record<string, never>>(`/sales-orders/${id}/confirm`, {}),
   cancel: ({ id, reason }: { id: string; reason: string }) =>
     apiClient.post<SalesOrder, { reason: string }>(`/sales-orders/${id}/cancel`, { reason }),
+  reserve: (id: string) =>
+    apiClient.post<SalesOrderStockOperation, Record<string, never>>(
+      `/sales-orders/${id}/reserve`,
+      {},
+    ),
+  releaseReservation: (id: string) =>
+    apiClient.post<SalesOrderStockOperation, Record<string, never>>(
+      `/sales-orders/${id}/release-reservation`,
+      {},
+    ),
+  ship: ({ id, notes }: { id: string; notes?: string }) =>
+    apiClient.post<SalesOrderStockOperation, { notes?: string }>(`/sales-orders/${id}/ship`, {
+      notes,
+    }),
 };

@@ -83,6 +83,7 @@ A chave estrangeira composta `(companyId, warehouseId) → Warehouse(companyId, 
 | --- | --- | --- |
 | SalesOrder | id, companyId, customerId, warehouseId, number, status, datas, valores, usuários e cancelamento | N:1 Company, Customer, Warehouse e usuários; 1:N SalesOrderItem |
 | SalesOrderItem | id, companyId, salesOrderId, productId, snapshots, quantity, unitPrice, discountAmount, subtotal, reservedQuantity | N:1 SalesOrder e Product |
+| StockReservation | id, companyId, salesOrderId, salesOrderItemId, productId, locationId, quantity, status, atores/datas | N:1 pedido, item, produto, endereço e usuários |
 | SalesOrderSequence | companyId, lastNumber, updatedAt | 1:1 Company; contador atômico por empresa |
 | PurchaseOrderSequence | companyId, lastNumber, updatedAt | 1:1 Company; contador atômico por empresa |
 | Invoice | id, direction, status, dueDate, amount, balance | opcionalmente ligada a venda ou compra; 1:N Payment |
@@ -91,7 +92,9 @@ A chave estrangeira composta `(companyId, warehouseId) → Warehouse(companyId, 
 
 Regras de integridade: um item não pode ter quantidade ou preço negativo; `total = quantidade × preço - desconto`; uma fatura não pode apontar simultaneamente para compra e venda; pagamentos cancelados não compõem saldo.
 
-`SalesOrder.status` usa somente `DRAFT`, `CONFIRMED` e `CANCELLED`. Número é único por empresa e produto é único por pedido. Checks garantem quantidade positiva, valores não negativos, descontos limitados, igualdade dos totais e metadados coerentes com o estado. Os itens congelam nome, SKU e unidade. `reservedQuantity` usa `Decimal(18,4)`, inicia em zero e não é atualizado na Etapa 15; sua faixa entre zero e a quantidade prepara reserva parcial futura sem criar uma reserva.
+`SalesOrder.status` usa `DRAFT`, `CONFIRMED`, `RESERVED`, `SHIPPED` e `CANCELLED`. Número é único por empresa e produto é único por pedido. Checks garantem quantidade positiva, valores não negativos, descontos limitados, igualdade dos totais e metadados coerentes com o estado. Os itens congelam nome, SKU e unidade; `reservedQuantity` espelha a reserva integral ativa e volta a zero na liberação, expedição ou cancelamento.
+
+`StockReservation` usa `Decimal(18,4)` positivo e estados `ACTIVE`, `RELEASED` e `CONSUMED`, com metadados de ator/data validados por check. Relações compostas repetem `companyId`; um índice parcial impede duas reservas ativas para o mesmo item/endereço e um trigger preserva o histórico contra exclusão física.
 
 `PurchaseOrder.status` usa `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `PARTIALLY_RECEIVED`, `RECEIVED` e `CANCELLED`. Número é único por empresa. Produto é único por pedido. Checks garantem quantidade positiva, custos e valores não negativos e `receivedQuantity` entre zero e a quantidade pedida. Snapshots mínimos preservam nome, SKU e unidade históricos.
 

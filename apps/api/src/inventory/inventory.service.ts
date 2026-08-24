@@ -5,7 +5,12 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { InventoryCountStatus, Prisma, StockMovementType } from '@prisma/client';
+import {
+  InventoryCountStatus,
+  Prisma,
+  StockMovementType,
+  StockReservationStatus,
+} from '@prisma/client';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -61,10 +66,11 @@ type MovementCommand = {
 };
 
 type MovementExecutionOptions = {
-  referenceType?: 'MANUAL' | 'INVENTORY' | 'PURCHASE_RECEIPT';
+  referenceType?: 'MANUAL' | 'INVENTORY' | 'PURCHASE_RECEIPT' | 'SALES_ORDER';
   referenceId?: string;
   bypassInventoryLock?: boolean;
   allowInactiveProduct?: boolean;
+  reservationAllowance?: Prisma.Decimal;
 };
 
 export type InventoryAdjustmentCommand = {
@@ -78,6 +84,14 @@ export type InventoryAdjustmentCommand = {
 
 export type PurchaseReceiptEntryCommand = {
   purchaseReceiptId: string;
+  productId: string;
+  locationId: string;
+  quantity: string;
+  reason: string;
+};
+
+export type SalesOrderShipmentExitCommand = {
+  salesOrderId: string;
   productId: string;
   locationId: string;
   quantity: string;
@@ -114,8 +128,14 @@ export class InventoryService {
       }),
       this.prisma.inventoryBalance.count({ where }),
     ]);
+    const reserved = await this.activeReservedByBalance(
+      identity.companyId,
+      rows.map((row) => ({ productId: row.productId, locationId: row.locationId })),
+    );
     return {
-      data: rows.map((row) => this.toBalance(row)),
+      data: rows.map((row) =>
+        this.toBalance(row, reserved.get(this.balanceKey(row)) ?? this.zero()),
+      ),
       meta: {
         page: query.page,
         limit: query.limit,
@@ -135,7 +155,16 @@ export class InventoryService {
         code: 'INVENTORY_BALANCE_NOT_FOUND',
         message: 'Saldo não encontrado.',
       });
-    return this.toBalance(balance);
+    const reserved = await this.prisma.stockReservation.aggregate({
+      where: {
+        companyId: identity.companyId,
+        productId: balance.productId,
+        locationId: balance.locationId,
+        status: StockReservationStatus.ACTIVE,
+      },
+      _sum: { quantity: true },
+    });
+    return this.toBalance(balance, reserved._sum.quantity ?? this.zero());
   }
 
   async findProductBalance(identity: AuthenticatedUser, productId: string) {
@@ -153,10 +182,24 @@ export class InventoryService {
       include: { location: { include: { warehouse: true } } },
       orderBy: [{ location: { warehouse: { name: 'asc' } } }, { location: { code: 'asc' } }],
     });
-    const total = balances.reduce((sum, item) => sum.add(item.quantity), new Prisma.Decimal(0));
+    const reservedByBalance = await this.activeReservedByBalance(
+      identity.companyId,
+      balances.map((item) => ({ productId: item.productId, locationId: item.locationId })),
+    );
+    const total = balances.reduce((sum, item) => sum.add(item.quantity), this.zero());
+    const totalReserved = [...reservedByBalance.values()].reduce(
+      (sum, quantity) => sum.add(quantity),
+      this.zero(),
+    );
     const warehouseTotals = new Map<
       string,
-      { id: string; name: string; code: string; quantity: Prisma.Decimal }
+      {
+        id: string;
+        name: string;
+        code: string;
+        quantity: Prisma.Decimal;
+        reservedQuantity: Prisma.Decimal;
+      }
     >();
     for (const item of balances) {
       const warehouse = item.location.warehouse;
@@ -165,15 +208,22 @@ export class InventoryService {
         id: warehouse.id,
         name: warehouse.name,
         code: warehouse.code,
-        quantity: (current?.quantity ?? new Prisma.Decimal(0)).add(item.quantity),
+        quantity: (current?.quantity ?? this.zero()).add(item.quantity),
+        reservedQuantity: (current?.reservedQuantity ?? this.zero()).add(
+          reservedByBalance.get(this.balanceKey(item)) ?? this.zero(),
+        ),
       });
     }
     return {
       product,
       totalQuantity: total.toFixed(4),
+      totalReservedQuantity: totalReserved.toFixed(4),
+      totalAvailableQuantity: total.sub(totalReserved).toFixed(4),
       warehouses: [...warehouseTotals.values()].map((item) => ({
         ...item,
         quantity: item.quantity.toFixed(4),
+        reservedQuantity: item.reservedQuantity.toFixed(4),
+        availableQuantity: item.quantity.sub(item.reservedQuantity).toFixed(4),
       })),
       locations: balances.map((item) => ({
         id: item.location.id,
@@ -184,6 +234,10 @@ export class InventoryService {
           code: item.location.warehouse.code,
         },
         quantity: item.quantity.toFixed(4),
+        reservedQuantity: (reservedByBalance.get(this.balanceKey(item)) ?? this.zero()).toFixed(4),
+        availableQuantity: item.quantity
+          .sub(reservedByBalance.get(this.balanceKey(item)) ?? this.zero())
+          .toFixed(4),
       })),
     };
   }
@@ -378,6 +432,34 @@ export class InventoryService {
     return movement.id;
   }
 
+  async applySalesOrderShipmentExit(
+    tx: Prisma.TransactionClient,
+    identity: AuthenticatedUser,
+    command: SalesOrderShipmentExitCommand,
+    requestId: string,
+  ): Promise<string> {
+    const quantity = new Prisma.Decimal(command.quantity);
+    const movement = await this.executeTransaction(
+      tx,
+      identity,
+      {
+        type: StockMovementType.EXIT,
+        productId: command.productId,
+        quantity: command.quantity,
+        sourceLocationId: command.locationId,
+        reason: command.reason,
+      },
+      requestId,
+      {
+        referenceType: 'SALES_ORDER',
+        referenceId: command.salesOrderId,
+        allowInactiveProduct: true,
+        reservationAllowance: quantity,
+      },
+    );
+    return movement.id;
+  }
+
   private async execute(identity: AuthenticatedUser, command: MovementCommand, requestId: string) {
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       try {
@@ -513,20 +595,44 @@ export class InventoryService {
     }
     const quantity = new Prisma.Decimal(command.quantity);
     if (command.sourceLocationId) {
-      const updated = await tx.inventoryBalance.updateMany({
-        where: {
-          companyId: identity.companyId,
-          productId: command.productId,
-          locationId: command.sourceLocationId,
-          quantity: { gte: quantity },
-        },
-        data: { quantity: { decrement: quantity } },
-      });
-      if (updated.count === 0)
+      const balances = await tx.$queryRaw<{ id: string; quantity: Prisma.Decimal }[]>`
+        SELECT "id", "quantity" FROM "InventoryBalance"
+        WHERE "companyId" = ${identity.companyId}::uuid
+          AND "productId" = ${command.productId}::uuid
+          AND "locationId" = ${command.sourceLocationId}::uuid
+        FOR UPDATE
+      `;
+      if (!balances.length)
         throw new UnprocessableEntityException({
           code: 'INSUFFICIENT_STOCK',
           message: 'Saldo insuficiente no endereço de origem.',
         });
+      const reservation = await tx.stockReservation.aggregate({
+        where: {
+          companyId: identity.companyId,
+          productId: command.productId,
+          locationId: command.sourceLocationId,
+          status: StockReservationStatus.ACTIVE,
+        },
+        _sum: { quantity: true },
+      });
+      const activeReserved = reservation._sum.quantity ?? this.zero();
+      const protectedReserved = activeReserved.sub(options.reservationAllowance ?? this.zero());
+      const remaining = balances[0].quantity.sub(quantity);
+      if (remaining.lt(0) || remaining.lt(protectedReserved)) {
+        throw new UnprocessableEntityException({
+          code: options.reservationAllowance
+            ? 'RESERVED_STOCK_INCONSISTENCY'
+            : 'INSUFFICIENT_AVAILABLE_STOCK',
+          message: options.reservationAllowance
+            ? 'O saldo físico não comporta o consumo das reservas.'
+            : 'O saldo disponível é insuficiente; parte do estoque está reservada.',
+        });
+      }
+      await tx.inventoryBalance.update({
+        where: { id: balances[0].id },
+        data: { quantity: { decrement: quantity } },
+      });
     }
     if (command.destinationLocationId) {
       await tx.inventoryBalance.upsert({
@@ -613,14 +719,47 @@ export class InventoryService {
 
   private toBalance(
     balance: Prisma.InventoryBalanceGetPayload<{ include: typeof balanceInclude }>,
+    reservedQuantity: Prisma.Decimal,
   ) {
     return {
       id: balance.id,
       quantity: balance.quantity.toFixed(4),
+      reservedQuantity: reservedQuantity.toFixed(4),
+      availableQuantity: balance.quantity.sub(reservedQuantity).toFixed(4),
       product: { ...balance.product, minimumStock: balance.product.minimumStock.toFixed(3) },
       location: balance.location,
       createdAt: balance.createdAt.toISOString(),
       updatedAt: balance.updatedAt.toISOString(),
     };
+  }
+
+  private async activeReservedByBalance(
+    companyId: string,
+    balances: Array<{ productId: string; locationId: string }>,
+  ) {
+    if (!balances.length) return new Map<string, Prisma.Decimal>();
+    const productIds = [...new Set(balances.map((item) => item.productId))];
+    const locationIds = [...new Set(balances.map((item) => item.locationId))];
+    const grouped = await this.prisma.stockReservation.groupBy({
+      by: ['productId', 'locationId'],
+      where: {
+        companyId,
+        productId: { in: productIds },
+        locationId: { in: locationIds },
+        status: StockReservationStatus.ACTIVE,
+      },
+      _sum: { quantity: true },
+    });
+    return new Map(
+      grouped.map((item) => [this.balanceKey(item), item._sum.quantity ?? this.zero()]),
+    );
+  }
+
+  private balanceKey(value: { productId: string; locationId: string }) {
+    return `${value.productId}:${value.locationId}`;
+  }
+
+  private zero() {
+    return new Prisma.Decimal(0);
   }
 }

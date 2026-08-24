@@ -135,7 +135,9 @@ export class StockTransferDto extends MovementBaseDto {
 
 export class InventoryBalanceResponseDto {
   @ApiProperty() id!: string;
-  @ApiProperty() quantity!: string;
+  @ApiProperty({ description: 'Saldo físico.' }) quantity!: string;
+  @ApiProperty({ description: 'Soma das reservas ativas.' }) reservedQuantity!: string;
+  @ApiProperty({ description: 'Saldo físico menos reservas ativas.' }) availableQuantity!: string;
   @ApiProperty() product!: object;
   @ApiProperty() location!: object;
   @ApiProperty() createdAt!: string;

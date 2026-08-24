@@ -141,10 +141,11 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 - Pedidos de venda pertencem à empresa, exigem cliente, depósito de origem e ao menos um produto ativo do tenant. O número `SO-000001` é gerado por contador atômico por empresa.
 - Itens congelam nome, SKU e símbolo da unidade. Quantidades e preparação de reserva usam `Decimal(18,4)`; preços, descontos e totais usam `Decimal(14,2)` e trafegam como strings.
 - O subtotal do item é o valor bruto arredondado menos o desconto da linha. O subtotal do pedido soma os itens líquidos; `total = subtotal - desconto geral + frete + outros`. O backend é a autoridade dos cálculos.
-- O fluxo desta etapa é `DRAFT → CONFIRMED` e `DRAFT|CONFIRMED → CANCELLED`. Somente rascunhos são editáveis; confirmação e cancelamento registram ator/data e estados finais preservam o histórico.
+- O fluxo é `DRAFT → CONFIRMED → RESERVED → SHIPPED`. Pedidos `DRAFT`, `CONFIRMED` ou `RESERVED` podem ser cancelados; cancelar um reservado libera suas reservas. Somente rascunhos são editáveis e a expedição é terminal.
 - Cliente, depósito e produtos precisam estar ativos para criar, editar ou confirmar. O limite de crédito é apenas informativo porque ainda não existe saldo de contas a receber.
-- Confirmar ou cancelar pedido de venda não consulta saldo como condição, não altera `InventoryBalance`, não cria `StockMovement` e não cria reserva. `reservedQuantity` permanece zero como preparação estrutural para a Etapa 16.
-- As permissões são `sales_orders.read`, `create`, `update`, `confirm` e `cancel`.
+- Confirmar não altera estoque. Reservar exige disponibilidade integral no depósito, distribui quantidades de forma determinística entre endereços ativos e mantém o saldo físico intacto. Liberar devolve disponibilidade. Expedir consome todas as reservas, reduz o físico e cria saídas `SALES_ORDER` atomicamente.
+- O saldo disponível é `físico - reservas ACTIVE`. Saídas, ajustes negativos e transferências manuais não podem consumir quantidades comprometidas. Reserva e expedição são bloqueadas durante inventário físico ativo no depósito.
+- As permissões comerciais são `sales_orders.read`, `create`, `update`, `confirm` e `cancel`; o fluxo físico usa `inventory.reservations.read`, `inventory.reserve`, `inventory.release` e `inventory.ship`.
 - Compras possuem fornecedor, depósito, itens e custos congelados, totais, aprovação e recebimentos parciais ou totais rastreáveis. Receber compra gera entrada de estoque.
 
 ## Financeiro e relatórios

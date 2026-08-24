@@ -1,0 +1,2 @@
+ALTER TYPE "SalesOrderStatus" ADD VALUE 'RESERVED';
+ALTER TYPE "SalesOrderStatus" ADD VALUE 'SHIPPED';

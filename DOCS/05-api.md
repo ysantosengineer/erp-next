@@ -58,9 +58,11 @@
 
 ### Saldos e movimentações de estoque
 
-- `GET /inventory`, `GET /inventory/:id`, `GET /inventory/products/:productId` e `GET /inventory/options` exigem `inventory.read`. A listagem filtra por busca, produto, depósito e endereço.
+- `GET /inventory`, `GET /inventory/balances/:id`, `GET /inventory/products/:productId` e `GET /inventory/options` exigem `inventory.read`. A listagem filtra por busca, produto, depósito e endereço. O segmento explícito `balances` evita colisão com as subrotas de reservas e movimentos.
 - `GET /inventory/movements` e `GET /inventory/movements/:id` exigem `inventory.movements.read`; o histórico filtra por produto, depósito, endereço, tipo, período e responsável.
 - `POST /inventory/movements/entry`, `/exit`, `/adjustment` e `/transfer` exigem, respectivamente, `inventory.entry`, `inventory.exit`, `inventory.adjust` e `inventory.transfer`.
+- `GET /inventory/reservations` e `GET /inventory/reservations/:id` exigem `inventory.reservations.read` e são sempre limitados ao tenant. A listagem filtra por pedido, produto, depósito, endereço, status e período.
+- Os responses de saldos expõem `quantity` físico, `reservedQuantity` agregado das reservas ativas e `availableQuantity` calculado. Saídas físicas respeitam a disponibilidade, não apenas o saldo físico.
 - Quantidades são strings decimais positivas com até quatro casas. Saldo insuficiente retorna `422 INSUFFICIENT_STOCK`; produto, endereço ou depósito inativo retorna `422` com código específico; recurso inexistente ou externo à empresa retorna `404 RESOURCE_NOT_FOUND`, sem aceitar `companyId` no request.
 - `idempotencyKey` é opcional. Repetição idêntica retorna a movimentação original; reutilização divergente retorna `409 IDEMPOTENCY_KEY_REUSED`.
 
@@ -92,12 +94,12 @@
 
 ### Pedidos de venda
 
-- `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm` e `POST /sales-orders/:id/cancel` usam as permissões correspondentes `sales_orders.*`. `GET /sales-orders/options` fornece clientes, depósitos e produtos ativos do tenant.
+- `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm` e `POST /sales-orders/:id/cancel` usam as permissões correspondentes `sales_orders.*`. `POST /sales-orders/:id/reserve`, `/release-reservation` e `/ship` exigem `inventory.reserve`, `inventory.release` e `inventory.ship`. `GET /sales-orders/options` fornece clientes, depósitos e produtos ativos do tenant.
 - A listagem aceita paginação, pesquisa, status, cliente, depósito, períodos do pedido/entrega e ordenação por whitelist. Pesquisa cobre número, cliente, nome e SKU congelados nos itens.
 - Criação e edição aceitam cliente, depósito, datas, observações, valores adicionais e representação completa dos itens. Empresa, número, status, snapshots, reservas, responsáveis e totais nunca vêm do cliente.
 - Item usa quantity com quatro casas, preço/desconto com duas e snapshot de produto. Desconto da linha não pode superar o bruto; desconto geral não pode superar o subtotal. O backend recalcula todos os valores.
 - Somente `DRAFT` é editável. Confirmar produz `CONFIRMED`; rascunho ou confirmado pode ser cancelado com motivo. Updates condicionais impedem transições concorrentes duplicadas.
-- Nenhum endpoint desta etapa altera saldo, cria `StockMovement` ou reserva estoque. O limite de crédito retornado é apenas informação cadastral.
+- Confirmar permanece comercial. Reservar/liberar alteram somente o comprometimento disponível; expedir cria uma saída por alocação com `referenceType=SALES_ORDER` e reduz o físico. Os comandos são transacionais, protegidos por estado e retornam o resultado atual em retries já concluídos.
 | Vendas | `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm`, `POST /sales-orders/:id/cancel` |
 | Compras | Pedidos em `/purchase-orders`; recebimentos em `GET,POST /purchase-receipts`, detalhe e `/purchase-orders/:id/receivable` |
 | Estoque | `GET /inventory`, `GET /inventory/products/:productId`, `GET /inventory/movements`; comandos em `/inventory/movements/{entry,exit,adjustment,transfer}` |
