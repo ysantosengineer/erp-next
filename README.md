@@ -1,6 +1,6 @@
 # ERP Next
 
-Monorepo do ERP Next para pequenas e médias empresas. O repositório contém uma aplicação web em Next.js, uma API NestJS, PostgreSQL via Prisma, autenticação, usuários, papéis e permissões, cadastros, estoque, inventário físico, compras e pedidos de venda com reserva e expedição.
+Monorepo do ERP Next para pequenas e médias empresas. O repositório contém uma aplicação web em Next.js, uma API NestJS, PostgreSQL via Prisma, autenticação, usuários, papéis e permissões, cadastros, estoque, inventário físico, compras, vendas e financeiro inicial.
 
 ## Pré-requisitos
 
@@ -59,6 +59,9 @@ npm run dev
 - Pedidos de compra: `http://localhost:3000/purchases/orders`
 - Recebimentos de compras: `http://localhost:3000/purchases/receipts`
 - Pedidos de venda: `http://localhost:3000/sales/orders`
+- Contas a pagar: `http://localhost:3000/finance/payables`
+- Contas a receber: `http://localhost:3000/finance/receivables`
+- Fluxo de caixa: `http://localhost:3000/finance/cash-flow`
 
 O estoque é alterado exclusivamente por entradas, saídas, ajustes ou transferências. Quantidades usam `Decimal(18,4)`, saldo negativo é bloqueado e saldo/movimentação/auditoria são confirmados na mesma transação serializável. O histórico não possui endpoints de edição ou exclusão.
 
@@ -67,6 +70,8 @@ O inventário físico captura um snapshot ao iniciar e bloqueia movimentações 
 Pedidos de compra usam numeração humana por empresa, itens e custos congelados, aprovação e cancelamento auditados. Aprovar não altera estoque. O recebimento físico aceita parciais e múltiplas confirmações, gera entradas `PURCHASE_RECEIPT`, atualiza saldo e pedido na mesma transação e protege retries por idempotência.
 
 Pedidos de venda usam numeração `SO-*` por empresa, snapshots, preços negociados, descontos e transições auditadas. Confirmar é comercial; reservar compromete o disponível por endereço sem alterar o físico, liberar devolve disponibilidade e expedir consome as reservas, gera saídas `SALES_ORDER` e reduz o físico atomicamente.
+
+O financeiro usa títulos `FIN-*` unificados por empresa, apresentados separadamente como contas a pagar e receber. Valores são decimais, saldo/atraso são derivados e pagamentos/recebimentos parciais são históricos imutáveis protegidos por transação serializável e idempotência. O fluxo de caixa distingue previsto de realizado; integração bancária, contabilidade, estorno e geração automática por pedidos não fazem parte desta etapa.
 
 ## Sessão web
 

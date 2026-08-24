@@ -9,7 +9,7 @@
 | US003 | Como operador, quero manter clientes, fornecedores, produtos e categorias. | Validações, busca e paginação funcionam. |
 | US004 | Como compras, quero registrar e receber compras. | Recebimento cria movimentação e atualiza saldo atomicamente. |
 | US005 | Como vendas, quero registrar, reservar e expedir pedidos. | Confirmação é comercial; reserva compromete disponibilidade integralmente e expedição consome a reserva e baixa o físico. |
-| US006 | Como financeiro, quero registrar pagamentos. | Pagamentos parciais atualizam saldo e status da fatura. |
+| US006 | Como financeiro, quero controlar títulos, pagamentos e recebimentos. | Baixas parciais/totais atualizam saldo e status atomicamente, com idempotência. |
 
 ## P1 — valor operacional
 
@@ -27,8 +27,8 @@ Exportação de relatórios, integrações, expansão do isolamento multiempresa
 ## Estado de implementação
 
 - US001 e US002 estão implementadas no backend e no frontend, com isolamento por empresa, controle visual por permissão, catálogo consultável e testes unitários baseados em mocks.
-- A validação em banco real e os testes de integração permanecem pendentes pela indisponibilidade local de PostgreSQL/Docker; por isso essas histórias ainda não são consideradas concluídas.
-- A interface de login, sessão autenticada, navegação por permissões e os CRUDs administrativos de usuários e papéis estão implementados. A validação manual integrada depende de API e PostgreSQL locais disponíveis.
+- O PostgreSQL local está disponível, todas as migrations estão aplicadas e o seed administrativo executa. Integrações específicas são ativadas por variáveis de ambiente para manter a suíte padrão determinística.
+- A interface de login, sessão autenticada, navegação por permissões e os CRUDs administrativos de usuários e papéis estão implementados e disponíveis com API e PostgreSQL locais.
 - A parte de fornecedores da US003 está implementada em código com PF/PJ, CPF/CNPJ, endereço principal, busca, filtros, paginação, status e testes unitários. A US003 permanece aberta até os demais cadastros previstos e a validação integrada em PostgreSQL.
 - A parte de produtos da US003 está implementada com SKU/código de barras únicos por empresa, categoria, unidade, fornecedor principal opcional, preços, dimensões, estoque mínimo, busca, filtros, paginação, status e testes.
 - A parte de clientes da US003 está implementada com PF/PJ, CPF/CNPJ obrigatório e único por empresa, endereço principal, limite de crédito decimal, busca, filtros, paginação, status, controle por permissão e testes.
@@ -36,3 +36,4 @@ Exportação de relatórios, integrações, expansão do isolamento multiempresa
 - A US010 está implementada por depósito com bloqueio de movimentos durante a contagem, inclusão manual de mercadoria sem saldo, aprovação serializável, rollback integral, prevenção de dupla aprovação e interface autenticada. Escopo por endereços e contagem cega permanecem como evolução.
 - A US004 está implementada com pedidos e recebimentos parciais/múltiplos/totais, numeração segura, estoque e status atômicos, concorrência, idempotência, auditoria e isolamento por empresa.
 - A US005 está implementada com pedidos de venda, itens e preços congelados, descontos, confirmação, reserva/liberação, cancelamento com liberação, expedição, concorrência, auditoria, multiempresa e interface.
+- A US006 está implementada com contas a pagar/receber, parceiros opcionais, numeração `FIN-*`, saldo e atraso derivados, baixas imutáveis, concorrência, idempotência, fluxo previsto/realizado, RBAC, auditoria, multiempresa e interface. Estorno e geração automática a partir de documentos comerciais permanecem posteriores.

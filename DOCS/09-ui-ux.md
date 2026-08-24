@@ -33,6 +33,8 @@ Em Vendas, `/sales/orders` oferece busca, filtros de status, cliente, depósito 
 
 O detalhe `/sales/orders/[id]` exibe snapshots, alocações, valores, histórico e ações por estado/permissão. Confirmação, reserva integral, liberação, cancelamento e expedição possuem diálogos acessíveis que deixam explícito o efeito sobre disponível e físico.
 
+Em Financeiro, `/finance/payables` e `/finance/receivables` mantêm contextos visuais separados sobre o mesmo contrato, com resumo, pesquisa, estado, vencimento e paginação. Criação/edição usa formulário dedicado, datas civis e moeda brasileira; o detalhe destaca original, liquidado, pendente, atraso e histórico imutável. Pagamento/recebimento e cancelamento aparecem somente quando estado e permissão permitem. `/finance/cash-flow` compara previsto e realizado por dia ou mês em tabela clara, sem antecipar dashboard avançado.
+
 ## Padrões de tela
 
 - Listagens: título, ação principal autorizada, filtros, tabela paginada e estado vazio com próximo passo.

@@ -103,7 +103,7 @@
 | Vendas | `GET,POST /sales-orders`, `GET,PATCH /sales-orders/:id`, `POST /sales-orders/:id/confirm`, `POST /sales-orders/:id/cancel` |
 | Compras | Pedidos em `/purchase-orders`; recebimentos em `GET,POST /purchase-receipts`, detalhe e `/purchase-orders/:id/receivable` |
 | Estoque | `GET /inventory`, `GET /inventory/products/:productId`, `GET /inventory/movements`; comandos em `/inventory/movements/{entry,exit,adjustment,transfer}` |
-| Financeiro | `GET,POST /invoices`, `GET /invoices/:id`, `POST /invoices/:id/payments`, `POST /payments/:id/cancel` |
+| Financeiro | `GET,POST /finance/entries`, `GET,PATCH /finance/entries/:id`, baixa e cancelamento por ação, opções, resumo e fluxo de caixa |
 | Relatórios | `GET /reports/dashboard`, `GET /reports/sales`, `GET /reports/inventory`, `GET /reports/financial` |
 
 ## Regras de contrato
@@ -118,3 +118,11 @@
 - `GET /users` aceita `page`, `limit` (máximo 100), `search`, `status`, `sortBy` e `sortOrder`, retornando `{ data, meta: { page, limit, total, totalPages } }`.
 - `POST /auth/login` retorna access token; o refresh token é enviado exclusivamente em cookie `HttpOnly`. O access token expira em 15 minutos. `POST /auth/refresh` usa e rotaciona o cookie de refresh, `POST /auth/logout` o revoga e limpa, e `GET /auth/me` exige access token e retorna dados seguros do usuário, empresa, papéis e permissões atuais. Alteração e recuperação de senha permanecem fora do escopo atual.
 - A API aceita origem configurada em `WEB_ORIGIN` com credenciais; não é permitido usar origem curinga com cookies.
+
+### Financeiro
+
+- `GET,POST /finance/entries`, `GET,PATCH /finance/entries/:id`, `POST /finance/entries/:id/settlements` e `POST /finance/entries/:id/cancel` implementam títulos manuais, edição elegível, baixa e cancelamento sem `DELETE`.
+- A lista suporta paginação, `type`, `status`, `overdue`, parceiro, intervalo de vencimento, pesquisa e ordenação por whitelist. O detalhe inclui saldo derivado, atraso, parceiros, origem, criador, cancelamento e histórico de liquidações.
+- A baixa exige valor, data, método e `idempotencyKey`; o mesmo payload pode ser repetido sem duplicação e reutilização divergente retorna `409`. Overpayment e estados inelegíveis retornam `422`.
+- `GET /finance/cash-flow` aceita período, `view=forecast|realized|combined` e `groupBy=day|month`. `GET /finance/summary` devolve totais simples; `GET /finance/options` lista parceiros ativos do tenant.
+- Guards usam `finance.read`, `finance.create`, `finance.update`, `finance.settle`, `finance.cancel` e `finance.cash_flow.read`. Empresa, número, estados, saldos, atores e hashes nunca são aceitos do cliente.

@@ -101,4 +101,24 @@ describe('Sidebar', () => {
     );
     expect(screen.queryByRole('link', { name: 'Pedidos de compra' })).not.toBeInTheDocument();
   });
+
+  it('separa títulos e fluxo de caixa por permissões financeiras', () => {
+    useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.FINANCE_READ] } });
+    const { rerender } = render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Contas a pagar' })).toHaveAttribute(
+      'href',
+      '/finance/payables',
+    );
+    expect(screen.getByRole('link', { name: 'Contas a receber' })).toHaveAttribute(
+      'href',
+      '/finance/receivables',
+    );
+    expect(screen.queryByRole('link', { name: 'Fluxo de caixa' })).not.toBeInTheDocument();
+    useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.FINANCE_CASH_FLOW_READ] } });
+    rerender(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Fluxo de caixa' })).toHaveAttribute(
+      'href',
+      '/finance/cash-flow',
+    );
+  });
 });

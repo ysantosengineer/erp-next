@@ -19,6 +19,7 @@ import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module';
 import { PurchaseReceiptsModule } from './purchase-receipts/purchase-receipts.module';
 import { SalesOrdersModule } from './sales-orders/sales-orders.module';
 import { StockReservationsModule } from './stock-reservations/stock-reservations.module';
+import { FinanceModule } from './finance/finance.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { StockReservationsModule } from './stock-reservations/stock-reservations
     PurchaseReceiptsModule,
     SalesOrdersModule,
     StockReservationsModule,
+    FinanceModule,
   ],
   controllers: [AppController],
 })

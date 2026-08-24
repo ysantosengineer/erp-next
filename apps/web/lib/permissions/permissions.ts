@@ -66,6 +66,12 @@ export const PERMISSIONS = {
   SALES_ORDERS_UPDATE: 'sales_orders.update',
   SALES_ORDERS_CONFIRM: 'sales_orders.confirm',
   SALES_ORDERS_CANCEL: 'sales_orders.cancel',
+  FINANCE_READ: 'finance.read',
+  FINANCE_CREATE: 'finance.create',
+  FINANCE_UPDATE: 'finance.update',
+  FINANCE_SETTLE: 'finance.settle',
+  FINANCE_CANCEL: 'finance.cancel',
+  FINANCE_CASH_FLOW_READ: 'finance.cash_flow.read',
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -138,6 +144,12 @@ export const PERMISSION_LABELS: Readonly<Record<string, string>> = {
   'sales_orders.update': 'Editar pedidos de venda',
   'sales_orders.confirm': 'Confirmar pedidos de venda',
   'sales_orders.cancel': 'Cancelar pedidos de venda',
+  'finance.read': 'Visualizar títulos financeiros',
+  'finance.create': 'Criar títulos financeiros',
+  'finance.update': 'Editar títulos financeiros',
+  'finance.settle': 'Registrar pagamentos e recebimentos',
+  'finance.cancel': 'Cancelar títulos financeiros',
+  'finance.cash_flow.read': 'Visualizar fluxo de caixa',
 };
 
 export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
@@ -157,4 +169,6 @@ export const RESOURCE_LABELS: Readonly<Record<string, string>> = {
   purchase_orders: 'Pedidos de compra',
   purchase_receipts: 'Recebimentos de compras',
   sales_orders: 'Pedidos de venda',
+  finance: 'Financeiro',
+  'finance.cash_flow': 'Fluxo de caixa',
 };

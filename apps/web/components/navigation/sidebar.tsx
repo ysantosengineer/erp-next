@@ -149,6 +149,40 @@ export function Sidebar() {
           </Link>
         </Can>
         <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Financeiro
+        </p>
+        <Can permission={PERMISSIONS.FINANCE_READ}>
+          <Link
+            className={cn(
+              navigationClass,
+              pathname.startsWith('/finance/payables') && 'bg-slate-100 text-slate-950',
+            )}
+            href="/finance/payables"
+          >
+            Contas a pagar
+          </Link>
+          <Link
+            className={cn(
+              navigationClass,
+              pathname.startsWith('/finance/receivables') && 'bg-slate-100 text-slate-950',
+            )}
+            href="/finance/receivables"
+          >
+            Contas a receber
+          </Link>
+        </Can>
+        <Can permission={PERMISSIONS.FINANCE_CASH_FLOW_READ}>
+          <Link
+            className={cn(
+              navigationClass,
+              pathname.startsWith('/finance/cash-flow') && 'bg-slate-100 text-slate-950',
+            )}
+            href="/finance/cash-flow"
+          >
+            Fluxo de caixa
+          </Link>
+        </Can>
+        <p className="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
           Administração
         </p>
         <Can permission={PERMISSIONS.USERS_READ}>

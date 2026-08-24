@@ -150,8 +150,12 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 
 ## Financeiro e relatórios
 
-- Faturas representam valores a receber ou a pagar vinculados à venda ou compra.
-- Pagamentos podem ser parciais; uma fatura é quitada quando a soma dos pagamentos válidos alcança o valor devido.
+- `FinancialEntry` representa um título manual a pagar (`PAYABLE`) ou receber (`RECEIVABLE`); cada parcela é um título independente e pode vincular fornecedor, cliente ou documento comercial do mesmo tenant.
+- Valores usam `Decimal(14,2)`. O saldo pendente é sempre derivado por `originalAmount - settledAmount`; os estados são `OPEN`, `PARTIALLY_SETTLED`, `SETTLED` e `CANCELLED`.
+- Pagamentos e recebimentos parciais criam `FinancialSettlement` imutável. Baixa excessiva é proibida, retries exigem idempotência e operações concorrentes são serializadas com lock do título.
+- Título com baixa não pode ser editado nem cancelado. Vencimento e dias em atraso são derivados, sem job ou estado persistido adicional.
+- O fluxo de caixa previsto usa saldos pendentes por vencimento; o realizado usa exclusivamente liquidações por data. Entradas e saídas permanecem segregadas na resposta.
+- A Etapa 17 não gera títulos automaticamente a partir de compras/vendas e não inclui estorno, contabilidade, banco, emissão fiscal, gateway ou dashboard avançado.
 - O dashboard mostra vendas, compras, contas em aberto e alertas de estoque baixo no período selecionado.
 - Relatórios do MVP oferecem filtros por período e exportação posterior, sem promessa de formato fiscal.
 

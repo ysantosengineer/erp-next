@@ -66,6 +66,12 @@ export const PERMISSIONS = {
   SALES_ORDERS_UPDATE: 'sales_orders.update',
   SALES_ORDERS_CONFIRM: 'sales_orders.confirm',
   SALES_ORDERS_CANCEL: 'sales_orders.cancel',
+  FINANCE_READ: 'finance.read',
+  FINANCE_CREATE: 'finance.create',
+  FINANCE_UPDATE: 'finance.update',
+  FINANCE_SETTLE: 'finance.settle',
+  FINANCE_CANCEL: 'finance.cancel',
+  FINANCE_CASH_FLOW_READ: 'finance.cash_flow.read',
 } as const;
 
 export const ADMINISTRATIVE_PERMISSIONS = Object.values(PERMISSIONS);

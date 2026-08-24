@@ -98,6 +98,12 @@ async function main(): Promise<void> {
     ['sales_orders', 'update', 'Edita pedidos de venda em rascunho.'],
     ['sales_orders', 'confirm', 'Confirma pedidos de venda sem alterar estoque.'],
     ['sales_orders', 'cancel', 'Cancela pedidos de venda.'],
+    ['finance', 'read', 'Consulta títulos financeiros.'],
+    ['finance', 'create', 'Cria títulos financeiros.'],
+    ['finance', 'update', 'Edita títulos financeiros elegíveis.'],
+    ['finance', 'settle', 'Registra pagamentos e recebimentos.'],
+    ['finance', 'cancel', 'Cancela títulos financeiros elegíveis.'],
+    ['finance.cash_flow', 'read', 'Consulta fluxo de caixa previsto e realizado.'],
   ] as const;
   const newPermissions = await Promise.all(
     businessPermissions.map(([resource, action, description]) =>

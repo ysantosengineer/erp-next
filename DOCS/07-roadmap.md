@@ -8,7 +8,7 @@ Monorepo, Docker Compose para API/PostgreSQL/Redis, configuração de qualidade,
 
 Autenticação, usuários, papéis, permissões, proteção de rotas, redefinição de senha e auditoria inicial.
 
-Estado atual: autenticação, gestão de usuários/papéis, catálogo e atribuição de permissões, autorização, auditoria, login web, sessão por cookie HttpOnly, dashboard estrutural e interfaces administrativas `/users` e `/roles` estão implementados em código. A aplicação das migrations e os testes de integração com PostgreSQL permanecem pendentes; redefinição de senha continua fora desta entrega. A sprint ainda não está concluída.
+Estado atual: autenticação, gestão de usuários/papéis, catálogo e atribuição de permissões, autorização, auditoria, login web, sessão por cookie HttpOnly, dashboard estrutural e interfaces administrativas `/users` e `/roles` estão implementados. As migrations estão aplicadas no ambiente PostgreSQL local; redefinição de senha continua fora desta entrega.
 
 ## Sprint 2 — Cadastros e catálogo
 
@@ -28,7 +28,7 @@ Pedidos de venda, confirmação comercial, cancelamento e histórico do cliente.
 
 ## Sprint 5 — Financeiro e relatórios
 
-Faturas, pagamentos parciais, contas em aberto, dashboard e relatórios operacionais.
+Etapa 17 implementada: títulos unificados a pagar/receber, baixas parciais/totais imutáveis, vencimentos, numeração, idempotência, concorrência, fluxo de caixa simples, permissões, auditoria, multiempresa e interfaces. Dashboard gerencial e relatórios ampliados permanecem para a Etapa 18; contabilidade e integrações bancárias continuam fora do escopo.
 
 ## Sprint 6 — Produção e estabilização
 

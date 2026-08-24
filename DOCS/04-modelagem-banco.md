@@ -86,11 +86,12 @@ A chave estrangeira composta `(companyId, warehouseId) → Warehouse(companyId, 
 | StockReservation | id, companyId, salesOrderId, salesOrderItemId, productId, locationId, quantity, status, atores/datas | N:1 pedido, item, produto, endereço e usuários |
 | SalesOrderSequence | companyId, lastNumber, updatedAt | 1:1 Company; contador atômico por empresa |
 | PurchaseOrderSequence | companyId, lastNumber, updatedAt | 1:1 Company; contador atômico por empresa |
-| Invoice | id, direction, status, dueDate, amount, balance | opcionalmente ligada a venda ou compra; 1:N Payment |
-| Payment | id, paidAt, amount, method, status, reference | N:1 Invoice; N:1 User |
+| FinancialEntry | id, companyId, number, type, status, descrição, parceiro, datas, originalAmount, settledAmount, referência, atores e cancelamento | N:1 Company, Supplier/Customer opcionais e usuários; 1:N FinancialSettlement |
+| FinancialSettlement | id, companyId, financialEntryId, amount, settlementDate, paymentMethod, idempotencyKey, requestHash, createdByUserId | N:1 FinancialEntry, Company e User |
+| FinancialEntrySequence | companyId, lastNumber, updatedAt | 1:1 Company; gera `FIN-*` atomicamente |
 | AuditLog | id, companyId, entity, entityId, action, before, after, occurredAt | N:1 User; N:1 Company opcional |
 
-Regras de integridade: um item não pode ter quantidade ou preço negativo; `total = quantidade × preço - desconto`; uma fatura não pode apontar simultaneamente para compra e venda; pagamentos cancelados não compõem saldo.
+Regras financeiras de integridade: valores são `Decimal(14,2)`, `originalAmount > 0`, `0 <= settledAmount <= originalAmount`, vencimento não antecede emissão, `PAYABLE` não aceita cliente e `RECEIVABLE` não aceita fornecedor. Checks mantêm estado, valores, referência e metadados de cancelamento coerentes. `remainingAmount`, vencido e dias em atraso são derivados. Liquidações não possuem endpoints de alteração/exclusão e um trigger bloqueia mutação física, salvo manutenção explicitamente habilitada; correções futuras exigirão estorno.
 
 `SalesOrder.status` usa `DRAFT`, `CONFIRMED`, `RESERVED`, `SHIPPED` e `CANCELLED`. Número é único por empresa e produto é único por pedido. Checks garantem quantidade positiva, valores não negativos, descontos limitados, igualdade dos totais e metadados coerentes com o estado. Os itens congelam nome, SKU e unidade; `reservedQuantity` espelha a reserva integral ativa e volta a zero na liberação, expedição ou cancelamento.
 

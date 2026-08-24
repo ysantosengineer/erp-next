@@ -41,6 +41,7 @@ Módulos iniciais: `auth`, `users`, `roles`, `customers`, `suppliers`, `catalog`
 - Inventários e itens repetem `companyId` em suas relações compostas com depósito, produto, endereço e usuários. O escopo do depósito é validado no serviço e no banco, e recursos externos retornam `404`.
 - Pedidos e itens de compra repetem `companyId` nas relações com fornecedor, depósito, produto e usuários. O número vem de um contador atômico por empresa; criação e substituição integral de itens em rascunho são transacionais.
 - Pedidos e itens de venda repetem `companyId` nas relações com cliente, depósito, produto e usuários. Relações compostas e consultas sempre limitadas ao tenant impedem associações cross-tenant.
+- Títulos e liquidações financeiras repetem `companyId` em relações compostas com parceiros, entrada, atores e empresa. Referências polimórficas internas são validadas no service pelo tenant e recursos externos retornam `404`.
 
 ## Frontend
 
@@ -62,6 +63,8 @@ As rotas `/inventory` e `/inventory/movements` usam TanStack Query para cache e 
 
 `/inventory/reservations` mantém cache paginado e filtrado próprio. O físico continua em `InventoryBalance`; reservado é agregado de `StockReservation` ativa e disponível é calculado no backend, evitando duas fontes mutáveis de verdade.
 
+`/finance/payables`, `/finance/receivables`, `/finance/entries/[id]` e `/finance/cash-flow` compartilham contratos e query keys do domínio financeiro. Baixas e cancelamentos não usam atualização otimista; após commit invalidam listas, detalhe, resumo e fluxo de caixa.
+
 Os cadastros `/suppliers` e `/customers` seguem essa organização por domínio. `SupplierAddress` e `CustomerAddress` são entidades específicas porque os ciclos de vida dos domínios podem evoluir de forma independente. Ambos aceitam relação 1:N, enquanto a interface atual mantém somente um endereço principal. Validação e formatação estáveis de CPF, CNPJ, telefone e CEP são compartilhadas em utilitários, sem introduzir uma tabela polimórfica de endereços.
 
 ## Integrações e observabilidade
@@ -79,3 +82,4 @@ OpenAPI é o contrato público da API. Logs devem ser estruturados e correlacion
 - Pedidos de compra usam atualização condicional por estado para submit, aprovação e cancelamento. A aprovação é uma decisão comercial sem efeito físico.
 - Recebimentos bloqueiam a linha do pedido com `FOR UPDATE` em transação `SERIALIZABLE`, reutilizam o serviço transacional de estoque, atualizam histórico/acumulado/status atomicamente e repetem conflitos serializáveis até três vezes. Idempotência por empresa e hash canônico protege retries após timeout.
 - Pedidos de venda usam contador atômico por empresa e updates condicionais por estado. Reserva, liberação e expedição bloqueiam o pedido e os saldos relevantes com `FOR UPDATE`, executam em `SERIALIZABLE` e repetem até três conflitos. A alocação é estável por código/id do endereço e integral; expedição reutiliza o núcleo transacional de movimentos.
+- Liquidações financeiras bloqueiam `FinancialEntry` com `FOR UPDATE` dentro de transação `SERIALIZABLE`, revalidam saldo e repetem até três conflitos. `(companyId, idempotencyKey)` e hash canônico diferenciam retry seguro de reutilização divergente.
