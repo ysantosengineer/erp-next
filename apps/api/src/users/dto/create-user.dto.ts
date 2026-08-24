@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import {
+  ArrayMaxSize,
   ArrayUnique,
   IsArray,
   IsEmail,
@@ -35,6 +36,7 @@ export class CreateUserDto {
   @ApiPropertyOptional({ type: [String], format: 'uuid' })
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(50)
   @ArrayUnique()
   @IsUUID('4', { each: true })
   roleIds: string[] = [];

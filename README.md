@@ -35,6 +35,10 @@ AUTH_COOKIE_SECURE=false
 
 Em produção, use HTTPS e `AUTH_COOKIE_SECURE=true`.
 
+Para os testes HTTP com PostgreSQL real, copie `.env.test.example`, configure
+`DATABASE_URL_TEST` exclusivamente para um banco ou schema terminado em `_test` e execute
+`npm run test:e2e`. O runner aborta antes da limpeza se o destino não for reconhecido como teste.
+
 ## Execução
 
 ```bash
@@ -87,6 +91,7 @@ As telas administrativas consomem paginação, filtros e mutações reais da API
 | `npm run lint`      | Executa ESLint e verifica a formatação com Prettier. |
 | `npm run typecheck` | Executa a verificação de tipos dos workspaces.       |
 | `npm run test`      | Executa os testes dos workspaces.                    |
+| `npm run test:e2e`  | Executa testes HTTP contra PostgreSQL isolado.       |
 | `npm run build`     | Gera builds de produção.                             |
 | `npm run format`    | Formata os arquivos com Prettier.                    |
 
@@ -98,3 +103,6 @@ apps/
   web/  # Interface Next.js
 DOCS/   # Documentação oficial do projeto
 ```
+
+Os controles, a estratégia de isolamento E2E e o checklist de produção estão em
+`DOCS/12-seguranca-e-testes.md`.

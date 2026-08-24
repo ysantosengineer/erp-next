@@ -20,6 +20,7 @@ import {
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { randomUUID } from 'node:crypto';
+import { Throttle } from '@nestjs/throttler';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -58,6 +59,7 @@ export class PurchaseReceiptsController {
   }
 
   @Post()
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @RequirePermissions(PERMISSIONS.PURCHASE_RECEIPTS_CREATE)
   @ApiOperation({
     summary: 'Confirma um recebimento e atualiza estoque e pedido atomicamente.',

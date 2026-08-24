@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsDateString,
@@ -62,6 +63,7 @@ export class CreatePurchaseReceiptDto {
   @ApiProperty({ type: [PurchaseReceiptItemInputDto], minItems: 1 })
   @IsArray()
   @ArrayMinSize(1, { message: 'Informe ao menos um item para recebimento.' })
+  @ArrayMaxSize(100, { message: 'O recebimento aceita no máximo 100 itens.' })
   @ValidateNested({ each: true })
   @Type(() => PurchaseReceiptItemInputDto)
   items!: PurchaseReceiptItemInputDto[];

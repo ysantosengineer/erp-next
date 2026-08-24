@@ -22,6 +22,7 @@ import {
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { randomUUID } from 'node:crypto';
+import { Throttle } from '@nestjs/throttler';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -120,6 +121,7 @@ export class SalesOrdersController {
   }
 
   @Post(':id/reserve')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @HttpCode(200)
   @RequirePermissions(PERMISSIONS.INVENTORY_RESERVE)
   @ApiOperation({
@@ -148,6 +150,7 @@ export class SalesOrdersController {
   }
 
   @Post(':id/ship')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @HttpCode(200)
   @RequirePermissions(PERMISSIONS.INVENTORY_SHIP)
   @ApiOperation({

@@ -383,7 +383,7 @@ describeDatabase('InventoryCountsService PostgreSQL integration', () => {
       data: { quantity: 0 },
     });
     await expect(service.approve(identity, created.id, 'rollback-approve')).rejects.toMatchObject({
-      response: { code: 'INSUFFICIENT_STOCK' },
+      response: { code: 'INSUFFICIENT_AVAILABLE_STOCK' },
     });
     const firstAfter = await prisma.inventoryBalance.findUniqueOrThrow({
       where: {

@@ -21,6 +21,7 @@ import {
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { randomUUID } from 'node:crypto';
+import { Throttle } from '@nestjs/throttler';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -85,6 +86,7 @@ export class InventoryController {
   }
 
   @Post('movements/entry')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @RequirePermissions(PERMISSIONS.INVENTORY_ENTRY)
   @ApiCreatedResponse({ type: StockMovementResponseDto })
   @ApiConflictResponse({ description: 'Chave de idempotência reutilizada.' })
@@ -97,6 +99,7 @@ export class InventoryController {
   }
 
   @Post('movements/exit')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @RequirePermissions(PERMISSIONS.INVENTORY_EXIT)
   @ApiCreatedResponse({ type: StockMovementResponseDto })
   @ApiUnprocessableEntityResponse({ description: 'Saldo insuficiente.' })
@@ -109,6 +112,7 @@ export class InventoryController {
   }
 
   @Post('movements/adjustment')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @RequirePermissions(PERMISSIONS.INVENTORY_ADJUST)
   @ApiCreatedResponse({ type: StockMovementResponseDto })
   adjustment(
@@ -120,6 +124,7 @@ export class InventoryController {
   }
 
   @Post('movements/transfer')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @RequirePermissions(PERMISSIONS.INVENTORY_TRANSFER)
   @ApiCreatedResponse({ type: StockMovementResponseDto })
   transfer(

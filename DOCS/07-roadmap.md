@@ -34,4 +34,9 @@ Etapas 17 e 18 implementadas: títulos unificados a pagar/receber, baixas, fluxo
 
 Cobertura de fluxos críticos, segurança, observabilidade, backup, deploy e documentação de operação.
 
+Estado atual: a Etapa 19 implementou testes HTTP E2E com PostgreSQL isolado, hardening de headers,
+CORS, payload, JWT/cookie, rate limiting, erros seguros, request ID/logs estruturados, liveness,
+readiness, validação de ambiente e checklist de produção. Redis distribuído, CI/CD, backup,
+observabilidade externa, infraestrutura e deploy continuam nas próximas etapas.
+
 Cada sprint só é concluída quando seus critérios de aceitação, testes relevantes, OpenAPI e documentação estiverem atualizados.

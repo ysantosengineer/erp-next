@@ -22,6 +22,7 @@ import {
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { randomUUID } from 'node:crypto';
+import { Throttle } from '@nestjs/throttler';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -101,6 +102,7 @@ export class FinanceController {
   }
 
   @Post('entries/:id/settlements')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @RequirePermissions(PERMISSIONS.FINANCE_SETTLE)
   @ApiCreatedResponse({ description: 'Liquidação registrada de forma atômica.' })
   @ApiConflictResponse({ description: 'Conflito de idempotência ou concorrência.' })

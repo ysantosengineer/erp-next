@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { SalesOrderStatus } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsDateString,
@@ -99,6 +100,7 @@ export class CreateSalesOrderDto {
   @ApiProperty({ type: [SalesOrderItemInputDto], minItems: 1 })
   @IsArray()
   @ArrayMinSize(1, { message: 'O pedido deve possuir ao menos um item.' })
+  @ArrayMaxSize(100, { message: 'O pedido aceita no máximo 100 itens.' })
   @ValidateNested({ each: true })
   @Type(() => SalesOrderItemInputDto)
   items!: SalesOrderItemInputDto[];

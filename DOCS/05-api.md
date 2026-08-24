@@ -7,6 +7,11 @@
 - Listagens aceitam `page` (inicia em 1), `limit` (máximo 100), `sortBy`, `sortOrder`, filtros documentados e devolvem `{ data, meta }`.
 - Respostas usam DTOs. Erros seguem `{ statusCode, code, message, details?, requestId }`.
 - `400` validação, `401` não autenticado, `403` sem permissão, `404` inexistente, `409` conflito de estado/unicidade e `422` regra de negócio.
+- Toda resposta inclui `X-Request-ID` e `Cache-Control: no-store`. A API limita o corpo a 256 KiB
+  por padrão, rejeita propriedades não declaradas e aplica rate limit global e limites mais
+  restritos em autenticação e comandos transacionais.
+- `GET /health` é o liveness sem dependências e `GET /ready` valida a conexão PostgreSQL. Swagger
+  só é publicado quando `SWAGGER_ENABLED=true`.
 
 ## Recursos
 

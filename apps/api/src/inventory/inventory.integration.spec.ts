@@ -250,7 +250,7 @@ describeDatabase('InventoryService PostgreSQL integration', () => {
         },
         'insufficient-transfer',
       ),
-    ).rejects.toMatchObject({ response: { code: 'INSUFFICIENT_STOCK' } });
+    ).rejects.toMatchObject({ response: { code: 'INSUFFICIENT_AVAILABLE_STOCK' } });
     await expect(
       service.transfer(
         identity,

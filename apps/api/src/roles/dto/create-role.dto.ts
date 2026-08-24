@@ -1,4 +1,5 @@
 import {
+  ArrayMaxSize,
   ArrayUnique,
   IsArray,
   IsOptional,
@@ -15,6 +16,7 @@ export class CreateRoleDto {
   @ApiPropertyOptional({ type: [String], format: 'uuid' })
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(200)
   @ArrayUnique()
   @IsUUID('4', { each: true })
   permissionIds: string[] = [];

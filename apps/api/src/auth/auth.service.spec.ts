@@ -40,6 +40,14 @@ describe('AuthService', () => {
     verifyAsync: jest.fn(),
   };
   const configService = {
+    get: jest.fn((key: string) => {
+      const values: Record<string, string> = {
+        JWT_ISSUER: 'erp-next-api',
+        JWT_AUDIENCE: 'erp-next-web',
+      };
+
+      return values[key];
+    }),
     getOrThrow: jest.fn((key: string) => {
       const values: Record<string, string | number> = {
         JWT_ACCESS_TTL_SECONDS: '900',
@@ -97,9 +105,15 @@ describe('AuthService', () => {
     expect(transaction.refreshToken.create.mock.calls[0][0].data.tokenHash).not.toBe(
       'refresh-token',
     );
-    expect(jwtService.signAsync).toHaveBeenNthCalledWith(1, expect.any(Object), {
-      expiresIn: 900,
-    });
+    expect(jwtService.signAsync).toHaveBeenNthCalledWith(
+      1,
+      expect.any(Object),
+      expect.objectContaining({
+        expiresIn: 900,
+        issuer: 'erp-next-api',
+        audience: 'erp-next-web',
+      }),
+    );
     expect(jwtService.signAsync).toHaveBeenNthCalledWith(
       2,
       expect.any(Object),

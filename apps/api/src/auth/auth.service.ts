@@ -221,12 +221,18 @@ export class AuthService {
     const refreshTokenId = randomUUID();
     const payload = { sub: user.id, authVersion: user.authVersion };
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload, { expiresIn: accessTtl }),
+      this.jwtService.signAsync(payload, {
+        expiresIn: accessTtl,
+        issuer: this.configService.get<string>('JWT_ISSUER') ?? 'erp-next-api',
+        audience: this.configService.get<string>('JWT_AUDIENCE') ?? 'erp-next-web',
+      }),
       this.jwtService.signAsync(
         { ...payload, jti: refreshTokenId },
         {
           secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
           expiresIn: refreshTtl,
+          issuer: this.configService.get<string>('JWT_ISSUER') ?? 'erp-next-api',
+          audience: this.configService.get<string>('JWT_AUDIENCE') ?? 'erp-next-web',
         },
       ),
     ]);
@@ -245,6 +251,8 @@ export class AuthService {
     try {
       return await this.jwtService.verifyAsync<RefreshTokenPayload>(refreshToken, {
         secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+        issuer: this.configService.get<string>('JWT_ISSUER') ?? 'erp-next-api',
+        audience: this.configService.get<string>('JWT_AUDIENCE') ?? 'erp-next-web',
       });
     } catch {
       throw this.invalidSessionException();
