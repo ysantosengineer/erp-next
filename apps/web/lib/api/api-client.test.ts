@@ -82,4 +82,50 @@ describe('apiClient', () => {
     expect(invalidated).toHaveBeenCalledTimes(1);
     apiClient.setSessionInvalidatedHandler(null);
   });
+
+  it('compartilha uma única renovação entre requisições concorrentes', async () => {
+    const attempts = new Map<string, number>();
+    let refreshes = 0;
+    const fetchMock = vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.endsWith('/auth/login')) {
+        return jsonResponse({ accessToken: 'access-1', tokenType: 'Bearer', expiresIn: 900 });
+      }
+      if (url.endsWith('/auth/refresh')) {
+        refreshes += 1;
+        await Promise.resolve();
+        return jsonResponse({ accessToken: 'access-2', tokenType: 'Bearer', expiresIn: 900 });
+      }
+      const count = attempts.get(url) ?? 0;
+      attempts.set(url, count + 1);
+      return count === 0
+        ? jsonResponse({ statusCode: 401, code: 'INVALID_SESSION' }, 401)
+        : jsonResponse({ data: [] });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await apiClient.login({ email: 'admin@erp.local', password: 'senha-segura-com-12-caracteres' });
+    await Promise.all([apiClient.get('/users'), apiClient.get('/roles')]);
+
+    expect(refreshes).toBe(1);
+  });
+
+  it('não renova nem invalida a sessão em uma resposta 403', async () => {
+    const invalidated = vi.fn();
+    apiClient.setSessionInvalidatedHandler(invalidated);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({ accessToken: 'access', tokenType: 'Bearer', expiresIn: 900 }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ statusCode: 403, code: 'FORBIDDEN' }, 403));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await apiClient.login({ email: 'admin@erp.local', password: 'senha-segura-com-12-caracteres' });
+    await expect(apiClient.get('/users')).rejects.toMatchObject({ statusCode: 403 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(invalidated).not.toHaveBeenCalled();
+    apiClient.setSessionInvalidatedHandler(null);
+  });
 });

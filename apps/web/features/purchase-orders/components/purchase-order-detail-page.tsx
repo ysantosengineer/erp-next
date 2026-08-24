@@ -1,0 +1,318 @@
+'use client';
+import { ArrowLeft, Check, Pencil, Send, Truck, XCircle } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { ErrorState } from '../../../components/shared/data-state';
+import { PageHeader } from '../../../components/shared/page-header';
+import { Button, buttonVariants } from '../../../components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../components/ui/dialog';
+import { Label } from '../../../components/ui/label';
+import { Skeleton } from '../../../components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../../components/ui/table';
+import { Textarea } from '../../../components/ui/textarea';
+import { getApiErrorMessage } from '../../../lib/api/api-error-message';
+import { formatCurrency, formatDecimalPtBr } from '../../../lib/decimal';
+import { PERMISSIONS } from '../../../lib/permissions/permissions';
+import { cn } from '../../../lib/utils';
+import { useAuth } from '../../auth/hooks/use-auth';
+import { usePurchaseReceiptsByOrder } from '../../purchase-receipts/hooks/use-purchase-receipts';
+import {
+  useApprovePurchaseOrder,
+  useCancelPurchaseOrder,
+  usePurchaseOrder,
+  useSubmitPurchaseOrder,
+} from '../hooks/use-purchase-orders';
+import { PurchaseOrderStatus } from './purchase-order-status';
+
+export function PurchaseOrderDetailPage({ orderId }: { orderId: string }) {
+  const query = usePurchaseOrder(orderId);
+  const { user } = useAuth();
+  const canReadReceipts = user?.permissions.includes(PERMISSIONS.PURCHASE_RECEIPTS_READ) ?? false;
+  const receipts = usePurchaseReceiptsByOrder(orderId, canReadReceipts);
+  const submit = useSubmitPurchaseOrder();
+  const approve = useApprovePurchaseOrder();
+  const cancel = useCancelPurchaseOrder();
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  if (query.isLoading) return <Skeleton className="h-[600px]" />;
+  if (query.isError || !query.data)
+    return (
+      <ErrorState
+        message="Não foi possível carregar o pedido."
+        onRetry={() => void query.refetch()}
+      />
+    );
+  const order = query.data;
+  const can = (permission: string) => user?.permissions.includes(permission) ?? false;
+  const run = async (kind: 'submit' | 'approve') => {
+    if (
+      !window.confirm(
+        kind === 'submit'
+          ? `Enviar ${order.number} para aprovação?`
+          : `Aprovar ${order.number} no total de ${formatCurrency(order.totalAmount)}?`,
+      )
+    )
+      return;
+    try {
+      if (kind === 'submit') await submit.mutateAsync(order.id);
+      else await approve.mutateAsync(order.id);
+      toast.success(
+        kind === 'submit'
+          ? 'Pedido enviado para aprovação.'
+          : 'Pedido aprovado sem alterar o estoque.',
+      );
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Não foi possível concluir a ação.'));
+    }
+  };
+  const confirmCancel = async () => {
+    try {
+      await cancel.mutateAsync({ id: order.id, reason });
+      toast.success('Pedido cancelado.');
+      setCancelOpen(false);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Não foi possível cancelar.'));
+    }
+  };
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Compras"
+        title={order.number}
+        description="Pedido de compra com acompanhamento das quantidades recebidas."
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Link className={cn(buttonVariants({ variant: 'outline' }))} href="/purchases/orders">
+              <ArrowLeft className="size-4" /> Voltar
+            </Link>
+            {order.status === 'DRAFT' && can(PERMISSIONS.PURCHASE_ORDERS_UPDATE) ? (
+              <Button asChild variant="outline">
+                <Link href={`/purchases/orders/${order.id}/edit`}>
+                  <Pencil className="size-4" /> Editar
+                </Link>
+              </Button>
+            ) : null}
+            {order.status === 'DRAFT' && can(PERMISSIONS.PURCHASE_ORDERS_SUBMIT) ? (
+              <Button onClick={() => void run('submit')}>
+                <Send className="size-4" /> Enviar
+              </Button>
+            ) : null}
+            {order.status === 'PENDING_APPROVAL' && can(PERMISSIONS.PURCHASE_ORDERS_APPROVE) ? (
+              <Button onClick={() => void run('approve')}>
+                <Check className="size-4" /> Aprovar
+              </Button>
+            ) : null}
+            {['APPROVED', 'PARTIALLY_RECEIVED'].includes(order.status) &&
+            can(PERMISSIONS.PURCHASE_RECEIPTS_CREATE) ? (
+              <Button asChild>
+                <Link href={`/purchases/orders/${order.id}/receive`}>
+                  <Truck className="size-4" /> Receber mercadoria
+                </Link>
+              </Button>
+            ) : null}
+            {['DRAFT', 'PENDING_APPROVAL', 'APPROVED'].includes(order.status) &&
+            can(PERMISSIONS.PURCHASE_ORDERS_CANCEL) ? (
+              <Button onClick={() => setCancelOpen(true)} variant="destructive">
+                <XCircle className="size-4" /> Cancelar
+              </Button>
+            ) : null}
+          </div>
+        }
+      />
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card label="Status">
+          <PurchaseOrderStatus status={order.status} />
+        </Card>
+        <Card label="Fornecedor" value={order.supplier.name} detail={order.supplier.document} />
+        <Card label="Depósito" value={order.warehouse.name} detail={order.warehouse.code} />
+        <Card
+          label="Previsão"
+          value={
+            order.expectedDeliveryDate
+              ? new Date(`${order.expectedDeliveryDate}T00:00:00`).toLocaleDateString('pt-BR')
+              : 'Não informada'
+          }
+        />
+      </div>
+      <div className="overflow-x-auto rounded-xl border bg-white">
+        <Table className="min-w-[720px]">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Produto</TableHead>
+              <TableHead>SKU</TableHead>
+              <TableHead>Unidade</TableHead>
+              <TableHead>Quantidade</TableHead>
+              <TableHead>Recebido</TableHead>
+              <TableHead>Pendente</TableHead>
+              <TableHead>Custo</TableHead>
+              <TableHead>Subtotal</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {order.items.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell>{item.productName}</TableCell>
+                <TableCell className="font-mono">{item.productSku}</TableCell>
+                <TableCell>{item.unitSymbol}</TableCell>
+                <TableCell>{formatDecimalPtBr(item.quantity, 4)}</TableCell>
+                <TableCell>{formatDecimalPtBr(item.receivedQuantity, 4)}</TableCell>
+                <TableCell>
+                  {formatDecimalPtBr(
+                    Math.max(0, Number(item.quantity) - Number(item.receivedQuantity)).toFixed(4),
+                    4,
+                  )}
+                </TableCell>
+                <TableCell>{formatCurrency(item.unitCost)}</TableCell>
+                <TableCell>{formatCurrency(item.subtotal)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      {canReadReceipts ? (
+        <div className="rounded-xl border bg-white p-5">
+          <h2 className="font-semibold">Recebimentos</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Histórico das entradas de estoque vinculadas a este pedido.
+          </p>
+          {receipts.isLoading ? (
+            <Skeleton className="mt-4 h-24" />
+          ) : receipts.data?.data.length ? (
+            <div className="mt-4 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Número</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Responsável</TableHead>
+                    <TableHead>Itens</TableHead>
+                    <TableHead>Quantidade</TableHead>
+                    <TableHead>Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {receipts.data.data.map((receipt) => (
+                    <TableRow key={receipt.id}>
+                      <TableCell className="font-mono">{receipt.number}</TableCell>
+                      <TableCell>{new Date(receipt.receivedAt).toLocaleString('pt-BR')}</TableCell>
+                      <TableCell>{receipt.receivedBy.name}</TableCell>
+                      <TableCell>{receipt.itemCount}</TableCell>
+                      <TableCell>{formatDecimalPtBr(receipt.totalQuantity, 4)}</TableCell>
+                      <TableCell>
+                        <Button asChild size="sm" variant="outline">
+                          <Link href={`/purchases/receipts/${receipt.id}`}>Detalhes</Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-slate-500">Nenhum recebimento confirmado.</p>
+          )}
+        </div>
+      ) : null}
+      <div className="grid gap-4 rounded-xl border bg-white p-5 md:grid-cols-2">
+        <div>
+          <h2 className="font-semibold">Observações</h2>
+          <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+            {order.notes || 'Nenhuma observação.'}
+          </p>
+          <p className="mt-4 text-sm">
+            Criado por {order.createdBy.name} em {new Date(order.createdAt).toLocaleString('pt-BR')}
+            .
+          </p>
+          {order.approvedBy ? (
+            <p className="text-sm">
+              Aprovado por {order.approvedBy.name} em{' '}
+              {new Date(order.approvedAt!).toLocaleString('pt-BR')}.
+            </p>
+          ) : null}
+          {order.cancellationReason ? (
+            <p className="mt-2 text-sm text-red-700">Cancelado: {order.cancellationReason}</p>
+          ) : null}
+        </div>
+        <div className="space-y-2 md:justify-self-end md:min-w-72">
+          <Total label="Subtotal" value={order.subtotal} />
+          <Total label="Desconto" value={order.discountAmount} />
+          <Total label="Frete" value={order.freightAmount} />
+          <Total label="Outros" value={order.otherAmount} />
+          <Total label="Total" value={order.totalAmount} strong />
+        </div>
+      </div>
+      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancelar {order.number}</DialogTitle>
+            <DialogDescription>
+              O pedido permanecerá no histórico e não poderá ser recebido posteriormente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="cancel-reason">Motivo</Label>
+            <Textarea
+              id="cancel-reason"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setCancelOpen(false)} variant="outline">
+              Voltar
+            </Button>
+            <Button
+              disabled={reason.trim().length < 3 || cancel.isPending}
+              onClick={() => void confirmCancel()}
+              variant="destructive"
+            >
+              Confirmar cancelamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+function Card({
+  label,
+  value,
+  detail,
+  children,
+}: {
+  label: string;
+  value?: string;
+  detail?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border bg-white p-4">
+      <p className="text-xs uppercase text-slate-500">{label}</p>
+      <div className="mt-2 font-medium">{children ?? value}</div>
+      {detail ? <p className="text-sm text-slate-500">{detail}</p> : null}
+    </div>
+  );
+}
+function Total({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <p className={cn('flex justify-between', strong && 'border-t pt-2 text-lg font-bold')}>
+      <span>{label}</span>
+      <span>{formatCurrency(value)}</span>
+    </p>
+  );
+}

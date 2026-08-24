@@ -61,6 +61,50 @@ async function main(): Promise<void> {
     ['customers', 'create', 'Cria clientes.'],
     ['customers', 'update', 'Atualiza clientes.'],
     ['customers', 'manage_status', 'Ativa e inativa clientes.'],
+    ['warehouses', 'read', 'Consulta depósitos.'],
+    ['warehouses', 'create', 'Cria depósitos.'],
+    ['warehouses', 'update', 'Atualiza depósitos.'],
+    ['warehouses', 'manage_status', 'Ativa e inativa depósitos.'],
+    ['stock_locations', 'read', 'Consulta endereços de estoque.'],
+    ['stock_locations', 'create', 'Cria endereços de estoque.'],
+    ['stock_locations', 'update', 'Atualiza endereços de estoque.'],
+    ['stock_locations', 'manage_status', 'Ativa e inativa endereços de estoque.'],
+    ['inventory', 'read', 'Consulta saldos de estoque.'],
+    ['inventory', 'entry', 'Registra entradas de estoque.'],
+    ['inventory', 'exit', 'Registra saídas de estoque.'],
+    ['inventory', 'adjust', 'Registra ajustes de estoque.'],
+    ['inventory', 'transfer', 'Transfere estoque entre endereços.'],
+    ['inventory.movements', 'read', 'Consulta o histórico de movimentações.'],
+    ['inventory.reservations', 'read', 'Consulta reservas de estoque.'],
+    ['inventory', 'reserve', 'Reserva estoque para pedidos de venda.'],
+    ['inventory', 'release', 'Libera reservas de pedidos de venda.'],
+    ['inventory', 'ship', 'Realiza a baixa de pedidos de venda reservados.'],
+    ['inventory_counts', 'read', 'Consulta inventários físicos.'],
+    ['inventory_counts', 'create', 'Cria e inicia inventários físicos.'],
+    ['inventory_counts', 'count', 'Registra a primeira contagem física.'],
+    ['inventory_counts', 'recount', 'Solicita e registra recontagens.'],
+    ['inventory_counts', 'approve', 'Aprova inventários e gera ajustes.'],
+    ['inventory_counts', 'cancel', 'Cancela inventários físicos.'],
+    ['purchase_orders', 'read', 'Consulta pedidos de compra.'],
+    ['purchase_orders', 'create', 'Cria pedidos de compra.'],
+    ['purchase_orders', 'update', 'Edita pedidos de compra em rascunho.'],
+    ['purchase_orders', 'submit', 'Envia pedidos de compra para aprovação.'],
+    ['purchase_orders', 'approve', 'Aprova pedidos de compra.'],
+    ['purchase_orders', 'cancel', 'Cancela pedidos de compra.'],
+    ['purchase_receipts', 'read', 'Consulta recebimentos de compras.'],
+    ['purchase_receipts', 'create', 'Confirma recebimentos e entradas de estoque.'],
+    ['sales_orders', 'read', 'Consulta pedidos de venda.'],
+    ['sales_orders', 'create', 'Cria pedidos de venda.'],
+    ['sales_orders', 'update', 'Edita pedidos de venda em rascunho.'],
+    ['sales_orders', 'confirm', 'Confirma pedidos de venda sem alterar estoque.'],
+    ['sales_orders', 'cancel', 'Cancela pedidos de venda.'],
+    ['finance', 'read', 'Consulta títulos financeiros.'],
+    ['finance', 'create', 'Cria títulos financeiros.'],
+    ['finance', 'update', 'Edita títulos financeiros elegíveis.'],
+    ['finance', 'settle', 'Registra pagamentos e recebimentos.'],
+    ['finance', 'cancel', 'Cancela títulos financeiros elegíveis.'],
+    ['finance.cash_flow', 'read', 'Consulta fluxo de caixa previsto e realizado.'],
+    ['analytics.dashboard', 'read', 'Consulta o dashboard gerencial.'],
   ] as const;
   const newPermissions = await Promise.all(
     businessPermissions.map(([resource, action, description]) =>
@@ -143,6 +187,27 @@ async function main(): Promise<void> {
       }),
     ),
   );
+
+  const mainWarehouse = await prisma.warehouse.upsert({
+    where: { companyId_code: { companyId: company.id, code: 'MAIN' } },
+    update: { name: 'Depósito Principal', isActive: true },
+    create: {
+      companyId: company.id,
+      name: 'Depósito Principal',
+      code: 'MAIN',
+      description: 'Depósito padrão do ambiente local.',
+    },
+  });
+  await prisma.stockLocation.upsert({
+    where: { warehouseId_code: { warehouseId: mainWarehouse.id, code: 'DEFAULT' } },
+    update: { companyId: company.id, isActive: true },
+    create: {
+      companyId: company.id,
+      warehouseId: mainWarehouse.id,
+      code: 'DEFAULT',
+      description: 'Endereço padrão do ambiente local.',
+    },
+  });
 }
 
 main()

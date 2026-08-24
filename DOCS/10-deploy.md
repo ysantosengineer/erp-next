@@ -22,6 +22,9 @@ Registrar logs estruturados, erros de aplicação e health check. Monitorar disp
 
 Para sessão web, configure `WEB_ORIGIN` com a origem exata do frontend, `NEXT_PUBLIC_API_URL` com a base versionada da API e `AUTH_COOKIE_SECURE=true` em produção. CORS deve usar credenciais somente com origens explícitas; HTTPS é obrigatório para o cookie de refresh seguro.
 
+Consulte `12-seguranca-e-testes.md` para os controles já aplicados, execução E2E isolada e o
+checklist que deve ser concluído antes do primeiro deploy.
+
 ## Hospedagem
 
 Frontend pode ser implantado na Vercel. API, PostgreSQL e Redis podem usar Railway ou AWS; a escolha concreta, custos, região e estratégia de backup devem ser registrados antes do primeiro deploy de produção.

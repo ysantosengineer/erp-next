@@ -1,6 +1,6 @@
 # ERP Next
 
-Monorepo do ERP Next para pequenas e médias empresas. O repositório contém uma aplicação web em Next.js, uma API NestJS, PostgreSQL via Prisma, autenticação, usuários, papéis e permissões, além dos cadastros iniciais de categorias, unidades de medida, fornecedores, produtos e clientes. Os demais módulos de negócio permanecem para próximas etapas.
+Monorepo do ERP Next para pequenas e médias empresas. O repositório contém uma aplicação web em Next.js, uma API NestJS, PostgreSQL via Prisma, autenticação, usuários, papéis e permissões, cadastros, estoque, inventário físico, compras, vendas e financeiro inicial.
 
 ## Pré-requisitos
 
@@ -35,6 +35,10 @@ AUTH_COOKIE_SECURE=false
 
 Em produção, use HTTPS e `AUTH_COOKIE_SECURE=true`.
 
+Para os testes HTTP com PostgreSQL real, copie `.env.test.example`, configure
+`DATABASE_URL_TEST` exclusivamente para um banco ou schema terminado em `_test` e execute
+`npm run test:e2e`. O runner aborta antes da limpeza se o destino não for reconhecido como teste.
+
 ## Execução
 
 ```bash
@@ -51,6 +55,27 @@ npm run dev
 - Fornecedores: `http://localhost:3000/suppliers`
 - Produtos: `http://localhost:3000/products`
 - Clientes: `http://localhost:3000/customers`
+- Depósitos: `http://localhost:3000/warehouses`
+- Saldos de estoque: `http://localhost:3000/inventory`
+- Reservas de estoque: `http://localhost:3000/inventory/reservations`
+- Movimentações: `http://localhost:3000/inventory/movements`
+- Inventários físicos: `http://localhost:3000/inventory/counts`
+- Pedidos de compra: `http://localhost:3000/purchases/orders`
+- Recebimentos de compras: `http://localhost:3000/purchases/receipts`
+- Pedidos de venda: `http://localhost:3000/sales/orders`
+- Contas a pagar: `http://localhost:3000/finance/payables`
+- Contas a receber: `http://localhost:3000/finance/receivables`
+- Fluxo de caixa: `http://localhost:3000/finance/cash-flow`
+
+O estoque é alterado exclusivamente por entradas, saídas, ajustes ou transferências. Quantidades usam `Decimal(18,4)`, saldo negativo é bloqueado e saldo/movimentação/auditoria são confirmados na mesma transação serializável. O histórico não possui endpoints de edição ou exclusão.
+
+O inventário físico captura um snapshot ao iniciar e bloqueia movimentações do depósito até aprovação ou cancelamento. Primeira contagem e recontagem não alteram saldo; a aprovação usa os mesmos ajustes transacionais do estoque, com referência ao inventário e rollback integral.
+
+Pedidos de compra usam numeração humana por empresa, itens e custos congelados, aprovação e cancelamento auditados. Aprovar não altera estoque. O recebimento físico aceita parciais e múltiplas confirmações, gera entradas `PURCHASE_RECEIPT`, atualiza saldo e pedido na mesma transação e protege retries por idempotência.
+
+Pedidos de venda usam numeração `SO-*` por empresa, snapshots, preços negociados, descontos e transições auditadas. Confirmar é comercial; reservar compromete o disponível por endereço sem alterar o físico, liberar devolve disponibilidade e expedir consome as reservas, gera saídas `SALES_ORDER` e reduz o físico atomicamente.
+
+O financeiro usa títulos `FIN-*` unificados por empresa, apresentados separadamente como contas a pagar e receber. Valores são decimais, saldo/atraso são derivados e pagamentos/recebimentos parciais são históricos imutáveis protegidos por transação serializável e idempotência. O fluxo de caixa distingue previsto de realizado; integração bancária, contabilidade, estorno e geração automática por pedidos não fazem parte desta etapa.
 
 ## Sessão web
 
@@ -66,6 +91,7 @@ As telas administrativas consomem paginação, filtros e mutações reais da API
 | `npm run lint`      | Executa ESLint e verifica a formatação com Prettier. |
 | `npm run typecheck` | Executa a verificação de tipos dos workspaces.       |
 | `npm run test`      | Executa os testes dos workspaces.                    |
+| `npm run test:e2e`  | Executa testes HTTP contra PostgreSQL isolado.       |
 | `npm run build`     | Gera builds de produção.                             |
 | `npm run format`    | Formata os arquivos com Prettier.                    |
 
@@ -77,3 +103,6 @@ apps/
   web/  # Interface Next.js
 DOCS/   # Documentação oficial do projeto
 ```
+
+Os controles, a estratégia de isolamento E2E e o checklist de produção estão em
+`DOCS/12-seguranca-e-testes.md`.

@@ -21,6 +21,24 @@ Em `/products`, a listagem oferece busca com debounce, filtros de status, catego
 
 Em `/customers`, a listagem oferece busca com debounce, filtros de status e PF/PJ, paginação no servidor e tabela com limite de crédito formatado. Cadastro e edição usam formulário amplo dividido em identificação, contato e crédito, endereço principal e observações. CPF/CNPJ, telefone e CEP recebem máscara somente na interface; valores monetários são digitados no padrão brasileiro e enviados como strings decimais. A rota e as ações são condicionadas por `customers.*`, e a tabela preserva rolagem horizontal em telas menores.
 
+Em `/inventory`, a tabela apresenta físico, reservado e disponível por produto/endereço; o alerta de estoque baixo usa o disponível. Ações separadas registram entrada, saída, ajuste e transferência conforme as permissões `inventory.*`; a API continua sendo a autoridade concorrente e protege reservas ativas. `/inventory/movements` apresenta o histórico imutável. `/inventory/reservations` lista alocações com filtros, status e acesso ao pedido. Após sucesso, os caches afetados são invalidados sem atualização otimista.
+
+Em `/inventory/counts`, a listagem mostra depósito, status, responsável, progresso, filtros e paginação. O detalhe em `/inventory/counts/[id]` apresenta resumo, itens paginados e entrada inline de quantidade, permitindo navegação por teclado sem modal por item. Divergências usam texto e badge além de cor. Início, recontagem, aprovação e cancelamento exigem confirmação; a aprovação informa os ajustes e só atualiza a tela, saldos e movimentos após confirmação do backend. O saldo teórico permanece visível no MVP; contagem cega é evolução documentada.
+
+Em Compras, `/purchases/orders` oferece pesquisa, filtros, período, tabela paginada e número humano. Criação e edição usam páginas dedicadas, pesquisa de produto e tabela dinâmica com quantidade, custo e cálculo instantâneo. O detalhe mostra snapshots, progresso e histórico; submit, aprovação, cancelamento e recebimento são condicionados por estado e permissão.
+
+`/purchases/receipts` lista entradas imutáveis. `/purchases/orders/[id]/receive` inicia todas as quantidades em zero, permite preenchimento explícito das pendências, localização por linha, divergências, resumo e confirmação acessível do efeito real no estoque. `/purchases/receipts/[id]` preserva rastreabilidade. Não há atualização otimista e o botão permanece desabilitado durante a confirmação idempotente.
+
+Em Vendas, `/sales/orders` oferece busca, filtros de status, cliente, depósito e período, tabela paginada e número humano. Criação e edição usam páginas dedicadas com cliente, depósito de origem, datas, pesquisa de produto, tabela dinâmica, preço sugerido/editável, descontos por linha e geral e resumo em tempo real. O limite de crédito aparece como informação; eventual excesso gera warning sem bloqueio.
+
+O detalhe `/sales/orders/[id]` exibe snapshots, alocações, valores, histórico e ações por estado/permissão. Confirmação, reserva integral, liberação, cancelamento e expedição possuem diálogos acessíveis que deixam explícito o efeito sobre disponível e físico.
+
+Em Financeiro, `/finance/payables` e `/finance/receivables` mantêm contextos visuais separados sobre o mesmo contrato, com resumo, pesquisa, estado, vencimento e paginação. Criação/edição usa formulário dedicado, datas civis e moeda brasileira; o detalhe destaca original, liquidado, pendente, atraso e histórico imutável. Pagamento/recebimento e cancelamento aparecem somente quando estado e permissão permitem. `/finance/cash-flow` compara previsto e realizado por dia ou mês em tabela clara, sem antecipar dashboard avançado.
+
+O dashboard `/` oferece período global com atalhos de 7, 30 e 90 dias, cards de vendas, compras, estoque e financeiro, alertas acionáveis, evolução de pedidos e ranking limitado. Seções não autorizadas não são renderizadas. Estados de carregamento, erro e vazio são explícitos e gráficos mantêm alternativa textual acessível.
+
+A central `/reports` mostra somente relatórios autorizados. `/reports/sales`, `/reports/purchases`, `/reports/inventory` e `/reports/finance` possuem período, pesquisa, ordenação e paginação no servidor, tabelas responsivas e links para detalhamento. Quantidades exibem unidade e valores de pedidos não são rotulados como faturamento.
+
 ## Padrões de tela
 
 - Listagens: título, ação principal autorizada, filtros, tabela paginada e estado vazio com próximo passo.

@@ -55,6 +55,8 @@ Docker, Docker Compose e GitHub Actions. Vercel pode hospedar o frontend e Railw
 | Financeiro | Vendas e compras |
 | Dashboard e relatórios | Dados dos módulos operacionais |
 
+O dashboard gerencial e os relatórios básicos de vendas, compras, estoque e financeiro usam exclusivamente dados persistidos. Valores comerciais são identificados como “valor de pedidos” e não como faturamento fiscal.
+
 ## Evolução futura
 
 WMS, BI, recursos de IA e aplicativo mobile devem consumir APIs versionadas do ERP, sem acesso direto ao banco de dados.

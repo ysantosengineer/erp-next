@@ -16,7 +16,7 @@ Cada domínio é um módulo NestJS. A direção de dependência é:
 - Prisma acessa somente PostgreSQL. Redis serve cache, rate limiting ou filas quando a necessidade for documentada.
 - Transações Prisma são obrigatórias em operações que modificam pedido/compra, estoque e financeiro de forma conjunta.
 
-Módulos iniciais: `auth`, `users`, `roles`, `customers`, `suppliers`, `catalog`, `warehouses`, `sales`, `purchases`, `inventory`, `billing`, `audit` e `reports`.
+Módulos iniciais: `auth`, `users`, `roles`, `customers`, `suppliers`, `catalog`, `warehouses`, `sales`, `purchases`, `inventory`, `inventory-counts`, `billing`, `audit` e `reports`.
 
 ## Segurança
 
@@ -36,6 +36,12 @@ Módulos iniciais: `auth`, `users`, `roles`, `customers`, `suppliers`, `catalog`
 - Controllers não aceitam `companyId`. Services limitam consultas e mutações ao `companyId` autenticado e retornam `404` para recursos de outra empresa.
 - Alterações de papéis e permissões invalidam as sessões afetadas por incremento de `authVersion` e revogação de refresh tokens.
 - Categorias, unidades e fornecedores também pertencem a `Company`. O módulo de fornecedores valida CPF/CNPJ no backend, não aceita tenant externo e acessa endereços somente através de um fornecedor previamente limitado à empresa autenticada.
+- Depósitos e endereços de estoque pertencem a `Company`. A relação de endereço com depósito usa chave estrangeira composta `(companyId, warehouseId)`, impedindo associação cross-tenant também no banco. Toda consulta de endereço combina `locationId`, `warehouseId` e `companyId`; IDs isolados nunca autorizam acesso.
+- Saldos e movimentações usam chaves estrangeiras compostas com `companyId` para produto, endereço e ator. O tenant sempre vem da identidade autenticada e nunca do request.
+- Inventários e itens repetem `companyId` em suas relações compostas com depósito, produto, endereço e usuários. O escopo do depósito é validado no serviço e no banco, e recursos externos retornam `404`.
+- Pedidos e itens de compra repetem `companyId` nas relações com fornecedor, depósito, produto e usuários. O número vem de um contador atômico por empresa; criação e substituição integral de itens em rascunho são transacionais.
+- Pedidos e itens de venda repetem `companyId` nas relações com cliente, depósito, produto e usuários. Relações compostas e consultas sempre limitadas ao tenant impedem associações cross-tenant.
+- Títulos e liquidações financeiras repetem `companyId` em relações compostas com parceiros, entrada, atores e empresa. Referências polimórficas internas são validadas no service pelo tenant e recursos externos retornam `404`.
 
 ## Frontend
 
@@ -44,6 +50,24 @@ Next.js organiza páginas por área funcional. Formulários usam React Hook Form
 O frontend possui áreas públicas (`/login`) e autenticadas (`/` e `/unauthorized`). Um provider de autenticação mantém o access token apenas em memória, recupera a sessão por cookie HttpOnly e centraliza renovação, logout e tratamento de `401`. A proteção do cliente direciona a navegação, mas não substitui os guards da API.
 
 As áreas administrativas `/users` e `/roles` permanecem no layout autenticado. Cada domínio possui tipos, schemas Zod, serviços HTTP, hooks TanStack Query e componentes próprios. Mutações invalidam somente as queries afetadas; alterações que possam invalidar a autorização atual renovam a sessão ou encerram o acesso conforme a resposta da API.
+
+As rotas `/inventory` e `/inventory/movements` usam TanStack Query para cache e invalidação após comandos. Não há atualização otimista de saldo: a interface aguarda a transação confirmada pela API antes de atualizar saldos e histórico.
+
+`/inventory/counts` e `/inventory/counts/[id]` mantêm queries separadas para lista e detalhe paginado. Contagem e recontagem invalidam o inventário; aprovação também invalida saldos e movimentações somente depois do commit confirmado.
+
+`/purchases/orders` usa lista, detalhe e opções com chaves de cache próprias. Criação/edição usam página dedicada e tabela dinâmica. Transições invalidam apenas pedidos, pois aprovação não altera estoque.
+
+`/purchases/receipts`, `/purchases/receipts/[id]` e `/purchases/orders/[id]/receive` usam queries próprias e não aplicam atualização otimista. Após confirmação, pedidos, recebimentos, saldos, produtos e movimentos afetados são invalidados somente depois do commit da API.
+
+`/sales/orders`, `/sales/orders/new`, `/sales/orders/[id]` e `/sales/orders/[id]/edit` usam chaves próprias para lista, detalhe e opções. Confirmação invalida pedidos. Reserva, liberação, cancelamento reservado e expedição também invalidam reservas, saldos e agregados; expedição invalida movimentos. Não há atualização otimista para operações físicas.
+
+`/inventory/reservations` mantém cache paginado e filtrado próprio. O físico continua em `InventoryBalance`; reservado é agregado de `StockReservation` ativa e disponível é calculado no backend, evitando duas fontes mutáveis de verdade.
+
+`/finance/payables`, `/finance/receivables`, `/finance/entries/[id]` e `/finance/cash-flow` compartilham contratos e query keys do domínio financeiro. Baixas e cancelamentos não usam atualização otimista; após commit invalidam listas, detalhe, resumo e fluxo de caixa.
+
+O módulo `analytics` é uma camada somente de leitura sobre vendas, compras, estoque e financeiro. Agregações são executadas sob demanda no PostgreSQL, por tenant e período, sem tabelas-resumo. SQL parametrizado é usado apenas quando `groupBy`/`aggregate` do Prisma não expressam adequadamente a consulta. O cache inicial é exclusivamente cliente, via TanStack Query; Redis depende de medição real de latência e volume.
+
+Datas civis chegam como `YYYY-MM-DD`; consultas sobre `DateTime` usam intervalo semiaberto `[início, dia seguinte ao fim)`. Até existir timezone configurável por empresa, analytics usa UTC explicitamente.
 
 Os cadastros `/suppliers` e `/customers` seguem essa organização por domínio. `SupplierAddress` e `CustomerAddress` são entidades específicas porque os ciclos de vida dos domínios podem evoluir de forma independente. Ambos aceitam relação 1:N, enquanto a interface atual mantém somente um endereço principal. Validação e formatação estáveis de CPF, CNPJ, telefone e CEP são compartilhadas em utilitários, sem introduzir uma tabela polimórfica de endereços.
 
@@ -56,3 +80,10 @@ OpenAPI é o contrato público da API. Logs devem ser estruturados e correlacion
 - Banco PostgreSQL compartilhado com isolamento lógico por `companyId` nos módulos de acesso e administração.
 - API REST versionada com prefixo `/api/v1`.
 - Sem acesso direto do frontend ao banco e sem regras fiscais implícitas.
+- Movimentações de estoque são executadas em transação `SERIALIZABLE`, com decremento condicional e até três tentativas para conflitos de serialização.
+- Ao iniciar inventário, o snapshot e a transição para `IN_PROGRESS` ocorrem atomicamente. Enquanto o status estiver entre `IN_PROGRESS` e `READY_FOR_APPROVAL`, movimentos que atinjam o depósito retornam `LOCATION_UNDER_INVENTORY`.
+- A aprovação bloqueia a linha do inventário com `FOR UPDATE`, revalida o estado e aplica todos os ajustes pela mesma rotina da Etapa 11 na transação serializável. Falha intermediária causa rollback total e o lock impede dupla aprovação.
+- Pedidos de compra usam atualização condicional por estado para submit, aprovação e cancelamento. A aprovação é uma decisão comercial sem efeito físico.
+- Recebimentos bloqueiam a linha do pedido com `FOR UPDATE` em transação `SERIALIZABLE`, reutilizam o serviço transacional de estoque, atualizam histórico/acumulado/status atomicamente e repetem conflitos serializáveis até três vezes. Idempotência por empresa e hash canônico protege retries após timeout.
+- Pedidos de venda usam contador atômico por empresa e updates condicionais por estado. Reserva, liberação e expedição bloqueiam o pedido e os saldos relevantes com `FOR UPDATE`, executam em `SERIALIZABLE` e repetem até três conflitos. A alocação é estável por código/id do endereço e integral; expedição reutiliza o núcleo transacional de movimentos.
+- Liquidações financeiras bloqueiam `FinancialEntry` com `FOR UPDATE` dentro de transação `SERIALIZABLE`, revalidam saldo e repetem até três conflitos. `(companyId, idempotencyKey)` e hash canônico diferenciam retry seguro de reutilização divergente.

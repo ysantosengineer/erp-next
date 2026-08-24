@@ -18,6 +18,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: {
           expiresIn: Number(configService.getOrThrow<string>('JWT_ACCESS_TTL_SECONDS')),
+          issuer: configService.getOrThrow<string>('JWT_ISSUER'),
+          audience: configService.getOrThrow<string>('JWT_AUDIENCE'),
         },
       }),
     }),

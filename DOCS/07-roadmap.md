@@ -8,28 +8,35 @@ Monorepo, Docker Compose para API/PostgreSQL/Redis, configuração de qualidade,
 
 Autenticação, usuários, papéis, permissões, proteção de rotas, redefinição de senha e auditoria inicial.
 
-Estado atual: autenticação, gestão de usuários/papéis, catálogo e atribuição de permissões, autorização, auditoria, login web, sessão por cookie HttpOnly, dashboard estrutural e interfaces administrativas `/users` e `/roles` estão implementados em código. A aplicação das migrations e os testes de integração com PostgreSQL permanecem pendentes; redefinição de senha continua fora desta entrega. A sprint ainda não está concluída.
+Estado atual: autenticação, gestão de usuários/papéis, catálogo e atribuição de permissões, autorização, auditoria, login web, sessão por cookie HttpOnly, dashboard estrutural e interfaces administrativas `/users` e `/roles` estão implementados. As migrations estão aplicadas no ambiente PostgreSQL local; redefinição de senha continua fora desta entrega.
 
 ## Sprint 2 — Cadastros e catálogo
 
 Clientes, fornecedores, categorias, produtos, armazéns, busca/paginação e formulários validados.
 
-Estado atual: categorias, unidades de medida, fornecedores, produtos e clientes estão implementados com isolamento por empresa, permissões, auditoria, migrations e interfaces autenticadas. Clientes incluem PF/PJ, CPF/CNPJ, contato, endereço principal, limite de crédito decimal, busca, filtros, paginação e status. A Sprint 2 permanece em andamento porque armazéns ainda não foram implementados.
+Estado atual: categorias, unidades de medida, fornecedores, produtos, clientes, depósitos e endereços de estoque estão implementados com isolamento por empresa, permissões, auditoria, migrations e interfaces autenticadas. Depósitos e endereços incluem códigos humanos normalizados, hierarquia física opcional, capacidade lógica, busca, filtros, paginação e status. O escopo funcional previsto para a Sprint 2 está implementado; a estabilização integrada continua sendo acompanhada pelas validações do projeto.
 
 ## Sprint 3 — Compras e estoque
 
 Pedidos de compra, recebimento, saldo por armazém e movimentações imutáveis.
 
+Estado atual: núcleo de estoque, inventário físico, pedidos e recebimentos de compra estão implementados. Aprovação permanece comercial; recebimentos parciais/múltiplos/totais geram entradas, atualizam saldos e pedidos atomicamente, com concorrência, idempotência, auditoria e interfaces dedicadas. A Sprint 3 aguarda somente estabilização integrada e o escopo de vendas posterior não foi antecipado.
+
 ## Sprint 4 — Vendas
 
-Pedidos de venda, confirmação com baixa de estoque, cancelamento com estorno e histórico do cliente.
+Pedidos de venda, confirmação comercial, cancelamento e histórico do cliente. As Etapas 15 e 16 estão implementadas: numeração, snapshots, cálculos, reserva integral por endereço, liberação, expedição com baixa física, permissões, auditoria e interfaces. Picking avançado, separação parcial, transportadoras e faturamento permanecem posteriores.
 
 ## Sprint 5 — Financeiro e relatórios
 
-Faturas, pagamentos parciais, contas em aberto, dashboard e relatórios operacionais.
+Etapas 17 e 18 implementadas: títulos unificados a pagar/receber, baixas, fluxo de caixa, dashboard gerencial com dados reais e relatórios de vendas, compras, estoque e financeiro. Analytics respeita período, comparação, permissões e isolamento multiempresa. Exportação, contabilidade e integrações bancárias continuam fora do escopo.
 
 ## Sprint 6 — Produção e estabilização
 
 Cobertura de fluxos críticos, segurança, observabilidade, backup, deploy e documentação de operação.
+
+Estado atual: a Etapa 19 implementou testes HTTP E2E com PostgreSQL isolado, hardening de headers,
+CORS, payload, JWT/cookie, rate limiting, erros seguros, request ID/logs estruturados, liveness,
+readiness, validação de ambiente e checklist de produção. Redis distribuído, CI/CD, backup,
+observabilidade externa, infraestrutura e deploy continuam nas próximas etapas.
 
 Cada sprint só é concluída quando seus critérios de aceitação, testes relevantes, OpenAPI e documentação estiverem atualizados.

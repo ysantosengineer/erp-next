@@ -97,22 +97,72 @@ Usuários e papéis pertencem obrigatoriamente a uma empresa. O contexto da empr
 - Categorias, unidades e fornecedores precisam estar ativos para novas associações. Um produto existente pode manter uma associação posteriormente inativada até que o usuário escolha substituí-la.
 - NCM, imagens, estoque atual, variações, lotes e movimentações não fazem parte desta etapa de catálogo e serão tratados em módulos posteriores.
 - Categorias organizam produtos e não podem ser removidas enquanto tiverem produtos ativos.
+- Depósitos pertencem a uma empresa, têm nome, código único por empresa, descrição e status. Um depósito só pode ser inativado depois de todos os seus endereços ativos serem inativados.
+- Endereços de estoque pertencem simultaneamente à empresa e a um depósito, usam código único por depósito e podem informar zona, corredor, prateleira, nível, posição e capacidade lógica não negativa. Novos endereços e reativações exigem depósito ativo.
+- O cadastro de depósitos e endereços não altera saldos. Saldos e movimentações são mantidos pelo módulo transacional de estoque.
 - Armazéns possuem nome e endereço opcional.
 
 ## Operações
 
-- Pedidos de venda possuem cliente, itens, quantidades, preços congelados no item, descontos, totais e status: rascunho, confirmado, cancelado e faturado.
-- Compras possuem fornecedor, itens, custos congelados no item, totais e status: rascunho, confirmado, recebido e cancelado.
-- Confirmar venda reserva/baixa estoque somente segundo a política documentada na arquitetura; o MVP baixará estoque na confirmação. Estoque insuficiente bloqueia confirmação.
-- Receber compra gera entrada de estoque. Cancelamentos não podem deixar saldos negativos e devem criar estorno quando aplicável.
-- Cada alteração de estoque gera uma movimentação imutável com tipo, quantidade, origem e usuário responsável.
+### Estoque
+
+- O saldo atual é mantido por empresa, produto e endereço físico em `Decimal(18,4)` e nunca pode ficar negativo. Linhas com saldo zero são preservadas.
+- Entradas, saídas, ajustes de entrada/saída e transferências exigem produto, depósito e endereço ativos da empresa autenticada. Quantidades trafegam como strings decimais positivas.
+- Cada comando atualiza saldo, cria uma movimentação imutável e registra auditoria na mesma transação serializável. Saídas e transferências usam decremento condicional para impedir saldo negativo sob concorrência.
+- Transferências registram uma única movimentação com origem e destino distintos; podem atravessar depósitos da mesma empresa.
+- Uma chave de idempotência opcional é única por empresa. Repetir exatamente o mesmo comando devolve a movimentação existente; reutilizá-la com outro conteúdo retorna conflito.
+- As permissões são `inventory.read`, `inventory.entry`, `inventory.exit`, `inventory.adjust`, `inventory.transfer` e `inventory.movements.read`.
+- Inventários físicos pertencem a uma empresa e a um depósito. Ao iniciar, o sistema captura um snapshot imutável dos saldos registrados, bloqueia movimentações no depósito e permite primeira contagem e recontagem com quantidades `Decimal(18,4)` não negativas.
+- Qualquer diferença exige recontagem. A quantidade final é a primeira contagem quando não há divergência e a recontagem quando existe. Nenhuma fase anterior à aprovação altera o saldo.
+- A aprovação exige todas as contagens concluídas, ocorre em transação serializável e reutiliza os ajustes `ADJUSTMENT_IN`/`ADJUSTMENT_OUT`, identificados por `referenceType=INVENTORY`. Cancelamento preserva o histórico e não gera ajustes.
+- As permissões específicas são `inventory_counts.read`, `inventory_counts.create`, `inventory_counts.count`, `inventory_counts.recount`, `inventory_counts.approve` e `inventory_counts.cancel`.
+- Reservas, lotes, números de série, compras e vendas integradas permanecem fora desta etapa.
+
+### Pedidos de compra
+
+- Pedidos de compra pertencem a uma empresa, exigem fornecedor e depósito de destino ativos e contêm ao menos um produto ativo. Recursos externos à empresa são tratados como não encontrados.
+- O número `PO-000001` é gerado por contador atômico por empresa. Itens congelam nome, SKU e símbolo da unidade; quantidade usa `Decimal(18,4)` e custos/totais usam `Decimal(14,2)`.
+- O backend calcula subtotal por item, subtotal do pedido e `total = subtotal - desconto + frete + outros`. Desconto é financeiro e aplicado somente ao pedido.
+- O fluxo é `DRAFT → PENDING_APPROVAL → APPROVED`; rascunhos, pendentes e aprovados podem ser cancelados com motivo. Somente rascunhos são editáveis e cancelados não reabrem.
+- Aprovar pedido registra usuário/data, mas não altera `InventoryBalance`, não cria `StockMovement` e não atualiza o custo do produto. Recebimentos parciais e totais pertencem à etapa seguinte.
+- As permissões são `purchase_orders.read`, `create`, `update`, `submit`, `approve` e `cancel`.
+
+### Recebimentos de compras
+
+- Somente pedidos `APPROVED` ou `PARTIALLY_RECEIVED` podem ser recebidos. Cada confirmação é imutável, vinculada ao pedido e numerada como `PR-000001` por contador atômico da empresa.
+- O backend calcula a quantidade pendente, impede excesso e permite múltiplos recebimentos parciais. Cada item usa uma localização ativa do depósito do pedido; depósito/localização inativos ou bloqueados por inventário impedem a operação.
+- Histórico (`PurchaseReceiptItem`) e acumulado (`PurchaseOrderItem.receivedQuantity`) são atualizados juntamente com `InventoryBalance`, `StockMovement` de entrada e status do pedido em uma transação `SERIALIZABLE` com rollback total.
+- A chave de idempotência é obrigatória por empresa. Repetir o mesmo payload devolve o recebimento existente; reutilizar a chave com conteúdo diferente retorna conflito.
+- Produto ou fornecedor inativados depois da aprovação não invalidam o compromisso existente. Custo do produto, financeiro, fiscal, estorno e recebimento avulso não são alterados nesta etapa.
+- As permissões são `purchase_receipts.read` e `purchase_receipts.create`.
+
+### Pedidos de venda
+
+- Pedidos de venda pertencem à empresa, exigem cliente, depósito de origem e ao menos um produto ativo do tenant. O número `SO-000001` é gerado por contador atômico por empresa.
+- Itens congelam nome, SKU e símbolo da unidade. Quantidades e preparação de reserva usam `Decimal(18,4)`; preços, descontos e totais usam `Decimal(14,2)` e trafegam como strings.
+- O subtotal do item é o valor bruto arredondado menos o desconto da linha. O subtotal do pedido soma os itens líquidos; `total = subtotal - desconto geral + frete + outros`. O backend é a autoridade dos cálculos.
+- O fluxo é `DRAFT → CONFIRMED → RESERVED → SHIPPED`. Pedidos `DRAFT`, `CONFIRMED` ou `RESERVED` podem ser cancelados; cancelar um reservado libera suas reservas. Somente rascunhos são editáveis e a expedição é terminal.
+- Cliente, depósito e produtos precisam estar ativos para criar, editar ou confirmar. O limite de crédito é apenas informativo porque ainda não existe saldo de contas a receber.
+- Confirmar não altera estoque. Reservar exige disponibilidade integral no depósito, distribui quantidades de forma determinística entre endereços ativos e mantém o saldo físico intacto. Liberar devolve disponibilidade. Expedir consome todas as reservas, reduz o físico e cria saídas `SALES_ORDER` atomicamente.
+- O saldo disponível é `físico - reservas ACTIVE`. Saídas, ajustes negativos e transferências manuais não podem consumir quantidades comprometidas. Reserva e expedição são bloqueadas durante inventário físico ativo no depósito.
+- As permissões comerciais são `sales_orders.read`, `create`, `update`, `confirm` e `cancel`; o fluxo físico usa `inventory.reservations.read`, `inventory.reserve`, `inventory.release` e `inventory.ship`.
+- Compras possuem fornecedor, depósito, itens e custos congelados, totais, aprovação e recebimentos parciais ou totais rastreáveis. Receber compra gera entrada de estoque.
 
 ## Financeiro e relatórios
 
-- Faturas representam valores a receber ou a pagar vinculados à venda ou compra.
-- Pagamentos podem ser parciais; uma fatura é quitada quando a soma dos pagamentos válidos alcança o valor devido.
+- `FinancialEntry` representa um título manual a pagar (`PAYABLE`) ou receber (`RECEIVABLE`); cada parcela é um título independente e pode vincular fornecedor, cliente ou documento comercial do mesmo tenant.
+- Valores usam `Decimal(14,2)`. O saldo pendente é sempre derivado por `originalAmount - settledAmount`; os estados são `OPEN`, `PARTIALLY_SETTLED`, `SETTLED` e `CANCELLED`.
+- Pagamentos e recebimentos parciais criam `FinancialSettlement` imutável. Baixa excessiva é proibida, retries exigem idempotência e operações concorrentes são serializadas com lock do título.
+- Título com baixa não pode ser editado nem cancelado. Vencimento e dias em atraso são derivados, sem job ou estado persistido adicional.
+- O fluxo de caixa previsto usa saldos pendentes por vencimento; o realizado usa exclusivamente liquidações por data. Entradas e saídas permanecem segregadas na resposta.
+- A Etapa 17 não gera títulos automaticamente a partir de compras/vendas e não inclui estorno, contabilidade, banco, emissão fiscal, gateway ou dashboard avançado.
 - O dashboard mostra vendas, compras, contas em aberto e alertas de estoque baixo no período selecionado.
 - Relatórios do MVP oferecem filtros por período e exportação posterior, sem promessa de formato fiscal.
+- O período padrão do dashboard é de 30 dias civis, com seleção de até 366 dias e comparação com período anterior equivalente.
+- Vendas válidas para analytics são pedidos `CONFIRMED`, `RESERVED` e `SHIPPED`; rascunhos e cancelados não compõem os indicadores.
+- Quantidades são apresentadas por unidade de medida, sem somar unidades heterogêneas. Compras distinguem valores pedidos, aprovados e efetivamente recebidos.
+- Estoque baixo considera disponível maior que zero e menor ou igual ao mínimo; estoque zerado ou negativo é alerta separado.
+- Dados financeiros só são retornados a usuários com `finance.read`. Exportação permanece no backlog P2.
 
 ## Não funcionais
 

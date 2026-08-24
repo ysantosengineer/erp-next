@@ -33,6 +33,7 @@ import { AuthTokensDto } from './dto/auth-tokens.dto';
 import { CurrentUserDto } from './dto/current-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -43,6 +44,7 @@ export class AuthController {
   ) {}
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 900_000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Autentica um usuário ativo.' })
   @ApiOkResponse({ type: AuthTokensDto })
@@ -63,6 +65,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Throttle({ default: { limit: 30, ttl: 900_000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Rotaciona um refresh token válido.' })
   @ApiOkResponse({ type: AuthTokensDto })

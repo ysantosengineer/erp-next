@@ -28,4 +28,97 @@ describe('Sidebar', () => {
     expect(screen.queryByRole('link', { name: 'Usuários' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Papéis e permissões' })).not.toBeInTheDocument();
   });
+
+  it('exibe depósitos somente com permissão de leitura', () => {
+    useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.WAREHOUSES_READ] } });
+    render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Depósitos e endereços' })).toHaveAttribute(
+      'href',
+      '/warehouses',
+    );
+  });
+
+  it('exibe saldos somente com permissão de leitura de estoque', () => {
+    useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.INVENTORY_READ] } });
+    render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Saldos' })).toHaveAttribute('href', '/inventory');
+  });
+
+  it('separa movimentações e inventários por permissão', () => {
+    useAuthMock.mockReturnValue({
+      user: {
+        permissions: [PERMISSIONS.INVENTORY_MOVEMENTS_READ, PERMISSIONS.INVENTORY_COUNTS_READ],
+      },
+    });
+    render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Movimentações' })).toHaveAttribute(
+      'href',
+      '/inventory/movements',
+    );
+    expect(screen.getByRole('link', { name: 'Inventários' })).toHaveAttribute(
+      'href',
+      '/inventory/counts',
+    );
+  });
+
+  it('exibe reservas somente com a permissão específica', () => {
+    useAuthMock.mockReturnValue({
+      user: { permissions: [PERMISSIONS.INVENTORY_RESERVATIONS_READ] },
+    });
+    render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Reservas' })).toHaveAttribute(
+      'href',
+      '/inventory/reservations',
+    );
+    expect(screen.queryByRole('link', { name: 'Saldos' })).not.toBeInTheDocument();
+  });
+
+  it('exibe pedidos de compra somente com permissão de leitura', () => {
+    useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.PURCHASE_ORDERS_READ] } });
+    render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Pedidos de compra' })).toHaveAttribute(
+      'href',
+      '/purchases/orders',
+    );
+  });
+
+  it('exibe recebimentos somente com permissão própria de leitura', () => {
+    useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.PURCHASE_RECEIPTS_READ] } });
+    render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Recebimentos' })).toHaveAttribute(
+      'href',
+      '/purchases/receipts',
+    );
+    expect(screen.queryByRole('link', { name: 'Pedidos de compra' })).not.toBeInTheDocument();
+  });
+
+  it('exibe pedidos de venda somente com a permissão própria de leitura', () => {
+    useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.SALES_ORDERS_READ] } });
+    render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Pedidos de venda' })).toHaveAttribute(
+      'href',
+      '/sales/orders',
+    );
+    expect(screen.queryByRole('link', { name: 'Pedidos de compra' })).not.toBeInTheDocument();
+  });
+
+  it('separa títulos e fluxo de caixa por permissões financeiras', () => {
+    useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.FINANCE_READ] } });
+    const { rerender } = render(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Contas a pagar' })).toHaveAttribute(
+      'href',
+      '/finance/payables',
+    );
+    expect(screen.getByRole('link', { name: 'Contas a receber' })).toHaveAttribute(
+      'href',
+      '/finance/receivables',
+    );
+    expect(screen.queryByRole('link', { name: 'Fluxo de caixa' })).not.toBeInTheDocument();
+    useAuthMock.mockReturnValue({ user: { permissions: [PERMISSIONS.FINANCE_CASH_FLOW_READ] } });
+    rerender(<Sidebar />);
+    expect(screen.getByRole('link', { name: 'Fluxo de caixa' })).toHaveAttribute(
+      'href',
+      '/finance/cash-flow',
+    );
+  });
 });
