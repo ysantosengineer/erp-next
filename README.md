@@ -33,7 +33,9 @@ WEB_ORIGIN=http://localhost:3000
 AUTH_COOKIE_SECURE=false
 ```
 
-Em produção, use HTTPS e `AUTH_COOKIE_SECURE=true`.
+Em produção, use HTTPS e `AUTH_COOKIE_SECURE=true`. Quando frontend e API estiverem em sites
+distintos, configure também `AUTH_COOKIE_SAME_SITE=none`; com domínio próprio compartilhado,
+prefira `lax`.
 
 Para os testes HTTP com PostgreSQL real, copie `.env.test.example`, configure
 `DATABASE_URL_TEST` exclusivamente para um banco ou schema terminado em `_test` e execute
@@ -94,6 +96,14 @@ As telas administrativas consomem paginação, filtros e mutações reais da API
 | `npm run test:e2e`  | Executa testes HTTP contra PostgreSQL isolado.       |
 | `npm run build`     | Gera builds de produção.                             |
 | `npm run format`    | Formata os arquivos com Prettier.                    |
+
+## CI/CD e deploy
+
+Pull requests para `main` passam por lint, typecheck, testes, build, PostgreSQL real, E2E e build
+Docker. A implantação recomendada usa Vercel para o frontend, Render para a API Docker e Neon para
+PostgreSQL. A ativação, os secrets, a proteção de branch, migrations, smoke test e rollback estão
+documentados em `DOCS/10-deploy.md`. Use `.env.production.example` somente como referência de
+nomes; valores reais nunca devem ser commitados.
 
 ## Estrutura
 

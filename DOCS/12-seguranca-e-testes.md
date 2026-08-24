@@ -7,11 +7,13 @@ estado, totais ou saldos. A identidade vem do JWT validado e cada consulta de ne
 tenant. Referências compostas e validações de relacionamento impedem associação entre empresas.
 
 O access token permanece apenas em memória no navegador. O refresh token usa cookie `HttpOnly`,
-`SameSite=Lax`, caminho restrito à autenticação e `Secure` obrigatório em produção. Ele é
-armazenado somente como hash, rotacionado a cada uso e revogado no logout. Como as mutações usam
-Bearer token e o cookie só participa da renovação em uma origem CORS explícita, não foi adicionado
-um segundo token CSRF nesta etapa. Essa decisão deve ser revista se autenticação por cookie passar
-a autorizar endpoints de negócio ou se `SameSite=None` for necessário.
+`SameSite=Lax` por padrão, caminho restrito à autenticação e `Secure` obrigatório em produção. Em
+provedores hospedados em sites distintos, `AUTH_COOKIE_SAME_SITE=none` é permitido somente com
+`Secure=true`. Nesse modo, refresh e logout também rejeitam `Origin` ausente ou diferente da lista
+CORS. O token é armazenado somente como hash, rotacionado a cada uso e revogado no logout. Como as
+mutações de negócio usam Bearer token e o cookie só participa da renovação com origem explicitamente
+validada, não foi adicionado um segundo token CSRF. Essa decisão deve ser revista se autenticação
+por cookie passar a autorizar endpoints de negócio.
 
 ## Controles ativos
 
@@ -70,8 +72,9 @@ os fluxos de inventário, compras, recebimentos, vendas, reservas e relatórios.
 
 ## Limites desta etapa
 
-Redis distribuído, tracing/APM, cofre de segredos, backup automatizado, pipeline CI/CD, deploy,
-WAF, TLS do provedor e pentest externo pertencem à etapa de infraestrutura/produção. A auditoria
+Redis distribuído, tracing/APM, cofre de segredos gerenciado, backup automatizado, WAF e pentest
+externo permanecem pendentes. CI/CD, container da API e configuração de deploy foram adicionados
+na Etapa 20; a ativação do ambiente real depende das contas e credenciais dos provedores. A auditoria
 de pacotes pode manter findings de ferramentas de desenvolvimento quando não houver correção
 compatível sem upgrade principal; eles devem permanecer registrados e acompanhados.
 

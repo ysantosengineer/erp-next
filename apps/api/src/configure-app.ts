@@ -11,7 +11,13 @@ export function configureApp(app: INestApplication): void {
   const config = app.get(ConfigService);
   const production = config.get<string>('NODE_ENV') === 'production';
   const origins = corsOrigins(config.getOrThrow<string>('CORS_ORIGINS'));
-  (app.getHttpAdapter().getInstance() as { disable(name: string): void }).disable('x-powered-by');
+  const expressApp = app.getHttpAdapter().getInstance() as {
+    disable(name: string): void;
+    set(name: string, value: number): void;
+  };
+  expressApp.disable('x-powered-by');
+  const trustProxyHops = config.get<number>('TRUST_PROXY_HOPS') ?? 0;
+  if (trustProxyHops > 0) expressApp.set('trust proxy', trustProxyHops);
   app.enableCors({
     origin: origins,
     credentials: true,

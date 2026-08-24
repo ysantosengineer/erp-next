@@ -6,11 +6,29 @@ Há ambientes local, preview/homologação e produção. Cada ambiente possui va
 
 ## Containers
 
-Docker Compose deve iniciar, no mínimo, API, PostgreSQL e Redis para desenvolvimento. Imagens devem usar versões fixadas, usuário não-root quando possível e arquivos `.env.example` sem valores reais.
+A API possui imagem multi-stage baseada em Node 24, executa com usuário `node`, não inclui os
+devDependencies no runtime e expõe healthcheck de readiness. O frontend usa o runtime nativo da
+Vercel, portanto não há Dockerfile de frontend. O Compose mantém PostgreSQL para desenvolvimento e
+oferece a API no profile opcional `app`:
+
+```bash
+docker compose up -d postgres
+docker compose --profile app up --build
+```
+
+Redis continua previsto na arquitetura, mas não é iniciado enquanto não houver um consumidor real.
+O rate limiting é local ao processo; produção deve usar somente uma instância da API até migrar o
+storage de throttling para Redis.
 
 ## CI/CD
 
-Em pull requests, GitHub Actions executa instalação reproduzível, lint, verificação de tipos, testes e build. O deploy só ocorre após sucesso dessas verificações e conforme a política da branch principal.
+O workflow `CI` roda em pull requests e pushes para `main`. Ele executa instalação reproduzível,
+Prisma Generate, lint, typecheck, testes, build, auditoria das dependências de runtime, integrações e
+E2E com PostgreSQL real, além do build da imagem da API.
+
+O workflow `Deploy production` observa o sucesso do CI na `main`, mas só executa automaticamente
+quando a variável `PRODUCTION_DEPLOY_ENABLED` vale `true`. Também pode ser iniciado manualmente. O
+GitHub Environment `production` deve exigir aprovação enquanto o processo estiver sendo validado.
 
 ## Banco de dados
 
@@ -25,6 +43,49 @@ Para sessão web, configure `WEB_ORIGIN` com a origem exata do frontend, `NEXT_P
 Consulte `12-seguranca-e-testes.md` para os controles já aplicados, execução E2E isolada e o
 checklist que deve ser concluído antes do primeiro deploy.
 
-## Hospedagem
+## Hospedagem escolhida
 
-Frontend pode ser implantado na Vercel. API, PostgreSQL e Redis podem usar Railway ou AWS; a escolha concreta, custos, região e estratégia de backup devem ser registrados antes do primeiro deploy de produção.
+- frontend: Vercel, projeto com Root Directory `apps/web` e variável
+  `NEXT_PUBLIC_API_URL=https://<api>/api/v1`;
+- API: Render Web Service Docker, Blueprint `render.yaml`, uma instância e deploy automático
+  desligado para o workflow controlar migrations e promoção;
+- banco: Neon PostgreSQL na mesma região lógica da API, usando URL pooled com TLS;
+- Redis: adiado até o escalonamento horizontal.
+
+Os planos gratuitos são adequados a demonstração: o Render hiberna após inatividade e pode demorar
+para responder; Neon e Vercel têm cotas. Um ambiente comercial deve usar planos pagos, backups
+testados, alertas, região definida e orçamento aprovado.
+
+## Configuração do GitHub
+
+Crie o Environment `production` e cadastre:
+
+- secrets `PROD_DATABASE_URL` e `RENDER_DEPLOY_HOOK_URL`;
+- variables `PRODUCTION_API_URL` terminando em `/api/v1`, `PRODUCTION_WEB_URL` e, somente após a
+  primeira validação manual, `PRODUCTION_DEPLOY_ENABLED=true`.
+
+Proteja `main` exigindo pull request, branch atualizada, resolução de conversas e os checks
+`Quality, tests and builds`, `PostgreSQL integration and E2E` e `Build API container`. Restrinja
+push direto e force-push. Dependabot abre atualizações semanais, sem merge automático.
+
+## Primeiro deploy
+
+1. Crie o banco Neon e valide conexão pooled com `sslmode=require`.
+2. Importe `render.yaml`, preencha as variáveis marcadas `sync: false` e gere um deploy hook.
+3. Crie o projeto Vercel ligado à `main`, configure a raiz `apps/web` e a URL da API.
+4. Configure os secrets/variables do GitHub e execute manualmente `Deploy production`.
+5. Valide login, refresh de sessão, CORS, `/health`, `/ready`, logs e isolamento entre empresas.
+6. Habilite o deploy automático somente depois do smoke test manual.
+
+O seed é exclusivamente local/homologação controlada e nunca faz parte do pipeline de produção.
+
+## Rollback e operação
+
+Render e Vercel devem promover o último artefato saudável. Migrations são forward-only: mudanças
+destrutivas exigem estratégia expand/contract e backup/restauração testados antes do deploy. Se a
+migration falhar, o hook não é acionado e a versão anterior continua atendendo. Se o smoke test
+falhar após a promoção, reverta os dois provedores e mantenha a migration compatível até um novo
+deploy corretivo.
+
+Monitore disponibilidade de `/health` e `/ready`, latência, `5xx`, `429` e falhas do workflow.
+Logs seguem para stdout com request ID; segredos, tokens, cookies e corpos não devem ser logados.
