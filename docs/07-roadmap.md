@@ -36,7 +36,16 @@ Cobertura de fluxos críticos, segurança, observabilidade, backup, deploy e doc
 
 Estado atual: a Etapa 19 implementou testes HTTP E2E com PostgreSQL isolado, hardening de headers,
 CORS, payload, JWT/cookie, rate limiting, erros seguros, request ID/logs estruturados, liveness,
-readiness, validação de ambiente e checklist de produção. Redis distribuído, CI/CD, backup,
-observabilidade externa, infraestrutura e deploy continuam nas próximas etapas.
+readiness, validação de ambiente e checklist de produção. A Etapa 20 entregou CI/CD, imagem Docker
+da API e deploy público em Vercel, Render e Neon. Redis distribuído, backup automatizado e
+observabilidade externa permanecem como evoluções.
+
+## Etapa 21 — Finalização do portfólio
+
+Auditoria final, README bilíngue, diagramas, catálogo de screenshots, roteiros de demonstração,
+estudos de caso, índice documental e preparação do GitHub concluídos. A documentação foi
+reconciliada com o código e as validações aplicáveis foram executadas.
+
+**ROADMAP: 21/21 COMPLETED**
 
 Cada sprint só é concluída quando seus critérios de aceitação, testes relevantes, OpenAPI e documentação estiverem atualizados.

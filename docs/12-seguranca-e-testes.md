@@ -73,18 +73,22 @@ os fluxos de inventário, compras, recebimentos, vendas, reservas e relatórios.
 ## Limites desta etapa
 
 Redis distribuído, tracing/APM, cofre de segredos gerenciado, backup automatizado, WAF e pentest
-externo permanecem pendentes. CI/CD, container da API e configuração de deploy foram adicionados
-na Etapa 20; a ativação do ambiente real depende das contas e credenciais dos provedores. A auditoria
+externo permanecem pendentes. CI/CD, container da API e configuração de deploy estão ativos
+na Etapa 20 e o ambiente público está ativo em Vercel, Render e Neon. A auditoria
 de pacotes pode manter findings de ferramentas de desenvolvimento quando não houver correção
 compatível sem upgrade principal; eles devem permanecer registrados e acompanhados.
 
-### Auditoria de dependências em 24/08/2026
+### Auditoria de dependências em 13/09/2026
 
-`npm audit fix` sem `--force` atualizou `@nestjs/swagger`/`js-yaml` e `nanoid`, eliminando três
-findings altos. Permanecem três entradas altas que representam a mesma cadeia exclusivamente de
-desenvolvimento: `prisma -> @prisma/config -> deepmerge-ts`. O advisory é de exaustão de pilha ao
-mesclar grafos recursivos. O npm oferece apenas downgrade forçado do Prisma para 6.12.0, fora da
-faixa atual e incompatível com a decisão de não aplicar mudanças potencialmente quebráveis. A API
-de runtime usa `@prisma/client`, não importa `@prisma/config` nem processa configurações Prisma
-fornecidas por usuários. O finding deve ser reavaliado assim que o Prisma publicar uma versão
-compatível com `deepmerge-ts >= 8`.
+O Next.js foi atualizado para 16.3.5 e `sharp`, `qs` e `fast-uri` receberam as versões corrigidas
+resolvidas pelo lockfile. Isso removeu o finding crítico que bloqueava o CI. Os pacotes NestJS 11
+também foram atualizados dentro da mesma versão principal.
+
+Permanecem findings altos sem correção compatível oferecida pelo npm. A cadeia de desenvolvimento
+`prisma -> @prisma/config -> deepmerge-ts` só apresenta como correção automática um downgrade
+forçado do Prisma para 6.12.0. Em runtime, `@nestjs/platform-express` 11.2.3 fixa exatamente
+`multer` 2.2.0, enquanto os advisories atuais pedem 2.3.0; o `npm audit fix --force` sugere um
+downgrade incompatível para NestJS 7. Como a aplicação não implementa upload multipart, a
+superfície do Multer não é exposta atualmente. Ambos os casos devem ser reavaliados quando Prisma
+e NestJS publicarem versões compatíveis. O CI continua bloqueando findings críticos com
+`npm audit --omit=dev --audit-level=critical`.

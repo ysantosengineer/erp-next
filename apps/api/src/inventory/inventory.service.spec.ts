@@ -1,4 +1,9 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { InventoryService } from './inventory.service';
 
@@ -41,5 +46,38 @@ describe('InventoryService', () => {
         where: { id: '550e8400-e29b-41d4-a716-446655440004', companyId: identity.companyId },
       }),
     );
+  });
+
+  it('repete a transação quando o PostgreSQL reporta conflito serializável via query raw', async () => {
+    const serializationConflict = new Prisma.PrismaClientKnownRequestError(
+      'could not serialize access due to concurrent update',
+      {
+        code: 'P2010',
+        clientVersion: '6.19.0',
+        meta: { code: '40001' },
+      },
+    );
+    const insufficientStock = new UnprocessableEntityException({
+      code: 'INSUFFICIENT_AVAILABLE_STOCK',
+      message: 'Saldo disponível insuficiente.',
+    });
+    const transaction = jest
+      .fn()
+      .mockRejectedValueOnce(serializationConflict)
+      .mockRejectedValueOnce(insufficientStock);
+    const service = new InventoryService({ $transaction: transaction } as never);
+
+    await expect(
+      service.exit(
+        identity,
+        {
+          productId: '550e8400-e29b-41d4-a716-446655440002',
+          sourceLocationId: '550e8400-e29b-41d4-a716-446655440003',
+          quantity: '8',
+        },
+        'request',
+      ),
+    ).rejects.toBe(insufficientStock);
+    expect(transaction).toHaveBeenCalledTimes(2);
   });
 });

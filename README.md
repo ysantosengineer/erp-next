@@ -1,118 +1,220 @@
 # ERP Next
 
-Monorepo do ERP Next para pequenas e médias empresas. O repositório contém uma aplicação web em Next.js, uma API NestJS, PostgreSQL via Prisma, autenticação, usuários, papéis e permissões, cadastros, estoque, inventário físico, compras, vendas e financeiro inicial.
+🇧🇷 [Português](README.pt-BR.md)
 
-## Pré-requisitos
+[![CI](https://github.com/ysantosengineer/erp-next/actions/workflows/ci.yml/badge.svg)](https://github.com/ysantosengineer/erp-next/actions/workflows/ci.yml)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6)
+![Next.js](https://img.shields.io/badge/Next.js-16-000000)
+![NestJS](https://img.shields.io/badge/NestJS-11-E0234E)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1)
+![Prisma](https://img.shields.io/badge/Prisma-6-2D3748)
 
-- Node.js 24 LTS (consulte `.nvmrc`)
-- npm 11 ou superior
+A production-oriented, multi-tenant ERP portfolio project covering access control, catalog, inventory, purchasing, sales, finance, dashboards, and reports.
 
-## Instalação
+[Live application](https://erp-next-web.vercel.app) · [API health](https://erp-next-api.onrender.com/api/v1/health) · [Architecture](docs/architecture-overview.md) · [Engineering case study](docs/portfolio-case.md)
+
+![ERP Next dashboard](docs/assets/screenshots/01-dashboard.webp)
+
+## Overview
+
+ERP Next is a modular full-stack ERP whose web and API applications are independently deployable. PostgreSQL is the operational source of truth, and every business workflow runs in the authenticated company context.
+
+## The Problem
+
+Small and medium businesses often run purchasing, stock, sales, and cash control in disconnected spreadsheets. ERP Next demonstrates how those workflows can share one consistent, traceable domain model without turning a portfolio application into a superficial CRUD showcase.
+
+## The Solution
+
+The system models the operational chain from a purchase order and receipt through stock availability, sales reservation and shipment, financial settlements, and management indicators.
+
+## Features
+
+### Authentication & Authorization
+
+- JWT authentication with rotating refresh cookies, logout, and session recovery.
+- Multi-company users, roles, permissions, and protected navigation.
+
+### Master Data
+
+- Categories, units, suppliers, products, customers, warehouses, and stock locations.
+
+### Inventory
+
+- Immutable stock movements, balances, transfers, adjustments, and physical inventory.
+
+### Purchasing
+
+- Purchase orders with partial and idempotent receipts.
+
+### Sales
+
+- Sales orders with reservation, release, cancellation, and shipment.
+
+### Finance
+
+- Payables, receivables, partial settlements, cash flow, dashboards, and reports.
+
+### Analytics
+
+- Period-filtered KPIs, comparisons, operational alerts, and paginated reports based on persisted data.
+- Audit records for sensitive mutations and request-correlated structured logs.
+
+## Engineering Highlights
+
+- Database transactions protect stock, order, receipt, settlement, and inventory invariants.
+- Physical, reserved, and available quantities are kept distinct: `physicalQuantity >= reservedQuantity` and `availableQuantity = physicalQuantity - reservedQuantity`. Reservation does not change physical stock; shipment appends a real exit.
+- Tenant scope is enforced from the authenticated company context.
+- RBAC checks are applied in the API and reflected in the interface.
+- Idempotency prevents duplicate receipts, shipments, and financial settlements.
+- Validation occurs at API boundaries; database entities are not exposed directly.
+- CI verifies lint, types, tests, builds, PostgreSQL integration, E2E flows, runtime audit, and the API container.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  User[Browser] --> Web[Next.js on Vercel]
+  Web -->|HTTPS / JWT and cookie| API[NestJS API on Render]
+  API --> Domain[Domain modules]
+  Domain --> Prisma[Prisma ORM]
+  Prisma --> DB[(PostgreSQL on Neon)]
+  Actions[GitHub Actions] -->|quality, migrations, deploy| Web
+  Actions --> API
+```
+
+See the [architecture overview](docs/architecture-overview.md) for module, RBAC, tenancy, finance, delivery, and data diagrams.
+
+## Core Business Flow
+
+```mermaid
+flowchart LR
+  PO[Purchase order] --> Receipt[Partial or total receipt]
+  Receipt --> In[Stock entry]
+  In --> Available[Available stock]
+  Available --> Reserve[Sales reservation]
+  Reserve --> Ship[Shipment]
+  Ship --> Out[Stock exit]
+  Out --> Reports[Dashboard and reports]
+```
+
+The finance module consumes its own manual titles in this release; the diagram does not imply automatic accounting entries from sales or purchasing.
+
+## Technology Stack
+
+| Layer    | Technology                                                                           |
+| -------- | ------------------------------------------------------------------------------------ |
+| Web      | Next.js 16, React 19, TypeScript, Tailwind CSS, TanStack Query, React Hook Form, Zod |
+| API      | NestJS 11, Prisma 6, JWT, Swagger/OpenAPI, class-validator                           |
+| Data     | PostgreSQL 17                                                                        |
+| Quality  | ESLint, Prettier, Jest, Vitest, Supertest                                            |
+| Delivery | Docker, Docker Compose, GitHub Actions, Vercel, Render, Neon                         |
+
+## Repository Structure
+
+```text
+apps/
+  api/                 NestJS API, Prisma schema, migrations, and tests
+  web/                 Next.js application and component tests
+docs/                  Architecture, requirements, operation, and portfolio material
+scripts/               Operational and CI helpers
+.github/workflows/      CI and production delivery pipelines
+```
+
+## Security
+
+The API uses explicit CORS origins, Helmet headers, payload limits, throttling, secure refresh-cookie configuration, environment validation, safe error responses, liveness/readiness probes, and audit trails. The current limiter is process-local, so production intentionally runs one API instance until a shared Redis-backed store is introduced. See [security and E2E testing](docs/12-seguranca-e-testes.md).
+
+## Testing
+
+Jest covers API units and services, Vitest covers web components and behavior, and Supertest E2E suites exercise the real NestJS application against isolated PostgreSQL. No coverage percentage is claimed.
+
+## CI/CD
+
+Pull requests and `main` pushes run installation, Prisma Generate, lint, typecheck, unit tests, builds, runtime dependency audit, PostgreSQL integration/E2E, and the API Docker build. A successful `main` pipeline can apply migrations, trigger Render, and run smoke checks. See [deployment](docs/10-deploy.md).
+
+## Getting Started
+
+### Prerequisites
+
+Requirements: Node.js 24, npm 11, Docker, and Docker Compose.
+
+### Installation
 
 ```bash
-npm install
+git clone https://github.com/ysantosengineer/erp-next.git
+cd erp-next
+npm ci
+docker compose up -d postgres
 cp .env.example .env
+npm run prisma:generate
+npm run prisma:migrate
+npm run prisma:seed
 ```
 
-No Windows PowerShell, use:
+### Environment Variables
 
-```powershell
-Copy-Item .env.example .env
-```
+Copy [`.env.example`](.env.example) and configure `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `NEXT_PUBLIC_API_URL`, `WEB_ORIGIN`, `CORS_ORIGINS`, cookie settings, and optional seed values. Never commit real values.
 
-Antes de executar o seed local, substitua `SEED_ADMIN_PASSWORD` no seu `.env` por uma senha
-exclusiva de desenvolvimento com ao menos 12 caracteres. O seed cria ou atualiza a empresa,
-o usuário definido por `SEED_ADMIN_EMAIL`, o papel administrativo e o catálogo inicial de
-permissões.
+### Database
 
-Defina também segredos JWT exclusivos e, para o frontend local, mantenha:
+Use `npm run prisma:migrate` for local development and `npm run prisma:migrate:deploy` for controlled production delivery. Seed is limited to local or controlled test/demo environments.
 
-```env
-NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
-WEB_ORIGIN=http://localhost:3000
-AUTH_COOKIE_SECURE=false
-```
-
-Em produção, use HTTPS e `AUTH_COOKIE_SECURE=true`. Quando frontend e API estiverem em sites
-distintos, configure também `AUTH_COOKIE_SAME_SITE=none`; com domínio próprio compartilhado,
-prefira `lax`.
-
-Para os testes HTTP com PostgreSQL real, copie `.env.test.example`, configure
-`DATABASE_URL_TEST` exclusivamente para um banco ou schema terminado em `_test` e execute
-`npm run test:e2e`. O runner aborta antes da limpeza se o destino não for reconhecido como teste.
-
-## Execução
+### Running the Application
 
 ```bash
 npm run dev
 ```
 
-- Web: `http://localhost:3000`
-- API: `http://localhost:3001/api/v1/health`
-- Login: `http://localhost:3000/login`
-- Usuários: `http://localhost:3000/users`
-- Papéis e permissões: `http://localhost:3000/roles`
-- Categorias: `http://localhost:3000/categories`
-- Unidades de medida: `http://localhost:3000/units`
-- Fornecedores: `http://localhost:3000/suppliers`
-- Produtos: `http://localhost:3000/products`
-- Clientes: `http://localhost:3000/customers`
-- Depósitos: `http://localhost:3000/warehouses`
-- Saldos de estoque: `http://localhost:3000/inventory`
-- Reservas de estoque: `http://localhost:3000/inventory/reservations`
-- Movimentações: `http://localhost:3000/inventory/movements`
-- Inventários físicos: `http://localhost:3000/inventory/counts`
-- Pedidos de compra: `http://localhost:3000/purchases/orders`
-- Recebimentos de compras: `http://localhost:3000/purchases/receipts`
-- Pedidos de venda: `http://localhost:3000/sales/orders`
-- Contas a pagar: `http://localhost:3000/finance/payables`
-- Contas a receber: `http://localhost:3000/finance/receivables`
-- Fluxo de caixa: `http://localhost:3000/finance/cash-flow`
+Open `http://localhost:3000`. The API uses `http://localhost:3001/api/v1`. Local Swagger is available at `http://localhost:3001/api/docs` when `SWAGGER_ENABLED=true`; it is intentionally disabled in production.
 
-O estoque é alterado exclusivamente por entradas, saídas, ajustes ou transferências. Quantidades usam `Decimal(18,4)`, saldo negativo é bloqueado e saldo/movimentação/auditoria são confirmados na mesma transação serializável. O histórico não possui endpoints de edição ou exclusão.
+The example environment file contains development-only placeholders. Never commit real credentials. Seeded accounts are for local demonstration only and must not be reused in production.
 
-O inventário físico captura um snapshot ao iniciar e bloqueia movimentações do depósito até aprovação ou cancelamento. Primeira contagem e recontagem não alteram saldo; a aprovação usa os mesmos ajustes transacionais do estoque, com referência ao inventário e rollback integral.
+### Tests
 
-Pedidos de compra usam numeração humana por empresa, itens e custos congelados, aprovação e cancelamento auditados. Aprovar não altera estoque. O recebimento físico aceita parciais e múltiplas confirmações, gera entradas `PURCHASE_RECEIPT`, atualiza saldo e pedido na mesma transação e protege retries por idempotência.
-
-Pedidos de venda usam numeração `SO-*` por empresa, snapshots, preços negociados, descontos e transições auditadas. Confirmar é comercial; reservar compromete o disponível por endereço sem alterar o físico, liberar devolve disponibilidade e expedir consome as reservas, gera saídas `SALES_ORDER` e reduz o físico atomicamente.
-
-O financeiro usa títulos `FIN-*` unificados por empresa, apresentados separadamente como contas a pagar e receber. Valores são decimais, saldo/atraso são derivados e pagamentos/recebimentos parciais são históricos imutáveis protegidos por transação serializável e idempotência. O fluxo de caixa distingue previsto de realizado; integração bancária, contabilidade, estorno e geração automática por pedidos não fazem parte desta etapa.
-
-## Sessão web
-
-O access token é mantido apenas em memória. O refresh token é configurado pela API em cookie `HttpOnly` e rotacionado por `/auth/refresh`; ele não é armazenado pelo frontend. As rotas internas redirecionam para `/login` quando a sessão não pode ser recuperada e a sidebar usa permissões atuais de `/auth/me` apenas para controle visual.
-
-As telas administrativas consomem paginação, filtros e mutações reais da API. O catálogo de permissões é consultado por `GET /api/v1/permissions`; permissões não podem ser criadas, alteradas ou removidas pela interface.
-
-## Scripts
-
-| Comando             | Descrição                                            |
-| ------------------- | ---------------------------------------------------- |
-| `npm run dev`       | Inicia web e API em modo de desenvolvimento.         |
-| `npm run lint`      | Executa ESLint e verifica a formatação com Prettier. |
-| `npm run typecheck` | Executa a verificação de tipos dos workspaces.       |
-| `npm run test`      | Executa os testes dos workspaces.                    |
-| `npm run test:e2e`  | Executa testes HTTP contra PostgreSQL isolado.       |
-| `npm run build`     | Gera builds de produção.                             |
-| `npm run format`    | Formata os arquivos com Prettier.                    |
-
-## CI/CD e deploy
-
-Pull requests para `main` passam por lint, typecheck, testes, build, PostgreSQL real, E2E e build
-Docker. A implantação recomendada usa Vercel para o frontend, Render para a API Docker e Neon para
-PostgreSQL. A ativação, os secrets, a proteção de branch, migrations, smoke test e rollback estão
-documentados em `DOCS/10-deploy.md`. Use `.env.production.example` somente como referência de
-nomes; valores reais nunca devem ser commitados.
-
-## Estrutura
-
-```text
-apps/
-  api/  # API NestJS
-  web/  # Interface Next.js
-DOCS/   # Documentação oficial do projeto
+```bash
+npm run prisma:generate
+npm run lint
+npm run format:check
+npm run typecheck
+npm run test
+npm run test:e2e
+npm run build
 ```
 
-Os controles, a estratégia de isolamento E2E e o checklist de produção estão em
-`DOCS/12-seguranca-e-testes.md`.
+E2E tests require an isolated PostgreSQL database whose name or schema ends in `_test`.
+
+## API Documentation
+
+Local Swagger is available at `http://localhost:3001/api/docs` when `SWAGGER_ENABLED=true`. It is intentionally disabled in production, so no public Swagger URL is advertised.
+
+## Demo
+
+Production deploys use Vercel for the web app, a Docker service on Render for the API, and pooled TLS connections to Neon. Free tiers are suitable for demonstration and can cold-start or enforce usage quotas.
+
+## Screenshots
+
+The real dashboard capture above is available. The curated 8–12 image plan and privacy checklist are in the [screenshot catalog](docs/assets/screenshots/README.md); pending images are explicitly marked and no mock image represents completed functionality.
+
+## Technical Decisions
+
+PostgreSQL provides relational constraints, transactions, concurrency controls, and reporting. Prisma provides typed access and versioned migrations, with targeted SQL used for locking or aggregates Prisma cannot express well. NestJS supplies modules, dependency injection, guards, and DTO boundaries. Next.js supplies the authenticated interface and React ecosystem inside the monorepo.
+
+## Trade-offs
+
+- The API uses modular NestJS services with direct Prisma access; a repository layer was avoided while it would only duplicate the ORM.
+- Financial entries are manual in this version. Automatic posting from commercial documents is future work to avoid inventing accounting rules.
+- Stock ledgers and settlements are append-only; corrections use explicit compensating operations where supported.
+- Swagger is local-only in the public deployment to reduce exposed implementation detail.
+- Redis is deferred until horizontal API scaling requires distributed throttling or cache coordination.
+
+## Future Improvements
+
+Password recovery, MFA/SSO, automated accounting entries, fiscal documents, reversals, exports, lots/serial numbers, advanced WMS, shared throttling, external APM, and automated backup validation are outside this release. An administrative audit-log viewer is also pending, although sensitive operations already write audit records.
+
+## Documentation
+
+Start with the [documentation index](docs/README.md), [Portuguese case study](docs/portfolio-case.pt-BR.md), [demo scripts](docs/demo-script.en.md), [deployment guide](docs/10-deploy.md), and [security/testing guide](docs/12-seguranca-e-testes.md).
+
+## License
+
+No open-source license has been granted yet. The source is publicly viewable for portfolio evaluation; reuse requires the author's permission.

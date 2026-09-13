@@ -2,27 +2,29 @@
 
 ## Visão
 
-O repositório será um monorepo com `apps/web` (Next.js), `apps/api` (NestJS) e `packages` para contratos, configuração e utilitários realmente compartilhados. Web e API são aplicações independentes e comunicam-se exclusivamente por HTTP.
+O repositório é um monorepo npm com `apps/web` (Next.js) e `apps/api` (NestJS). Web e API são aplicações independentes e comunicam-se exclusivamente por HTTP. Não existe atualmente um workspace `packages`; utilitários permanecem na aplicação que os utiliza até surgir compartilhamento real.
 
 ## Backend
 
 Cada domínio é um módulo NestJS. A direção de dependência é:
 
-`controller -> application service -> repository/port -> Prisma -> PostgreSQL`
+`controller -> application service -> Prisma -> PostgreSQL`
+
+Os serviços concentram regras e limites transacionais. Uma camada genérica de repository/port não foi adicionada porque apenas duplicaria a API tipada do Prisma no estado atual; integrações externas futuras podem justificar adapters específicos.
 
 - Controllers tratam transporte, autenticação e DTOs; não contêm regras de negócio.
 - Services aplicam casos de uso e regras transacionais.
-- Repositories isolam a persistência e nunca são retornados pela API.
-- Prisma acessa somente PostgreSQL. Redis serve cache, rate limiting ou filas quando a necessidade for documentada.
+- Prisma isola o acesso ao PostgreSQL e seus registros nunca são retornados diretamente pela API.
+- Redis não integra o runtime atual; poderá servir throttling, cache ou filas quando a necessidade for documentada.
 - Transações Prisma são obrigatórias em operações que modificam pedido/compra, estoque e financeiro de forma conjunta.
 
-Módulos iniciais: `auth`, `users`, `roles`, `customers`, `suppliers`, `catalog`, `warehouses`, `sales`, `purchases`, `inventory`, `inventory-counts`, `billing`, `audit` e `reports`.
+Módulos atuais: `auth`, `authorization`, `users`, `roles`, `permissions`, `categories`, `units`, `customers`, `suppliers`, `products`, `warehouses`, `stock-locations`, `inventory`, `inventory-counts`, `purchase-orders`, `purchase-receipts`, `sales-orders`, `stock-reservations`, `finance`, `analytics` e infraestrutura comum de segurança/auditoria.
 
 ## Segurança
 
 - A API emite JWT de acesso de 15 minutos com `sub` e `authVersion` e refresh JWT de maior duração. Refresh tokens são persistidos somente como hash, rotacionados no uso e revogados no logout ou em mudanças de autorização; tokens nunca são registrados em logs.
 - Em cada requisição protegida, guards carregam o usuário ativo, comparam `authVersion` e verificam permissões explícitas atuais no servidor. Papéis e permissões não são confiados ao JWT.
-- Alterar senha ou inativar usuário incrementa `authVersion`, invalidando tokens anteriores no próximo uso.
+- Inativar usuário ou alterar administrativamente sua credencial incrementa `authVersion`, invalidando tokens anteriores no próximo uso. Autosserviço de alteração de senha não está exposto nesta versão.
 - O catálogo de permissões é mantido no código/migrations; a API só o expõe para consulta. Redis pode ser usado para rate limiting e cache de autorização, desde que a mudança de usuário, papel ou permissão invalide o cache.
 - `GET /permissions` expõe somente identificador, código, recurso, ação e descrição do catálogo global, protegido por `roles.manage_permissions`; não existe CRUD público de permissões.
 - Senhas usam algoritmo de hash apropriado e comparação segura.
@@ -77,7 +79,7 @@ OpenAPI é o contrato público da API. Logs devem ser estruturados e correlacion
 
 ## Decisões atuais
 
-- Banco PostgreSQL compartilhado com isolamento lógico por `companyId` nos módulos de acesso e administração.
+- Banco PostgreSQL compartilhado com isolamento lógico por `companyId` em todos os módulos de negócio entregues.
 - API REST versionada com prefixo `/api/v1`.
 - Sem acesso direto do frontend ao banco e sem regras fiscais implícitas.
 - Movimentações de estoque são executadas em transação `SERIALIZABLE`, com decremento condicional e até três tentativas para conflitos de serialização.
