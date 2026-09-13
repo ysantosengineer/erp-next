@@ -73,6 +73,15 @@ type MovementExecutionOptions = {
   reservationAllowance?: Prisma.Decimal;
 };
 
+function isRetryableTransactionConflict(error: unknown): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return false;
+  if (error.code === 'P2034') return true;
+  if (error.code !== 'P2010') return false;
+
+  const databaseCode = error.meta?.code;
+  return databaseCode === '40001' || databaseCode === '40P01';
+}
+
 export type InventoryAdjustmentCommand = {
   inventoryCountId: string;
   productId: string;
@@ -469,12 +478,7 @@ export class InventoryService {
         );
         return this.toMovement(movement);
       } catch (error: unknown) {
-        if (
-          error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === 'P2034' &&
-          attempt < 3
-        )
-          continue;
+        if (isRetryableTransactionConflict(error) && attempt < 3) continue;
         if (
           error instanceof Prisma.PrismaClientKnownRequestError &&
           error.code === 'P2002' &&
