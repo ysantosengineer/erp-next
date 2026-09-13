@@ -23,7 +23,7 @@ O projeto é um portfólio profissional Full Stack, mas deve adotar práticas co
 5. Faturas, pagamentos e visão financeira básica.
 6. Dashboard, relatórios operacionais e trilha de auditoria.
 
-Fora do MVP: emissão fiscal oficial, integração bancária, e-commerce e app mobile. O módulo de acesso já adota isolamento lógico por empresa para usuários e papéis; os módulos comerciais só poderão ser tornados multiempresa mediante modelagem explícita. Nenhuma regra fiscal deve ser inferida.
+Fora do MVP: emissão fiscal oficial, integração bancária, e-commerce e app mobile. Usuários, acesso e módulos comerciais adotam isolamento lógico por empresa por meio de `companyId`, filtros obrigatórios, validação de relações e constraints compostas. Nenhuma regra fiscal deve ser inferida.
 
 ## Requisitos de qualidade
 
@@ -37,11 +37,11 @@ Node.js, Next.js, React, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, Re
 
 ### Backend
 
-Node.js, NestJS, TypeScript, Prisma ORM, PostgreSQL, Redis, JWT e Swagger/OpenAPI.
+Node.js, NestJS, TypeScript, Prisma ORM, PostgreSQL, JWT e Swagger/OpenAPI. Redis é uma evolução prevista para throttling ou cache distribuído quando houver mais de uma instância da API; não é dependência ativa do runtime atual.
 
 ### Infraestrutura
 
-Docker, Docker Compose e GitHub Actions. Vercel pode hospedar o frontend e Railway ou AWS podem hospedar os serviços, conforme decisão registrada em `10-deploy.md`.
+Docker, Docker Compose e GitHub Actions. O ambiente público usa Vercel no frontend, Render na API e Neon PostgreSQL, conforme registrado em `10-deploy.md`.
 
 ## Módulos e dependências
 

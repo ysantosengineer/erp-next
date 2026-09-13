@@ -41,7 +41,7 @@ Registrar logs estruturados, erros de aplicação e health check. Monitorar disp
 Para sessão web, configure `WEB_ORIGIN` com a origem exata do frontend, `NEXT_PUBLIC_API_URL` com a base versionada da API e `AUTH_COOKIE_SECURE=true` em produção. CORS deve usar credenciais somente com origens explícitas; HTTPS é obrigatório para o cookie de refresh seguro.
 
 Consulte `12-seguranca-e-testes.md` para os controles já aplicados, execução E2E isolada e o
-checklist que deve ser concluído antes do primeiro deploy.
+checklist usado na ativação e nas revalidações do ambiente público.
 
 ## Hospedagem escolhida
 
@@ -79,14 +79,16 @@ Proteja `main` exigindo pull request, branch atualizada, resolução de conversa
 `Quality, tests and builds`, `PostgreSQL integration and E2E` e `Build API container`. Restrinja
 push direto e force-push. Dependabot abre atualizações semanais, sem merge automático.
 
-## Primeiro deploy
+## Provisionamento realizado e revalidação
 
-1. Crie o banco Neon e valide conexão pooled com `sslmode=require`.
-2. Importe `render.yaml`, preencha as variáveis marcadas `sync: false` e gere um deploy hook.
-3. Crie o projeto Vercel ligado à `main`, configure a raiz `apps/web` e a URL da API.
-4. Configure os secrets/variables do GitHub e execute manualmente `Deploy production`.
+O ambiente foi provisionado em Vercel, Render e Neon. Para recriá-lo ou auditá-lo:
+
+1. Valide a conexão Neon pooled com `sslmode=require`.
+2. Confira o serviço criado a partir de `render.yaml`, variáveis protegidas e deploy hook.
+3. Confira o projeto Vercel ligado à `main`, raiz `apps/web` e URL pública da API.
+4. Revise secrets/variables do GitHub e o histórico de `Deploy production`.
 5. Valide login, refresh de sessão, CORS, `/health`, `/ready`, logs e isolamento entre empresas.
-6. Habilite o deploy automático somente depois do smoke test manual.
+6. Mantenha promoção automática condicionada ao CI e ao smoke test.
 
 O seed é exclusivamente local/homologação controlada e nunca faz parte do pipeline de produção.
 

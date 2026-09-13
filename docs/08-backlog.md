@@ -22,14 +22,14 @@
 
 ## P2 — após o MVP
 
-Exportação de relatórios, integrações, expansão do isolamento multiempresa para módulos comerciais, emissão fiscal, WMS, BI, IA e aplicativo mobile. Cada item deve ser refinado com regra de negócio, dependências e critérios de aceite antes de entrar em sprint.
+Exportação de relatórios, integrações, emissão fiscal, WMS, BI, IA, aplicativo mobile, throttling distribuído e consulta administrativa da auditoria. O isolamento multiempresa já cobre os módulos comerciais entregues. Cada evolução deve ser refinada com regra de negócio, dependências e critérios de aceite antes de entrar em sprint.
 
 ## Estado de implementação
 
 - US001 e US002 estão implementadas no backend e no frontend, com isolamento por empresa, controle visual por permissão, catálogo consultável e testes unitários baseados em mocks.
 - O PostgreSQL local está disponível, todas as migrations estão aplicadas e o seed administrativo executa. Integrações específicas são ativadas por variáveis de ambiente para manter a suíte padrão determinística.
 - A interface de login, sessão autenticada, navegação por permissões e os CRUDs administrativos de usuários e papéis estão implementados e disponíveis com API e PostgreSQL locais.
-- A parte de fornecedores da US003 está implementada em código com PF/PJ, CPF/CNPJ, endereço principal, busca, filtros, paginação, status e testes unitários. A US003 permanece aberta até os demais cadastros previstos e a validação integrada em PostgreSQL.
+- A US003 está implementada para fornecedores, produtos, clientes, categorias, unidades, depósitos e endereços, com validação integrada em PostgreSQL.
 - A parte de produtos da US003 está implementada com SKU/código de barras únicos por empresa, categoria, unidade, fornecedor principal opcional, preços, dimensões, estoque mínimo, busca, filtros, paginação, status e testes.
 - A parte de clientes da US003 está implementada com PF/PJ, CPF/CNPJ obrigatório e único por empresa, endereço principal, limite de crédito decimal, busca, filtros, paginação, status, controle por permissão e testes.
 - Depósitos e endereços de estoque concluem o escopo cadastral da US003. O núcleo transacional mantém físico, reservado e disponível por endereço; compras geram entradas e vendas expedidas geram saídas.

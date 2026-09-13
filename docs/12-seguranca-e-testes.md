@@ -73,8 +73,8 @@ os fluxos de inventário, compras, recebimentos, vendas, reservas e relatórios.
 ## Limites desta etapa
 
 Redis distribuído, tracing/APM, cofre de segredos gerenciado, backup automatizado, WAF e pentest
-externo permanecem pendentes. CI/CD, container da API e configuração de deploy foram adicionados
-na Etapa 20; a ativação do ambiente real depende das contas e credenciais dos provedores. A auditoria
+externo permanecem pendentes. CI/CD, container da API e configuração de deploy estão ativos
+na Etapa 20 e o ambiente público está ativo em Vercel, Render e Neon. A auditoria
 de pacotes pode manter findings de ferramentas de desenvolvimento quando não houver correção
 compatível sem upgrade principal; eles devem permanecer registrados e acompanhados.
 
