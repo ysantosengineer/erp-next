@@ -12,7 +12,7 @@ export default function UnauthorizedPage() {
       </p>
       <Link
         className="mt-5 inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-        href="/"
+        href="/dashboard"
       >
         Voltar ao dashboard
       </Link>

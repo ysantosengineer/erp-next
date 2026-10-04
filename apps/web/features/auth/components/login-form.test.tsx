@@ -43,7 +43,7 @@ describe('LoginForm', () => {
       email: 'admin@erp.local',
       password: 'senha-segura-com-12-caracteres',
     });
-    expect(replaceMock).toHaveBeenCalledWith('/');
+    expect(replaceMock).toHaveBeenCalledWith('/dashboard');
   });
 
   it('exibe mensagem segura para credenciais recusadas', async () => {

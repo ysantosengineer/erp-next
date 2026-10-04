@@ -16,12 +16,12 @@ export function Sidebar() {
 
   return (
     <aside className="flex w-full shrink-0 flex-col border-b border-slate-200 bg-white p-4 md:min-h-screen md:w-60 md:border-b-0 md:border-r">
-      <Link className="mb-6 text-lg font-bold tracking-tight text-slate-950" href="/">
+      <Link className="mb-6 text-lg font-bold tracking-tight text-slate-950" href="/dashboard">
         ERP Next
       </Link>
       <nav aria-label="Navegação principal" className="flex flex-col gap-1">
         <Can permission={PERMISSIONS.ANALYTICS_DASHBOARD_READ}>
-          <Link className={linkClass('/')} href="/">
+          <Link className={linkClass('/dashboard')} href="/dashboard">
             Dashboard
           </Link>
         </Can>
