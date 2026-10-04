@@ -33,7 +33,7 @@ export function LoginForm() {
     setFormError(null);
     try {
       await login(values);
-      router.replace('/');
+      router.replace('/dashboard');
     } catch (error) {
       setFormError(loginErrorMessage(error));
     }
