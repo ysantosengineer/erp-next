@@ -1,3 +1,3 @@
 export default function AuthLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <main className="grid min-h-screen place-items-center bg-slate-100 p-4">{children}</main>;
+  return <main className="min-h-screen bg-slate-950 p-4 sm:p-6">{children}</main>;
 }

@@ -51,7 +51,7 @@ export function LoginForm() {
       ) : null}
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="email">
+        <label className="mb-2 block text-sm font-semibold text-slate-800" htmlFor="email">
           E-mail
         </label>
         <input
@@ -59,7 +59,7 @@ export function LoginForm() {
           aria-describedby={errors.email ? 'email-error' : undefined}
           aria-invalid={Boolean(errors.email)}
           autoComplete="email"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 shadow-sm placeholder:text-slate-400"
+          className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-slate-900 shadow-sm transition placeholder:text-slate-400 hover:border-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
           id="email"
           inputMode="email"
           type="email"
@@ -72,8 +72,8 @@ export function LoginForm() {
       </div>
 
       <div>
-        <div className="mb-1.5 flex items-center justify-between gap-3">
-          <label className="block text-sm font-medium text-slate-700" htmlFor="password">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <label className="block text-sm font-semibold text-slate-800" htmlFor="password">
             Senha
           </label>
           <span
@@ -89,12 +89,12 @@ export function LoginForm() {
             aria-describedby={errors.password ? 'password-error' : undefined}
             aria-invalid={Boolean(errors.password)}
             autoComplete="current-password"
-            className="w-full rounded-lg border border-slate-300 py-2.5 pl-3 pr-20 text-slate-900 shadow-sm"
+            className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-3.5 pr-20 text-slate-900 shadow-sm transition hover:border-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
             id="password"
             type={showPassword ? 'text' : 'password'}
           />
           <button
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-50"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
             onClick={() => setShowPassword((current) => !current)}
             type="button"
           >
@@ -109,7 +109,7 @@ export function LoginForm() {
       </div>
 
       <button
-        className="flex w-full items-center justify-center rounded-lg bg-blue-700 px-4 py-2.5 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-400"
+        className="flex min-h-12 w-full items-center justify-center rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-400"
         disabled={isSubmitting}
         type="submit"
       >
